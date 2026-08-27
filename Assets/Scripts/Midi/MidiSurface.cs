@@ -10,6 +10,7 @@ namespace Aetherin
     /// APC mini mk2 の操作面を集約する<see cref="IMidiSurface"/>の実装
     /// LEDの状態を保持して画面に表示し、実機が未接続のときはUIのクリック/スライダーを入力として扱う
     /// </summary>
+    [DefaultExecutionOrder(-90)]
     public class MidiSurface : MonoBehaviour, IMidiSurface, IUiTarget
     {
         private const int ValueCount = 128;
@@ -39,9 +40,12 @@ namespace Aetherin
         // エミュレート入力の状態
         private readonly bool[] _emulatedNotes = new bool[ValueCount];
 
-        // UIの構築がAwakeより先に走る場合があるため、初期値はフィールド初期化子で入れておく
-        private readonly int[] _emulatedNoteOnFrames = CreateFilledArray(-1);
-        private readonly int[] _emulatedNoteOffFrames = CreateFilledArray(-1);
+        // UIのクリックはフレームのどこで処理されるか決まっていないため、
+        // 一度溜めてからUpdateでこのフレームの入力として確定させる
+        private readonly bool[] _emulatedNoteOnThisFrame = new bool[ValueCount];
+        private readonly bool[] _emulatedNoteOffThisFrame = new bool[ValueCount];
+        private readonly List<int> _pendingEmulatedNoteOn = new();
+        private readonly List<int> _pendingEmulatedNoteOff = new();
 
         /// <summary> エミュレートされたCC値。負値は未設定 </summary>
         private readonly float[] _emulatedCcValues = CreateFilledArray(-1f);
@@ -53,6 +57,9 @@ namespace Aetherin
         {
             _input = input;
             _output = output;
+
+            // MidiBindingがInspector / RosettaUIのどちらからでもLearnできるように、操作面を登録する
+            MidiBinding.SetSource(this);
 
             if (_input == null) return;
 
@@ -67,10 +74,10 @@ namespace Aetherin
             => _emulatedNotes[noteNumber] || (_input?.IsNoteOn(noteNumber) ?? false);
 
         public bool WasNoteOn(int noteNumber)
-            => _emulatedNoteOnFrames[noteNumber] == Time.frameCount || (_input?.WasNoteOn(noteNumber) ?? false);
+            => _emulatedNoteOnThisFrame[noteNumber] || (_input?.WasNoteOn(noteNumber) ?? false);
 
         public bool WasNoteOff(int noteNumber)
-            => _emulatedNoteOffFrames[noteNumber] == Time.frameCount || (_input?.WasNoteOff(noteNumber) ?? false);
+            => _emulatedNoteOffThisFrame[noteNumber] || (_input?.WasNoteOff(noteNumber) ?? false);
 
         public float GetVelocity(int noteNumber)
         {
@@ -172,14 +179,42 @@ namespace Aetherin
 
         private void Update()
         {
+            PublishEmulatedEvents();
+
             // 実機が後から接続されたらLEDの状態を送り直す
             bool outputConnected = _output != null && _output.IsConnected;
             if (outputConnected && !_wasOutputConnected) ResendAllLeds();
             _wasOutputConnected = outputConnected;
         }
 
+        /// <summary>
+        /// 溜まったUI操作をこのフレームの入力として確定させ、イベントを発火する
+        /// </summary>
+        private void PublishEmulatedEvents()
+        {
+            Array.Clear(_emulatedNoteOnThisFrame, 0, ValueCount);
+            Array.Clear(_emulatedNoteOffThisFrame, 0, ValueCount);
+
+            foreach (int noteNumber in _pendingEmulatedNoteOn)
+            {
+                _emulatedNoteOnThisFrame[noteNumber] = true;
+                OnNoteOn?.Invoke(noteNumber, 1f);
+            }
+
+            foreach (int noteNumber in _pendingEmulatedNoteOff)
+            {
+                _emulatedNoteOffThisFrame[noteNumber] = true;
+                OnNoteOff?.Invoke(noteNumber);
+            }
+
+            _pendingEmulatedNoteOn.Clear();
+            _pendingEmulatedNoteOff.Clear();
+        }
+
         private void OnDestroy()
         {
+            if (ReferenceEquals(MidiBinding.Source, this)) MidiBinding.SetSource(null);
+
             if (_input == null) return;
 
             _input.OnNoteOn -= HandleHardwareNoteOn;
@@ -192,14 +227,12 @@ namespace Aetherin
             if (_emulatedNotes[noteNumber])
             {
                 _emulatedNotes[noteNumber] = false;
-                _emulatedNoteOffFrames[noteNumber] = Time.frameCount;
-                OnNoteOff?.Invoke(noteNumber);
+                _pendingEmulatedNoteOff.Add(noteNumber);
             }
             else
             {
                 _emulatedNotes[noteNumber] = true;
-                _emulatedNoteOnFrames[noteNumber] = Time.frameCount;
-                OnNoteOn?.Invoke(noteNumber, 1f);
+                _pendingEmulatedNoteOn.Add(noteNumber);
             }
         }
 
@@ -261,14 +294,29 @@ namespace Aetherin
 
         private Element CreateTrackRow(bool emulating)
         {
-            var row = new List<Element>(ApcMiniMk2.GridSize);
+            var row = new List<Element>(ApcMiniMk2.GridSize + 1);
 
             for (int i = 0; i < ApcMiniMk2.GridSize; i++)
             {
                 row.Add(CreateButtonElement(ApcMiniMk2.TrackButtonFirst + i, i, _trackLeds, Color.red, emulating));
             }
 
+            // 実機と同じ並びで、Track Buttonの右隣 (グリッド右下) にShiftを置く
+            row.Add(CreateShiftElement(emulating));
+
             return UI.Row(row);
+        }
+
+        /// <summary>
+        /// ShiftボタンはLEDを持たないため、押下状態だけを表示する
+        /// </summary>
+        private Element CreateShiftElement(bool emulating)
+        {
+            return CreateCellElement(ApcMiniMk2.ShiftButton, emulating, () =>
+            {
+                var color = new Color(0.3f, 0.3f, 0.3f);
+                return IsNoteOn(ApcMiniMk2.ShiftButton) ? Color.Lerp(color, Color.white, 0.65f) : color;
+            });
         }
 
         private Element CreatePadElement(int noteNumber, bool emulating)

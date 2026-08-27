@@ -12,7 +12,11 @@ namespace Aetherin
     /// <summary>
     /// Minisを介してMIDI入力を受け取る<see cref="IMidiInput"/>の実装
     /// 認識された全てのMidiDevice(=チャンネル)の入力を合成して保持する
+    ///
+    /// Minisのコールバックはフレームの途中 (EditorではEditorApplication.updateからも) 呼ばれるため、
+    /// 受信内容は一度キューに溜めて、他のコンポーネントより先に走るUpdateでフレーム単位に確定させる
     /// </summary>
+    [DefaultExecutionOrder(-100)]
     public class MidiInput : MonoBehaviour, IMidiInput, IUiTarget
     {
         private const int ValueCount = 128;
@@ -37,9 +41,31 @@ namespace Aetherin
         private readonly bool[] _noteStates = new bool[ValueCount];
         private readonly float[] _velocities = new float[ValueCount];
 
-        /// <summary> ノートオン/オフが発生したフレーム番号。Time.frameCountと比較するためクリア処理が不要 </summary>
-        private readonly int[] _noteOnFrames = new int[ValueCount];
-        private readonly int[] _noteOffFrames = new int[ValueCount];
+        /// <summary> このフレームでノートオン/オフがあったか (Updateで確定させる) </summary>
+        private readonly bool[] _noteOnThisFrame = new bool[ValueCount];
+        private readonly bool[] _noteOffThisFrame = new bool[ValueCount];
+
+        private enum MidiEventType { NoteOn, NoteOff, ControlChange }
+
+        private readonly struct PendingEvent
+        {
+            public readonly MidiEventType Type;
+            public readonly int Number;
+            public readonly float Value;
+
+            public PendingEvent(MidiEventType type, int number, float value)
+            {
+                Type = type;
+                Number = number;
+                Value = value;
+            }
+        }
+
+        /// <summary> コールバックが溜めた受信イベント </summary>
+        private readonly List<PendingEvent> _pendingEvents = new();
+
+        /// <summary> Update中に処理するイベント (処理中の再入で崩れないよう入れ替えて使う) </summary>
+        private readonly List<PendingEvent> _dispatchingEvents = new();
 
         /// <summary> 一度でもCCを受信した番号 (昇順、モニタ表示用) </summary>
         private readonly List<int> _receivedCcNumbers = new();
@@ -64,13 +90,48 @@ namespace Aetherin
         }
 
         public bool IsNoteOn(int noteNumber) => _noteStates[noteNumber];
-        public bool WasNoteOn(int noteNumber) => _noteOnFrames[noteNumber] == Time.frameCount;
-        public bool WasNoteOff(int noteNumber) => _noteOffFrames[noteNumber] == Time.frameCount;
+        public bool WasNoteOn(int noteNumber) => _noteOnThisFrame[noteNumber];
+        public bool WasNoteOff(int noteNumber) => _noteOffThisFrame[noteNumber];
         public float GetVelocity(int noteNumber) => _velocities[noteNumber];
 
         private void Awake()
         {
             ResetStates();
+        }
+
+        /// <summary>
+        /// 溜まった受信イベントをこのフレームのものとして確定させ、イベントを発火する
+        /// </summary>
+        private void Update()
+        {
+            Array.Clear(_noteOnThisFrame, 0, ValueCount);
+            Array.Clear(_noteOffThisFrame, 0, ValueCount);
+
+            if (_pendingEvents.Count == 0) return;
+
+            _dispatchingEvents.Clear();
+            _dispatchingEvents.AddRange(_pendingEvents);
+            _pendingEvents.Clear();
+
+            foreach (var pendingEvent in _dispatchingEvents)
+            {
+                switch (pendingEvent.Type)
+                {
+                    case MidiEventType.NoteOn:
+                        _noteOnThisFrame[pendingEvent.Number] = true;
+                        OnNoteOn?.Invoke(pendingEvent.Number, pendingEvent.Value);
+                        break;
+
+                    case MidiEventType.NoteOff:
+                        _noteOffThisFrame[pendingEvent.Number] = true;
+                        OnNoteOff?.Invoke(pendingEvent.Number);
+                        break;
+
+                    case MidiEventType.ControlChange:
+                        OnCcChanged?.Invoke(pendingEvent.Number, pendingEvent.Value);
+                        break;
+                }
+            }
         }
 
         private void OnEnable()
@@ -234,10 +295,9 @@ namespace Aetherin
             int number = note.noteNumber;
             _noteStates[number] = true;
             _velocities[number] = velocity;
-            _noteOnFrames[number] = Time.frameCount;
 
             SetLastMessage("Note On", number, velocity);
-            OnNoteOn?.Invoke(number, velocity);
+            _pendingEvents.Add(new PendingEvent(MidiEventType.NoteOn, number, velocity));
         }
 
         private void HandleNoteOff(MidiNoteControl note)
@@ -249,10 +309,9 @@ namespace Aetherin
         {
             _noteStates[number] = false;
             _velocities[number] = 0f;
-            _noteOffFrames[number] = Time.frameCount;
 
             SetLastMessage("Note Off", number, 0f);
-            OnNoteOff?.Invoke(number);
+            _pendingEvents.Add(new PendingEvent(MidiEventType.NoteOff, number, 0f));
         }
 
         private void HandleAftertouch(MidiNoteControl note, float pressure)
@@ -268,7 +327,7 @@ namespace Aetherin
             _ccRawValues[number] = Mathf.RoundToInt(value * 127f);
 
             SetLastMessage("CC", number, value);
-            OnCcChanged?.Invoke(number, value);
+            _pendingEvents.Add(new PendingEvent(MidiEventType.ControlChange, number, value));
         }
 
         private void HandleChannelPressure(AxisControl control, float value)
@@ -306,14 +365,15 @@ namespace Aetherin
             _lastMessageNumber = -1;
             _lastMessageValue = 0f;
             _receivedCcNumbers.Clear();
+            _pendingEvents.Clear();
 
             for (int i = 0; i < ValueCount; i++)
             {
                 _ccRawValues[i] = -1;
                 _noteStates[i] = false;
                 _velocities[i] = 0f;
-                _noteOnFrames[i] = -1;
-                _noteOffFrames[i] = -1;
+                _noteOnThisFrame[i] = false;
+                _noteOffThisFrame[i] = false;
             }
         }
     }

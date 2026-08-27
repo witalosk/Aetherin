@@ -4,6 +4,7 @@ namespace Aetherin
 {
     public interface IUiTarget : IParamsTarget, IMonoBehaviour
     {
-        Element AdditiveUi();
+        bool FoldParams => false;
+        Element AdditiveUi(){ return null; }
     }
 }

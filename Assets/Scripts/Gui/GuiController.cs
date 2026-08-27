@@ -21,12 +21,14 @@ namespace Aetherin
         private void Awake()
         {
             _root = GetComponentInChildren<RosettaUIRoot>();
+            RegisterUiCustomFuncs();
+            
             List<Element> launchers = new List<Element>();
             foreach (var uiTarget in _uiTargets)
             {
                 launchers.Add(UI.WindowLauncher(uiTarget.gameObject.name,
                     UI.Window(uiTarget.gameObject.name, UI.Column(
-                        UI.Field(null, Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).Open(),
+                        UI.Field("Params", Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).SetOpenFlag(!uiTarget.FoldParams),
                         uiTarget.AdditiveUi()
                     ))
                 ));
@@ -35,6 +37,11 @@ namespace Aetherin
             _root.Build(UI.Window("Aetherin",
                 UI.Column(launchers)
             ));
+            
+        }
+
+        private void RegisterUiCustomFuncs()
+        {
             
         }
     }
