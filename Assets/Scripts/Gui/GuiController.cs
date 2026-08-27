@@ -20,7 +20,7 @@ namespace Aetherin
 
         private void Awake()
         {
-            _root = GetComponentInParent<RosettaUIRoot>();
+            _root = GetComponentInChildren<RosettaUIRoot>();
             List<Element> launchers = new List<Element>();
             foreach (var uiTarget in _uiTargets)
             {
