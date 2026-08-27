@@ -10,10 +10,10 @@ using UnityEngine.InputSystem.Controls;
 namespace Aetherin
 {
     /// <summary>
-    /// Minisを介してMIDI入力を受け取る<see cref="IMidiController"/>の実装
+    /// Minisを介してMIDI入力を受け取る<see cref="IMidiInput"/>の実装
     /// 認識された全てのMidiDevice(=チャンネル)の入力を合成して保持する
     /// </summary>
-    public class MidiController : MonoBehaviour, IMidiController, IUiTarget
+    public class MidiInput : MonoBehaviour, IMidiInput, IUiTarget
     {
         private const int ValueCount = 128;
 
@@ -27,7 +27,7 @@ namespace Aetherin
         public event Action<int> OnNoteOff;
 
         [SerializeField]
-        private MidiControllerParams _params = new();
+        private MidiInputParams _params = new();
 
         private readonly List<MidiDevice> _devices = new();
 

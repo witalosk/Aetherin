@@ -7,7 +7,7 @@ namespace Aetherin
     /// 単一機材の使用を前提としており、接続されている全てのMIDIデバイス/チャンネルの入力を
     /// 1つの入力空間として合成して扱う
     /// </summary>
-    public interface IMidiController
+    public interface IMidiInput
     {
         /// <summary>
         /// MIDIデバイスが1つ以上認識されているか
