@@ -24,6 +24,7 @@ namespace Aetherin
     public class InputFocusController : MonoBehaviour, ISaveAndUiTarget
     {
         public IParams Params => _params;
+        public string Category => UiCategory.System;
 
         [SerializeField]
         private InputFocusParams _params = new();

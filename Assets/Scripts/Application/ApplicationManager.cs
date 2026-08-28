@@ -12,10 +12,11 @@ namespace Aetherin
         public Vector2Int Resolution = new(3840, 2160);
     }
     
-    public class ApplicationManager : MonoBehaviour, ISaveAndUiTarget
+    public class ApplicationManager : MonoBehaviour, IApplicationManager, ISaveAndUiTarget
     {
         public Vector2Int Resolution => _params.Resolution;
         public IParams Params => _params;
+        public string Category => UiCategory.System;
         
         [SerializeField] private ApplicaitonManagerParams _params = new();
 

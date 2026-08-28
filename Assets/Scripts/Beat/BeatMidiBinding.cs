@@ -38,6 +38,7 @@ namespace Aetherin
     public class BeatMidiBinding : MonoBehaviour, ISaveAndUiTarget
     {
         public IParams Params => _params;
+        public string Category => UiCategory.Beat;
 
         [SerializeField]
         private BeatMidiBindingParams _params = new();

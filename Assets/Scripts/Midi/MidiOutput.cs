@@ -27,6 +27,7 @@ namespace Aetherin
     {
         public bool IsConnected => _isOpen;
         public IParams Params => _params;
+        public string Category => UiCategory.Midi;
 
         [SerializeField]
         private MidiOutputParams _params = new();

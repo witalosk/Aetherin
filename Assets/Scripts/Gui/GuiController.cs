@@ -9,6 +9,18 @@ namespace Aetherin
 {
     public class GuiController : MonoBehaviour
     {
+        /// <summary>
+        /// タブの表示順。ここに無いカテゴリは名前順で後ろに並ぶ
+        /// </summary>
+        private static readonly string[] CategoryOrder =
+        {
+            UiCategory.Audio,
+            UiCategory.Beat,
+            UiCategory.Midi,
+            UiCategory.System,
+            UiCategory.Misc,
+        };
+
         private RosettaUIRoot _root;
         private List<IUiTarget> _uiTargets;
         private ISaveManager _saveManager;
@@ -24,23 +36,36 @@ namespace Aetherin
         {
             _root = GetComponentInChildren<RosettaUIRoot>();
             RegisterUiCustomFuncs();
-            
-            List<Element> launchers = new List<Element>();
-            foreach (var uiTarget in _uiTargets)
-            {
-                launchers.Add(UI.WindowLauncher(uiTarget.gameObject.name,
-                    UI.Window(uiTarget.gameObject.name, UI.Column(
-                        UI.Field("Params", Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).SetOpenFlag(!uiTarget.FoldParams),
-                        uiTarget.AdditiveUi()
-                    ))
-                ));
-            }
-            launchers.Add(_saveManager.CreateElement(null));
-            
+
+            var tabs = _uiTargets
+                .GroupBy(ut => string.IsNullOrEmpty(ut.Category) ? UiCategory.Misc : ut.Category)
+                .OrderBy(GetCategorySortKey)
+                .ThenBy(g => g.Key)
+                .Select(g => Tab.Create(g.Key, () => UI.Column(g.Select(CreateLauncher))))
+                .ToList();
+
             _root.Build(UI.Window("Aetherin",
-                UI.Column(launchers)
+                UI.Column(
+                    _saveManager.CreateElement(null),
+                    UI.Tabs(tabs)
+                )
             ).SetWidth(300f));
-            
+        }
+
+        private static Element CreateLauncher(IUiTarget uiTarget)
+        {
+            return UI.WindowLauncher(uiTarget.gameObject.name,
+                UI.Window(uiTarget.gameObject.name, UI.Column(
+                    UI.Field("Params", Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).SetOpenFlag(!uiTarget.FoldParams),
+                    uiTarget.AdditiveUi()
+                ))
+            );
+        }
+
+        private static int GetCategorySortKey(IGrouping<string, IUiTarget> group)
+        {
+            var index = Array.IndexOf(CategoryOrder, group.Key);
+            return index < 0 ? CategoryOrder.Length : index;
         }
 
         private void RegisterUiCustomFuncs()

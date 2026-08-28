@@ -9,7 +9,7 @@ namespace Aetherin
         public RenderTexture OutputTexture { get; private set; }
 
         [SerializeField] private string _stageName;
-        
+        [SerializeField] private RenderTexture _tex;
         private IApplicationManager _applicationManager;
         
         [Inject]
@@ -18,14 +18,15 @@ namespace Aetherin
             _applicationManager = applicationManager;
         }
 
-        private void Start()
+        protected virtual void Start()
         {
             OutputTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0, RenderTextureFormat.ARGB32);
+            _tex = OutputTexture;
         }
 
-        private void OnDestroy()
+        protected virtual void OnDestroy()
         {
-            OutputTexture.Release();
+            OutputTexture?.Release();
         }
     }
 }

@@ -24,6 +24,7 @@ namespace Aetherin
         public Texture WaveformTexture => _waveformTexture;
         public Texture SpectrumTexture => _spectrumTexture;
         public IParams Params => _params;
+        public string Category => UiCategory.Audio;
         public bool FoldParams => true;
 
         [SerializeField] private MonoBehaviour _audioInputSource;

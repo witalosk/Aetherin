@@ -66,6 +66,7 @@ namespace Aetherin
         public bool WasBar => _lastBarFrame == Time.frameCount;
 
         public IParams Params => _params;
+        public string Category => UiCategory.Beat;
         public bool FoldParams => true;
 
         public event Action<int> OnBeat;
