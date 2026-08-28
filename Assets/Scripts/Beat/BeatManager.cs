@@ -12,7 +12,7 @@ namespace Aetherin
     /// サブ拍 (拍) のタップでテンポを決め、主拍 (小節頭) のタップで小節の頭を合わせる
     /// 主拍が何拍ごとに来るかから拍子を推定する
     /// </summary>
-    public class BeatManager : MonoBehaviour, IBeatManager, IUiTarget
+    public class BeatManager : MonoBehaviour, IBeatManager, ISaveAndUiTarget
     {
         public float Bpm => _beat.Bpm;
         public bool IsRunning => _beat.IsRunning;

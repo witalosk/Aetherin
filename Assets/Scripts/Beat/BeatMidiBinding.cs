@@ -9,7 +9,7 @@ namespace Aetherin
     ///
     /// ボタンの割り当て・Learnは<see cref="MidiBinding"/>が持つため、ここではその読み書きだけを行う
     /// </summary>
-    public class BeatMidiBinding : MonoBehaviour, IUiTarget
+    public class BeatMidiBinding : MonoBehaviour, ISaveAndUiTarget
     {
         public IParams Params => _params;
 

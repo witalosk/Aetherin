@@ -10,7 +10,7 @@ namespace Aetherin
     /// RtMidiを直接使ってMIDI出力を行う<see cref="IMidiOutput"/>の実装
     /// MinisはMIDI入力専用のため、出力はこちらで独自にポートを開いて扱う
     /// </summary>
-    public class MidiOutput : MonoBehaviour, IMidiOutput, IUiTarget
+    public class MidiOutput : MonoBehaviour, IMidiOutput, ISaveAndUiTarget
     {
         public bool IsConnected => _isOpen;
         public IParams Params => _params;

@@ -10,7 +10,7 @@ namespace Aetherin
     /// EditorのGame Viewや、ビルド後のウィンドウがアクティブでない状態でも
     /// キーボード入力をゲーム側で受け取れるようにする
     /// </summary>
-    public class InputFocusController : MonoBehaviour, IUiTarget
+    public class InputFocusController : MonoBehaviour, ISaveAndUiTarget
     {
         public IParams Params => _params;
 

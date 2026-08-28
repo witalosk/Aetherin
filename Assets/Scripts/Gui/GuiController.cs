@@ -11,11 +11,13 @@ namespace Aetherin
     {
         private RosettaUIRoot _root;
         private List<IUiTarget> _uiTargets;
+        private ISaveManager _saveManager;
         
         [Inject]
-        public void Construct(IEnumerable<IUiTarget> uiTargets)
+        public void Construct(IEnumerable<IUiTarget> uiTargets, ISaveManager saveManager)
         {
             _uiTargets = uiTargets.OrderBy(ut => ut.gameObject.name).ToList();
+            _saveManager = saveManager;
         }
 
         private void Awake()
@@ -33,6 +35,7 @@ namespace Aetherin
                     ))
                 ));
             }
+            launchers.Add(_saveManager.CreateElement(null));
             
             _root.Build(UI.Window("Aetherin",
                 UI.Column(launchers)

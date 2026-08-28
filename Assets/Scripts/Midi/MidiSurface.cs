@@ -11,7 +11,7 @@ namespace Aetherin
     /// LEDの状態を保持して画面に表示し、実機が未接続のときはUIのクリック/スライダーを入力として扱う
     /// </summary>
     [DefaultExecutionOrder(-90)]
-    public class MidiSurface : MonoBehaviour, IMidiSurface, IUiTarget
+    public class MidiSurface : MonoBehaviour, IMidiSurface, ISaveAndUiTarget
     {
         private const int ValueCount = 128;
         private const int PadCount = 64;

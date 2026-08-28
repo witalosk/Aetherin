@@ -17,7 +17,7 @@ namespace Aetherin
     /// 受信内容は一度キューに溜めて、他のコンポーネントより先に走るUpdateでフレーム単位に確定させる
     /// </summary>
     [DefaultExecutionOrder(-100)]
-    public class MidiInput : MonoBehaviour, IMidiInput, IUiTarget
+    public class MidiInput : MonoBehaviour, IMidiInput, ISaveAndUiTarget
     {
         private const int ValueCount = 128;
 

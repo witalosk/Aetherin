@@ -10,7 +10,7 @@ namespace Aetherin
         public Vector2Int Resolution = new(3840, 2160);
     }
     
-    public class SceneManager : MonoBehaviour, IUiTarget
+    public class SceneManager : MonoBehaviour, ISaveAndUiTarget
     {
         public Vector2Int Resolution => _params.Resolution;
         public IParams Params => _params;

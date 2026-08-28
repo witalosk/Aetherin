@@ -119,6 +119,60 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &71093670
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 71093671}
+  - component: {fileID: 71093672}
+  m_Layer: 0
+  m_Name: BeatMidiBinding
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &71093671
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 71093670}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1535279250}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &71093672
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 71093670}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cc0d90b9255d174584bab303da82950, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.BeatMidiBinding
+  _params:
+    MainTapButton:
+      _noteNumber: 0
+    SubTapButton:
+      _noteNumber: 1
+    MainColor: {r: 0.35, g: 0.85, b: 1, a: 1}
+    SubColor: {r: 1, g: 0.65, b: 0.25, a: 1}
+    FlashSharpness: 3
+    IdleBrightness: 0.08
+    BrightnessSteps: 12
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -539,6 +593,51 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 2287126204365735152, guid: 4ed1865184a851c448a44589b9f302b9, type: 3}
   m_PrefabInstance: {fileID: 1084674270}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1168554447
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1168554449}
+  - component: {fileID: 1168554448}
+  m_Layer: 0
+  m_Name: SaveManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1168554448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1168554447}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e45fbf7797d4ce7b270ab40767ec08d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.SaveManager
+  _saveDataName: SaveData.json
+--- !u!4 &1168554449
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1168554447}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0, y: 0, z: -0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1404546250
 GameObject:
   m_ObjectHideFlags: 0
@@ -631,7 +730,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1535279250}
   - component: {fileID: 1535279249}
-  - component: {fileID: 1535279251}
   m_Layer: 0
   m_Name: BeatManager
   m_TagString: Untagged
@@ -674,29 +772,10 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 71093671}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1535279251
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1535279248}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7cc0d90b9255d174584bab303da82950, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.BeatMidiBinding
-  _params:
-    MainTapNote: 0
-    SubTapNote: 1
-    MainColor: {r: 0.35, g: 0.85, b: 1, a: 1}
-    SubColor: {r: 1, g: 0.65, b: 0.25, a: 1}
-    FlashSharpness: 3
-    IdleBrightness: 0.08
-    BrightnessSteps: 12
 --- !u!1 &1656248365
 GameObject:
   m_ObjectHideFlags: 0
@@ -846,6 +925,7 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 1168554449}
   - {fileID: 1915598371}
   - {fileID: 933337478}
   - {fileID: 1530768238}
