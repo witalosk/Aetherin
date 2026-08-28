@@ -39,7 +39,7 @@ namespace Aetherin
             
             _root.Build(UI.Window("Aetherin",
                 UI.Column(launchers)
-            ));
+            ).SetWidth(300f));
             
         }
 

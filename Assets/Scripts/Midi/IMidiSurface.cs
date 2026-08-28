@@ -18,7 +18,7 @@ namespace Aetherin
         /// <summary> UI操作によるエミュレートが有効か (実機未接続時) </summary>
         bool IsEmulating { get; }
 
-        #region 入力 (実機 + エミュレート)
+        #region Input
 
         bool IsNoteOn(int noteNumber);
         bool WasNoteOn(int noteNumber);

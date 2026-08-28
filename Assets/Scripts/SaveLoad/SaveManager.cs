@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using RosettaUI;
 using UnityEngine;
 using UnitySimpleContainer;
@@ -28,7 +30,12 @@ namespace Aetherin
         public void Save(string path = null)
         {
             path ??= GetDefaultPath();
-            SaveData saveData = new();
+            JObject saveData = new()
+            {
+                ["Version"] = 3
+            };
+            JArray entries = new();
+            saveData["Entries"] = entries;
 
             foreach (ISaveTarget target in _saveTargets)
             {
@@ -38,19 +45,19 @@ namespace Aetherin
                     continue;
                 }
 
-                saveData.Entries.Add(new SaveEntry
+                entries.Add(new JObject
                 {
-                    TargetType = GetTypeId(target.GetType()),
-                    GameObjectName = GetGameObjectName(target),
-                    ParamsType = GetTypeId(target.Params.GetType()),
-                    Json = JsonUtility.ToJson(target.Params)
+                    ["TargetType"] = GetTypeId(target.GetType()),
+                    ["GameObjectName"] = GetGameObjectName(target),
+                    ["ParamsType"] = GetTypeId(target.Params.GetType()),
+                    ["Params"] = JObject.Parse(JsonUtility.ToJson(target.Params))
                 });
             }
 
             string directory = Path.GetDirectoryName(Path.GetFullPath(path));
             if (!string.IsNullOrEmpty(directory)) Directory.CreateDirectory(directory);
 
-            File.WriteAllText(path, JsonUtility.ToJson(saveData, true));
+            File.WriteAllText(path, saveData.ToString(Formatting.Indented));
         }
 
         public void Load(string path = null)
@@ -58,10 +65,10 @@ namespace Aetherin
             path ??= GetDefaultPath();
             if (!File.Exists(path)) return;
 
-            SaveData saveData;
+            List<SaveEntry> entries;
             try
             {
-                saveData = JsonUtility.FromJson<SaveData>(File.ReadAllText(path));
+                entries = ParseEntries(File.ReadAllText(path));
             }
             catch (Exception exception)
             {
@@ -69,10 +76,10 @@ namespace Aetherin
                 return;
             }
 
-            if (saveData?.Entries == null) return;
+            if (entries == null) return;
 
             // 型と GameObject 名の組み合わせで対象を識別する。同名の場合のみ保存時の列挙順を使う。
-            Dictionary<string, Queue<SaveEntry>> entriesByTarget = saveData.Entries
+            Dictionary<string, Queue<SaveEntry>> entriesByTarget = entries
                 .Where(entry => entry != null && !string.IsNullOrEmpty(entry.TargetType))
                 .GroupBy(entry => GetTargetId(entry.TargetType, entry.GameObjectName))
                 .ToDictionary(group => group.Key, group => new Queue<SaveEntry>(group));
@@ -84,8 +91,7 @@ namespace Aetherin
                 string targetType = GetTypeId(target.GetType());
                 string gameObjectName = GetGameObjectName(target);
                 string targetId = GetTargetId(targetType, gameObjectName);
-                if (!TryGetEntry(entriesByTarget, targetId, out SaveEntry entry) &&
-                    !TryGetEntry(entriesByTarget, GetTargetId(targetType, string.Empty), out entry)) continue;
+                if (!TryGetEntry(entriesByTarget, targetId, out SaveEntry entry)) continue;
 
                 string paramsType = GetTypeId(target.Params.GetType());
                 if (entry.ParamsType != paramsType)
@@ -98,7 +104,7 @@ namespace Aetherin
 
                 try
                 {
-                    JsonUtility.FromJsonOverwrite(entry.Json, target.Params);
+                    JsonUtility.FromJsonOverwrite(entry.ParamsJson, target.Params);
                 }
                 catch (Exception exception)
                 {
@@ -107,7 +113,7 @@ namespace Aetherin
             }
         }
 
-        private string GetDefaultPath() => Path.Combine(Application.persistentDataPath, _saveDataName);
+        private string GetDefaultPath() => Path.Combine(Application.streamingAssetsPath, _saveDataName);
 
         private static string GetTypeId(Type type) => type.FullName ?? type.Name;
 
@@ -132,27 +138,49 @@ namespace Aetherin
             return false;
         }
 
-        [Serializable]
-        private sealed class SaveData
+        private static List<SaveEntry> ParseEntries(string json)
         {
-            public int Version = 2;
-            public List<SaveEntry> Entries = new();
+            JObject root = JObject.Parse(json);
+            if (root.Value<int?>("Version") != 3)
+                throw new InvalidDataException("Unsupported save data version.");
+
+            if (root["Entries"] is not JArray jsonEntries) return new List<SaveEntry>();
+
+            List<SaveEntry> entries = new();
+            foreach (JToken token in jsonEntries)
+            {
+                if (token is not JObject jsonEntry) continue;
+
+                if (jsonEntry["Params"] is not JObject paramsObject) continue;
+
+                entries.Add(new SaveEntry
+                {
+                    TargetType = jsonEntry.Value<string>("TargetType"),
+                    GameObjectName = jsonEntry.Value<string>("GameObjectName"),
+                    ParamsType = jsonEntry.Value<string>("ParamsType"),
+                    ParamsJson = paramsObject.ToString(Formatting.None)
+                });
+            }
+
+            return entries;
         }
 
-        [Serializable]
         private sealed class SaveEntry
         {
             public string TargetType;
             public string GameObjectName;
             public string ParamsType;
-            public string Json;
+            public string ParamsJson;
         }
 
         public Element CreateElement(LabelElement label)
         {
-            return UI.Row(
-                UI.Button("Save", () => Save()).SetFlexBasis(100f).SetBackgroundColor(Color.darkCyan * 0.5f),
-                UI.Button("Load", () => Load()).SetFlexBasis(100f).SetBackgroundColor(Color.mediumSlateBlue * 0.5f)
+            return UI.Column(
+                UI.TextAreaReadOnly(null, GetDefaultPath).SetMaxWidth(300f),
+                UI.Row(
+                    UI.Button("Save", () => Save()).SetFlexGrow(1f).SetFlexBasis(100f).SetBackgroundColor(Color.darkCyan * 0.5f),
+                    UI.Button("Load", () => Load()).SetFlexGrow(1f).SetFlexBasis(100f).SetBackgroundColor(Color.mediumSlateBlue * 0.5f)
+                )
             );
         }
     }

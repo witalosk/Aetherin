@@ -2,7 +2,7 @@
 
 namespace Aetherin
 {
-    public interface ISceneManager
+    public interface IApplicationManager
     {
         Vector2Int Resolution { get; }
     }

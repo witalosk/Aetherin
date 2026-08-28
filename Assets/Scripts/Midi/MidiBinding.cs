@@ -5,9 +5,6 @@ namespace Aetherin
 {
     /// <summary>
     /// MIDIコントローラのボタン1つへの割り当て
-    ///
-    /// 入力の読み出しとLEDの点灯をこの型経由で行えるようにして、
-    /// Inspector / RosettaUI のどちらからでもLearn (押したボタンを割り当てる) ができるようにする
     /// </summary>
     [Serializable]
     public class MidiBinding
@@ -19,16 +16,12 @@ namespace Aetherin
         [Range(Unassigned, 127)]
         private int _noteNumber = Unassigned;
 
-        /// <summary> Learnと入出力に使うMIDI操作面。<see cref="MidiSurface"/>が自身を登録する </summary>
         public static IMidiSurface Source { get; private set; }
 
-        private static MidiBinding _learningBinding;
-
-        /// <summary> 割り当てを行ったフレーム。その押下をタップとして扱わないために使う </summary>
         private int _assignedFrame = -1;
-
-        /// <summary> 直近にLEDを点灯させたノート番号。割り当て変更時に消灯するために保持する </summary>
         private int _litNoteNumber = Unassigned;
+        
+        private static MidiBinding _learningBinding;
 
         public MidiBinding()
         {
@@ -50,7 +43,7 @@ namespace Aetherin
         /// <summary> このBindingがLearn待ちか </summary>
         public bool IsLearning => _learningBinding == this;
 
-        #region 入力
+        #region Input
 
         public bool IsNoteOn => IsAssigned && Source != null && Source.IsNoteOn(_noteNumber);
 

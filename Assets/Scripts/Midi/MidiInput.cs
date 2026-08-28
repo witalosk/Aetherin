@@ -9,6 +9,13 @@ using UnityEngine.InputSystem.Controls;
 
 namespace Aetherin
 {
+    [Serializable]
+    public class MidiInputParams : IParams
+    {
+        [Tooltip("未受信のCCもモニタに表示する")]
+        public bool ShowAllCc = false;
+    }
+    
     /// <summary>
     /// Minisを介してMIDI入力を受け取る<see cref="IMidiInput"/>の実装
     /// 認識された全てのMidiDevice(=チャンネル)の入力を合成して保持する
@@ -35,13 +42,9 @@ namespace Aetherin
 
         private readonly List<MidiDevice> _devices = new();
 
-        /// <summary> CCの生値。-1は未受信 </summary>
         private readonly int[] _ccRawValues = new int[ValueCount];
-
         private readonly bool[] _noteStates = new bool[ValueCount];
         private readonly float[] _velocities = new float[ValueCount];
-
-        /// <summary> このフレームでノートオン/オフがあったか (Updateで確定させる) </summary>
         private readonly bool[] _noteOnThisFrame = new bool[ValueCount];
         private readonly bool[] _noteOffThisFrame = new bool[ValueCount];
 

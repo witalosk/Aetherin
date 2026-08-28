@@ -1,9 +1,20 @@
+using System;
 using RosettaUI;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace Aetherin
 {
+    [Serializable]
+    public class InputFocusParams : IParams
+    {
+        [Tooltip("Game Viewにフォーカスが無くてもキー入力をゲーム側で受け取る (Editorでのみ効果あり)")]
+        public bool AlwaysSendInputToGame = true;
+
+        [Tooltip("ウィンドウが非アクティブでも入力を受け取る (ビルド後にも効果あり)")]
+        public bool IgnoreApplicationFocus = true;
+    }
+    
     /// <summary>
     /// フォーカスに関係なく入力を受け取るようにInput Systemの設定を実行時に切り替える
     ///

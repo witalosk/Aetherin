@@ -6,6 +6,20 @@ using UnitySimpleContainer;
 
 namespace Aetherin
 {
+    [Serializable]
+    public class MidiSurfaceParams : IParams
+    {
+        [Tooltip("パッド1つのUIサイズ (px)")]
+        [Range(12f, 64f)]
+        public float PadSize = 26f;
+
+        [Tooltip("フェーダーUIの幅 (px)")]
+        public float FaderWidth = 260f;
+
+        [Tooltip("実機が接続されていてもUIから操作できるようにする")]
+        public bool AlwaysAllowEmulation = false;
+    }
+    
     /// <summary>
     /// APC mini mk2 の操作面を集約する<see cref="IMidiSurface"/>の実装
     /// LEDの状態を保持して画面に表示し、実機が未接続のときはUIのクリック/スライダーを入力として扱う
@@ -68,7 +82,7 @@ namespace Aetherin
             _input.OnCcChanged += HandleHardwareCcChanged;
         }
 
-        #region 入力 (実機 + エミュレート)
+        #region Input
 
         public bool IsNoteOn(int noteNumber)
             => _emulatedNotes[noteNumber] || (_input?.IsNoteOn(noteNumber) ?? false);
