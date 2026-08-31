@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using RosettaUI;
 using UnityEngine;
+using UnitySimpleContainer;
 
 namespace Aetherin
 {
@@ -16,6 +17,16 @@ namespace Aetherin
         public Color AccentColor2;
         public Color SubAccentColor1;
         public Color SubAccentColor2;
+
+        public void ApplyToMaterial(Material material)
+        {
+            material.SetColor("_BackgroundColor1", BackgroundColor1.linear);
+            material.SetColor("_BackgroundColor2", BackgroundColor2.linear);
+            material.SetColor("_AccentColor1", AccentColor1.linear);
+            material.SetColor("_AccentColor2", AccentColor2.linear);
+            material.SetColor("_SubAccentColor1", SubAccentColor1.linear);
+            material.SetColor("_SubAccentColor2", SubAccentColor2.linear);
+        }
     }
 
     [Serializable]
@@ -39,45 +50,61 @@ namespace Aetherin
         public List<ColorPaletteBinding> PaletteBindings = new();
     }
     
-    public class ColorPaletteManager : MonoBehaviour, IColorPaletteManager, ISaveAndUiTarget
+    /// <summary>
+    /// パレットの定義とMIDIパッドによる選択だけを担当するマネージャ
+    /// 選択結果はNext側のDeckStateに書き込むだけで、Current / Nextの二重管理はStageManagerに閉じている
+    /// </summary>
+    public class ColorPaletteManager : MonoBehaviour, ISaveAndUiTarget
     {
-        public ColorPalette CurrentPalette { get; private set; } = new();
         public string Category => UiCategory.Main;
-
-
         public IParams Params => _params;
-        
+
         [SerializeField] private ColorPaletteManagerParams _params = new();
+
+        private IDeckStateProvider _deckStateProvider;
+
+        private ColorPalette CurrentPalette => _deckStateProvider?.GetState(StageDeck.Current).Palette;
+        private ColorPalette NextPalette => _deckStateProvider?.NextState.Palette;
+
+        [Inject]
+        public void Construct(IDeckStateProvider deckStateProvider)
+        {
+            _deckStateProvider = deckStateProvider;
+        }
 
         private void Start()
         {
-            if (_params.PaletteBindings.Count > 0)
-            {
-                CurrentPalette = _params.PaletteBindings[0].Palette;
-            }
+            if (_deckStateProvider == null || _params.PaletteBindings.Count == 0) return;
+
+            _deckStateProvider.GetState(StageDeck.Current).Palette = _params.PaletteBindings[0].Palette;
+            _deckStateProvider.NextState.Palette = _params.PaletteBindings[0].Palette;
         }
 
         private void Update()
         {
+            if (_deckStateProvider == null) return;
+
             foreach (var pair in _params.PaletteBindings)
             {
-                pair.Binding.SetLed(CurrentPalette == pair.Palette ? pair.Palette.AccentColor1 * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f) : pair.Palette.AccentColor1);
+                // Nextに選択中のものを点滅、Currentに反映済みのものを点灯、それ以外は暗めに表示する
+                var ledColor = pair.Palette.AccentColor1 * 0.25f;
+                if (NextPalette == pair.Palette) ledColor = pair.Palette.AccentColor1 * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
+                else if (CurrentPalette == pair.Palette) ledColor = pair.Palette.AccentColor1;
+                pair.Binding.SetLed(ledColor);
+
                 if (pair.Binding.WasNoteOn)
                 {
-                    CurrentPalette = pair.Palette;
+                    _deckStateProvider.NextState.Palette = pair.Palette;
                 }
             }
         }
 
-        public void SetToMaterial(Material material)
+        public Element AdditiveUi()
         {
-            material.SetColor("_BackgroundColor1", CurrentPalette.BackgroundColor1.linear);
-            material.SetColor("_BackgroundColor2", CurrentPalette.BackgroundColor2.linear);
-            material.SetColor("_AccentColor1", CurrentPalette.AccentColor1.linear);
-            material.SetColor("_AccentColor2", CurrentPalette.AccentColor2.linear);
-            material.SetColor("_SubAccentColor1", CurrentPalette.SubAccentColor1.linear);
-            material.SetColor("_SubAccentColor2", CurrentPalette.SubAccentColor2.linear);
+            return UI.Column(
+                UI.Label(() => $"Current: {CurrentPalette?.Name ?? "-"}"),
+                UI.Label(() => $"Next: {NextPalette?.Name ?? "-"}")
+            );
         }
-        
     }
 }

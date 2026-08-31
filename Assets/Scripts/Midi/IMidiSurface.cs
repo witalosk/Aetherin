@@ -12,7 +12,6 @@ namespace Aetherin
     /// </summary>
     public interface IMidiSurface
     {
-        /// <summary> 実機が接続されているか </summary>
         bool IsHardwareConnected { get; }
 
         /// <summary> UI操作によるエミュレートが有効か (実機未接続時) </summary>
@@ -58,14 +57,8 @@ namespace Aetherin
         /// <param name="index">上からの位置 (0..7)</param>
         void SetSceneLed(int index, ApcMiniMk2.ButtonLedState state);
 
-        /// <summary>
-        /// 全てのLEDを消灯する
-        /// </summary>
         void ClearLeds();
 
-        /// <summary>
-        /// 現在設定されているパッドの色を取得する
-        /// </summary>
         Color GetPadColor(int noteNumber);
 
         #endregion

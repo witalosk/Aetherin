@@ -9,7 +9,6 @@ namespace Aetherin
     /// </summary>
     public static class ApcMiniMk2
     {
-        /// <summary> パッドグリッドの一辺のサイズ </summary>
         public const int GridSize = 8;
 
         /// <summary> 8x8パッド (Clip Launch) のノート番号。0が左下、右上が63 </summary>
@@ -30,7 +29,6 @@ namespace Aetherin
         /// <summary> フェーダー1-8のCC番号 (0x30-0x37) </summary>
         public const int FaderCcFirst = 0x30;
 
-        /// <summary> マスターフェーダーのCC番号 </summary>
         public const int MasterFaderCc = 0x38;
 
         /// <summary>
@@ -167,9 +165,6 @@ namespace Aetherin
             output.SendNoteOn(noteNumber, (int)state);
         }
 
-        /// <summary>
-        /// 全てのLEDを消灯する
-        /// </summary>
         public static void ClearAllLeds(this IMidiOutput output)
         {
             output.SetPadRgb(PadFirst, PadLast, Color.black);

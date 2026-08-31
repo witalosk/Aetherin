@@ -6,7 +6,6 @@ namespace Aetherin
     [Serializable]
     public class AudioInputParams : IParams
     {
-        [Tooltip("OSのデフォルト入力デバイスを使用する")]
         [HideInInspector]
         public bool UseDefaultDevice = true;
 
@@ -14,7 +13,7 @@ namespace Aetherin
         [HideInInspector]
         public string DeviceId = string.Empty;
 
-        [Tooltip("入力チャンネル番号（0始まり）")]
+        [Tooltip("0始まり")]
         [Range(0, 15)]
         public int Channel;
 

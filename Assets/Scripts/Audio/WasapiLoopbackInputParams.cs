@@ -10,7 +10,7 @@ namespace Aetherin
         [Tooltip("空文字の場合はWindowsのデフォルト出力デバイス")]
         public string DeviceId = string.Empty;
 
-        [Tooltip("FFTサイズ（2の累乗）")]
+        [Tooltip("2の累乗")]
         public int FftSize = 1024;
 
         [Tooltip("UIや利用側へ公開する波形のサンプル数")]

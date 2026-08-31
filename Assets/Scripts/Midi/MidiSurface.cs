@@ -9,11 +9,11 @@ namespace Aetherin
     [Serializable]
     public class MidiSurfaceParams : IParams
     {
-        [Tooltip("パッド1つのUIサイズ (px)")]
+        [Tooltip("px")]
         [Range(12f, 64f)]
         public float PadSize = 26f;
 
-        [Tooltip("フェーダーUIの幅 (px)")]
+        [Tooltip("px")]
         public float FaderWidth = 260f;
 
         [Tooltip("実機が接続されていてもUIから操作できるようにする")]
@@ -47,12 +47,10 @@ namespace Aetherin
         private IMidiInput _input;
         private IMidiOutput _output;
 
-        // LEDの状態
         private readonly Color[] _padColors = new Color[PadCount];
         private readonly ApcMiniMk2.ButtonLedState[] _trackLeds = new ApcMiniMk2.ButtonLedState[ButtonCount];
         private readonly ApcMiniMk2.ButtonLedState[] _sceneLeds = new ApcMiniMk2.ButtonLedState[ButtonCount];
 
-        // エミュレート入力の状態
         private readonly bool[] _emulatedNotes = new bool[ValueCount];
 
         // UIのクリックはフレームのどこで処理されるか決まっていないため、

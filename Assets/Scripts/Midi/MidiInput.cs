@@ -12,7 +12,6 @@ namespace Aetherin
     [Serializable]
     public class MidiInputParams : IParams
     {
-        [Tooltip("未受信のCCもモニタに表示する")]
         public bool ShowAllCc = false;
     }
     
@@ -65,16 +64,15 @@ namespace Aetherin
             }
         }
 
-        /// <summary> コールバックが溜めた受信イベント </summary>
         private readonly List<PendingEvent> _pendingEvents = new();
 
-        /// <summary> Update中に処理するイベント (処理中の再入で崩れないよう入れ替えて使う) </summary>
+        /// <summary> 処理中の再入で崩れないよう、_pendingEventsと入れ替えて使う </summary>
         private readonly List<PendingEvent> _dispatchingEvents = new();
 
         /// <summary> 一度でもCCを受信した番号 (昇順、モニタ表示用) </summary>
         private readonly List<int> _receivedCcNumbers = new();
 
-        // モニタ表示用の直近受信メッセージ
+        // モニタ表示用
         private string _lastMessageType;
         private int _lastMessageNumber = -1;
         private float _lastMessageValue;
@@ -230,7 +228,7 @@ namespace Aetherin
         private static readonly string[] NoteNames =
             { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
 
-        /// <summary> ノート番号を音名に変換する (Minisの表記に合わせて60をC4とする) </summary>
+        /// <summary> Minisの表記に合わせて60をC4とする </summary>
         private static string GetNoteName(int noteNumber)
             => NoteNames[noteNumber % 12] + (noteNumber / 12 - 1);
 

@@ -53,7 +53,6 @@ namespace Aetherin
         /// <summary> 小節内の位置 (0..1)。小節頭が0 </summary>
         float BarPhase { get; }
 
-        /// <summary> 通算の小節数 </summary>
         int BarCount { get; }
 
         /// <summary> このフレームで小節頭が来たか </summary>
@@ -77,17 +76,14 @@ namespace Aetherin
         void TapSub();
 
         /// <summary>
-        /// 停止する (再度タップするまで位相は進まない)
+        /// 再度タップするまで位相は進まない
         /// </summary>
         void Stop();
 
-        /// <summary>
-        /// BPMを直接指定する
-        /// </summary>
         void SetBpm(float bpm);
 
         /// <summary>
-        /// 拍子を直接指定する (推定を上書きする)
+        /// 推定を上書きする
         /// </summary>
         void SetBeatsPerBar(int beatsPerBar);
     }

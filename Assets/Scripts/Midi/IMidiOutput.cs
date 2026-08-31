@@ -9,7 +9,6 @@ namespace Aetherin
     /// </summary>
     public interface IMidiOutput
     {
-        /// <summary> 出力ポートが開いているか </summary>
         bool IsConnected { get; }
 
         /// <summary>
@@ -20,18 +19,12 @@ namespace Aetherin
         /// <param name="channel">MIDIチャンネル (0..15) APC mini mk2では点灯の挙動として解釈される</param>
         void SendNoteOn(int noteNumber, int velocity, int channel = 0);
 
-        /// <summary>
-        /// ノートオフを送信する
-        /// </summary>
         void SendNoteOff(int noteNumber, int channel = 0);
 
-        /// <summary>
-        /// コントロールチェンジを送信する
-        /// </summary>
         void SendCc(int number, int value, int channel = 0);
 
         /// <summary>
-        /// 任意のMIDIメッセージを送信する (SysExなど)
+        /// SysExなどの任意のメッセージを送信する
         /// </summary>
         void SendRaw(ReadOnlySpan<byte> message);
     }

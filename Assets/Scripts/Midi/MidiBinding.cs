@@ -40,7 +40,6 @@ namespace Aetherin
 
         public bool IsAssigned => _noteNumber >= 0 && _noteNumber <= 127;
 
-        /// <summary> このBindingがLearn待ちか </summary>
         public bool IsLearning => _learningBinding == this;
 
         #region Input
@@ -186,12 +185,10 @@ namespace Aetherin
 
         public override string ToString() => Describe();
 
-        /// <summary>
-        /// Learnと入出力に使うMIDI操作面を登録する
-        /// </summary>
         public static void SetSource(IMidiSurface surface)
         {
             StopLearn();
+            MidiCcBinding.StopLearn();
             Source = surface;
         }
     }

@@ -13,13 +13,13 @@ namespace Aetherin
         
         private Material _material;
         private IAudioFeatureProvider _audioFeatureProvider;
-        private IColorPaletteManager _colorPaletteManager;
+        private IDeckStateProvider _deckStateProvider;
 
         [Inject]
-        private void Construct(IAudioFeatureProvider audioFeatureProvider, IColorPaletteManager colorPaletteManager)
+        private void Construct(IAudioFeatureProvider audioFeatureProvider, IDeckStateProvider deckStateProvider)
         {
             _audioFeatureProvider = audioFeatureProvider;
-            _colorPaletteManager = colorPaletteManager;
+            _deckStateProvider = deckStateProvider;
         }
 
         protected override void Start()
@@ -33,7 +33,7 @@ namespace Aetherin
         {
             if (_material == null || OutputTexture == null) return;
             _material.SetTexture("_WaveTex", _audioFeatureProvider.WaveformTexture);
-            _colorPaletteManager.SetToMaterial(_material);
+            _deckStateProvider.GetState(Deck).Palette?.ApplyToMaterial(_material);
             Graphics.Blit(null, OutputTexture, _material);
         }
     }

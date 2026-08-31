@@ -7,10 +7,9 @@ namespace Aetherin
     [Serializable]
     public class BeatMidiBindingParams : IParams
     {
-        [Tooltip("主拍 (小節頭) を叩くMIDIボタン")]
+        [Tooltip("主拍 = 小節の頭")]
         public MidiBinding MainTapButton = new(0);
 
-        [Tooltip("サブ拍を叩くMIDIボタン")]
         public MidiBinding SubTapButton = new(1);
 
         public Color MainColor = new(0.35f, 0.85f, 1f);

@@ -39,10 +39,6 @@ namespace Aetherin
         /// <returns>一度も受信していない場合はfalse</returns>
         bool TryGetCcRaw(int number, out int rawValue);
 
-        /// <summary>
-        /// ノートが押されているか
-        /// </summary>
-        /// <param name="noteNumber">ノート番号 (0..127)</param>
         bool IsNoteOn(int noteNumber);
 
         /// <summary>
@@ -72,9 +68,6 @@ namespace Aetherin
         /// </summary>
         event Action<int, float> OnNoteOn;
 
-        /// <summary>
-        /// ノートオフ受信時に発火する (ノート番号)
-        /// </summary>
         event Action<int> OnNoteOff;
     }
 }

@@ -9,13 +9,12 @@ namespace Aetherin
     [Serializable]
     public class MidiOutputParams : IParams
     {
-        [Tooltip("接続するMIDI出力ポート名 (部分一致、大文字小文字は無視)")]
+        [Tooltip("部分一致、大文字小文字は無視")]
         public string PortNameFilter = "APC mini mk2";
 
-        [Tooltip("未接続時に再接続を試みる間隔 (秒)")]
+        [Tooltip("秒")]
         public float ReconnectInterval = 2f;
 
-        [Tooltip("停止時に全てのLEDを消灯する")]
         public bool ClearLedsOnDisable = true;
     }
     
@@ -258,7 +257,6 @@ namespace Aetherin
             {
                 for (int x = 0; x < ApcMiniMk2.GridSize; x++)
                 {
-                    // 横方向に色相、縦方向に明度が変わるパターン
                     var color = UnityEngine.Color.HSVToRGB(x / (float)ApcMiniMk2.GridSize, 1f, (y + 1) / (float)ApcMiniMk2.GridSize);
                     this.SetPadRgb(ApcMiniMk2.GetPadNote(x, y), color);
                 }
