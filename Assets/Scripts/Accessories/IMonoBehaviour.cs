@@ -5,5 +5,6 @@ namespace Aetherin
     public interface IMonoBehaviour
     {
         GameObject gameObject { get; }
+        Transform transform { get; }
     }
 }

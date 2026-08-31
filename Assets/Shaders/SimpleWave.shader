@@ -11,11 +11,12 @@
 
         Pass
         {
-            CGPROGRAM
+            HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
 
             #include "UnityCG.cginc"
+            #include "Assets/Scripts/Color/ColorPalette.hlsl"
 
             struct appdata
             {
@@ -39,13 +40,13 @@
 
             sampler2D _WaveTex;
 
-            fixed4 frag(v2f i) : SV_Target
+            float4 frag(v2f i) : SV_Target
             {
                 float wave = tex2D(_WaveTex, i.uv).r;
                 
-                return abs(wave * 0.5 + 0.5 - i.uv.y) < 0.01 ? fixed4(1, 1, 1, 1) : fixed4(0, 0, 0, 0);
+                return abs(wave * 0.5 + 0.5 - i.uv.y) < 0.01 ? _AccentColor1 : _BackgroundColor1;
             }
-            ENDCG
+            ENDHLSL
         }
     }
 }

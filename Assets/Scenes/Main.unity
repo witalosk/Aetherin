@@ -173,6 +173,72 @@ MonoBehaviour:
     FlashSharpness: 3
     IdleBrightness: 0.08
     BrightnessSteps: 12
+--- !u!1 &76371270
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 76371272}
+  - component: {fileID: 76371271}
+  m_Layer: 0
+  m_Name: ColorPalette
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &76371271
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76371270}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7526d5c0dbd441b786761af7e5e48f9a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.ColorPaletteManager
+  _params:
+    PaletteBindings:
+    - Palette:
+        Name: White
+        BackgroundColor1: {r: 0, g: 0, b: 0, a: 1}
+        BackgroundColor2: {r: 0.2423756, g: 0.2494551, b: 0.27044016, a: 1}
+        AccentColor1: {r: 1, g: 1, b: 1, a: 1}
+        AccentColor2: {r: 0.70440245, g: 0.70440245, b: 0.70440245, a: 1}
+        SubAccentColor1: {r: 0.6603774, g: 0.6603774, b: 0.6603774, a: 1}
+        SubAccentColor2: {r: 0.27672952, g: 0.27672952, b: 0.27672952, a: 1}
+      Binding:
+        _noteNumber: 0
+    - Palette:
+        Name: BlueOrange
+        BackgroundColor1: {r: 0.057330403, g: 0.12412676, b: 0.27764904, a: 1}
+        BackgroundColor2: {r: 0.08691244, g: 0.17218734, b: 0.3527987, a: 1}
+        AccentColor1: {r: 1, g: 0.57090193, b: 0, a: 1}
+        AccentColor2: {r: 0.9137255, g: 0.60784316, b: 0, a: 1}
+        SubAccentColor1: {r: 0.99215686, g: 1, b: 0, a: 1}
+        SubAccentColor2: {r: 0.99247843, g: 1, b: 0.04100001, a: 1}
+      Binding:
+        _noteNumber: 8
+--- !u!4 &76371272
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 76371270}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &159083588
 GameObject:
   m_ObjectHideFlags: 0
@@ -470,6 +536,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.ShaderStage
   _stageName: TestStage
+  _tex: {fileID: 0}
   _shader: {fileID: 4800000, guid: 87790690f7b442489498db6c9920fad3, type: 3}
 --- !u!4 &735597824
 Transform:
@@ -1185,3 +1252,4 @@ SceneRoots:
   - {fileID: 1535279250}
   - {fileID: 934651080}
   - {fileID: 754430060}
+  - {fileID: 76371272}

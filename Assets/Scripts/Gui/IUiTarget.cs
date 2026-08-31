@@ -9,7 +9,7 @@ namespace Aetherin
         /// </summary>
         string Category => UiCategory.Misc;
         bool FoldParams => false;
-        Element AdditiveUi(){ return null; }
+        Element AdditiveUi() { return null; }
     }
 
     /// <summary>

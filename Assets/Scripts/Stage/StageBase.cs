@@ -20,7 +20,7 @@ namespace Aetherin
 
         protected virtual void Start()
         {
-            OutputTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0, RenderTextureFormat.ARGB32);
+            OutputTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 1, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _tex = OutputTexture;
         }
 
