@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Aetherin
@@ -9,7 +11,10 @@ namespace Aetherin
     /// </summary>
     public class CameraStage : StageBase
     {
+        public IReadOnlyList<StageLayer> Layers => _layers;
+
         [SerializeField] private Camera _camera;
+        private StageLayer[] _layers = Array.Empty<StageLayer>();
 
         protected override void Start()
         {
@@ -23,6 +28,20 @@ namespace Aetherin
             }
 
             _camera.targetTexture = OutputTexture;
+            RefreshLayers();
+        }
+
+        /// <summary>子にあるレイヤーを、非アクティブなものも含めて描画順に収集する。</summary>
+        public void RefreshLayers()
+        {
+            _layers = GetComponentsInChildren<StageLayer>(true);
+            Array.Sort(_layers, (a, b) => a.Order.CompareTo(b.Order));
+        }
+
+        public void SetLayerVisible(int index, bool visible)
+        {
+            if (index < 0 || index >= _layers.Length) return;
+            _layers[index].Visible = visible;
         }
 
         protected override void OnDestroy()
