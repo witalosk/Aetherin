@@ -11,6 +11,10 @@ namespace Aetherin
     public class StageManagerParams : IParams
     {
         public MidiCcBinding CrossFader = new(ApcMiniMk2.MasterFaderCc);
+
+        [Tooltip("即時モード (フェーダーを介さずNextへの操作を最終出力へ即時反映) を切り替えるボタン")]
+        public MidiBinding ImmediateModeButton = new();
+
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -37,6 +41,9 @@ namespace Aetherin
 
         /// <summary> クロスフェード済みの最終出力 </summary>
         public RenderTexture OutputTexture { get; private set; }
+
+        /// <summary> フェーダーを介さず、Nextへの操作が即座に最終出力へ反映されるモード </summary>
+        public bool IsImmediateMode { get; private set; }
 
         /// <summary>
         /// クロスフェーダーの現在値 (0: Current / 1: Next)
@@ -120,14 +127,17 @@ namespace Aetherin
         {
             if (_crossFadeMaterial == null || OutputTexture == null || _currentStages == null) return;
 
-            if (CrossFade >= _params.SwapThreshold) SwapDecks();
+            if (_params.ImmediateModeButton.WasNoteOn) SetImmediateMode(!IsImmediateMode);
+            _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
+
+            if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
             var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
             var nextTexture = GetStageTexture(_nextStages, _params.NextStageIndex);
 
             _crossFadeMaterial.SetTexture(TexAId, currentTexture);
             _crossFadeMaterial.SetTexture(TexBId, nextTexture);
-            _crossFadeMaterial.SetFloat(FadeId, CrossFade);
+            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
             Graphics.Blit(null, OutputTexture, _crossFadeMaterial);
 
             if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, currentTexture);
@@ -137,10 +147,21 @@ namespace Aetherin
         /// <summary>
         /// 出力される絵は変えずに、以降のMIDI操作対象 (Next) を裏側のデッキに切り替える
         /// </summary>
+        /// <summary>
+        /// 解除時は表示中のNextをCurrentへ昇格させ、フェーダー操作へ自然に戻す
+        /// </summary>
+        public void SetImmediateMode(bool enabled)
+        {
+            if (IsImmediateMode == enabled) return;
+
+            IsImmediateMode = enabled;
+            if (!enabled) SwapDecks();
+        }
+
         private void SwapDecks()
         {
-            // フェーダーの向きを反転することで、スワップ直後のブレンド結果 (=今まで見えていたNext) を維持する
-            _isFaderFlipped = !_isFaderFlipped;
+            // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
+            _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
 
             (_currentStages, _nextStages) = (_nextStages, _currentStages);
             (_params.CurrentStageIndex, _params.NextStageIndex) = (_params.NextStageIndex, _params.CurrentStageIndex);
@@ -190,7 +211,11 @@ namespace Aetherin
                     () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
                     value => _params.NextStageIndex = value,
                     stageNames),
-                UI.SliderReadOnly("CrossFade (Current ← → Next)", () => CrossFade, 0f, 1f)
+                UI.SliderReadOnly("CrossFade (Current ← → Next)", () => CrossFade, 0f, 1f),
+                UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
+                UI.Label(() => IsImmediateMode
+                    ? "即時モード中: Nextが直接出力されています (フェーダー無効)"
+                    : _isFaderFlipped ? "フェーダー: 下に倒すとNextが出ます" : "フェーダー: 上に倒すとNextが出ます")
             );
         }
     }

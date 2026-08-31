@@ -87,9 +87,10 @@ namespace Aetherin
             foreach (var pair in _params.PaletteBindings)
             {
                 // Nextに選択中のものを点滅、Currentに反映済みのものを点灯、それ以外は暗めに表示する
-                var ledColor = pair.Palette.AccentColor1 * 0.25f;
-                if (NextPalette == pair.Palette) ledColor = pair.Palette.AccentColor1 * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
-                else if (CurrentPalette == pair.Palette) ledColor = pair.Palette.AccentColor1;
+                Color baseColor = Color.Lerp(pair.Palette.BackgroundColor1, pair.Palette.AccentColor1, Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
+                var ledColor = baseColor * 0.25f;
+                if (NextPalette == pair.Palette) ledColor = baseColor * (Mathf.Sin(Time.time * 40f) * 0.4f + 0.5f);
+                else if (CurrentPalette == pair.Palette) ledColor = baseColor;
                 pair.Binding.SetLed(ledColor);
 
                 if (pair.Binding.WasNoteOn)
