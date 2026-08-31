@@ -42,6 +42,8 @@ namespace Aetherin
     public class ColorPaletteManager : MonoBehaviour, IColorPaletteManager, ISaveAndUiTarget
     {
         public ColorPalette CurrentPalette { get; private set; } = new();
+        public string Category => UiCategory.Main;
+
 
         public IParams Params => _params;
         

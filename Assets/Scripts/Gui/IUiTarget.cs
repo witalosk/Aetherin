@@ -7,7 +7,7 @@ namespace Aetherin
         /// <summary>
         /// GUIのタブ分けに使うカテゴリ名
         /// </summary>
-        string Category => UiCategory.Misc;
+        string Category => UiCategory.Main;
         bool FoldParams => false;
         Element AdditiveUi() { return null; }
     }
@@ -17,10 +17,8 @@ namespace Aetherin
     /// </summary>
     public static class UiCategory
     {
-        public const string Audio = "Audio";
-        public const string Beat = "Beat";
-        public const string Midi = "Midi";
-        public const string System = "System";
+        public const string Main = "Main";
+        public const string Settings = "Settings";
         public const string Misc = "Misc";
     }
 }

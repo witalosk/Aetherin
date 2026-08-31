@@ -34,7 +34,7 @@ namespace Aetherin
         public long LatestKickSampleIndex => Interlocked.Read(ref _latestKickSampleIndex);
         public long LatestSnareClapSampleIndex => Interlocked.Read(ref _latestSnareSampleIndex);
         public IParams Params => _params;
-        public string Category => UiCategory.Audio;
+        public string Category => UiCategory.Settings;
 
         [SerializeField] private WasapiLoopbackInputParams _params = new();
 

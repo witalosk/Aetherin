@@ -16,7 +16,7 @@ namespace Aetherin
     {
         public Vector2Int Resolution => _params.Resolution;
         public IParams Params => _params;
-        public string Category => UiCategory.System;
+        public string Category => UiCategory.Settings;
         
         [SerializeField] private ApplicaitonManagerParams _params = new();
 

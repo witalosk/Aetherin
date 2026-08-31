@@ -35,7 +35,7 @@ namespace Aetherin
         public bool IsHardwareConnected => _input != null && _input.IsConnected;
         public bool IsEmulating => _params.AlwaysAllowEmulation || !IsHardwareConnected;
         public IParams Params => _params;
-        public string Category => UiCategory.Midi;
+        public string Category => UiCategory.Settings;
 
         public event Action<int, float> OnNoteOn;
         public event Action<int> OnNoteOff;

@@ -14,11 +14,9 @@ namespace Aetherin
         /// </summary>
         private static readonly string[] CategoryOrder =
         {
-            UiCategory.Audio,
-            UiCategory.Beat,
-            UiCategory.Midi,
-            UiCategory.System,
-            UiCategory.Misc,
+            UiCategory.Main,
+            UiCategory.Settings,
+            UiCategory.Misc
         };
 
         private RosettaUIRoot _root;

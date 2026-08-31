@@ -32,7 +32,7 @@ namespace Aetherin
         public float PitchBend { get; private set; }
         public float ChannelPressure { get; private set; }
         public IParams Params => _params;
-        public string Category => UiCategory.Midi;
+        public string Category => UiCategory.Settings;
 
         public event Action<int, float> OnCcChanged;
         public event Action<int, float> OnNoteOn;

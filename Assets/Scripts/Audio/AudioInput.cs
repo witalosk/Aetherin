@@ -34,7 +34,7 @@ namespace Aetherin
         public ReadOnlySpan<float> Spectrum => _spectrum;
         public ReadOnlySpan<float> LogSpectrum => _logSpectrum;
         public IParams Params => _params;
-        public string Category => UiCategory.Audio;
+        public string Category => UiCategory.Settings;
 
         [SerializeField] private AudioInputParams _params = new();
 
