@@ -10,6 +10,14 @@ namespace Aetherin
         FromSource,
     }
 
+    public enum RepeaterLayoutMode
+    {
+        Linear,
+        GridXY,
+        GridXZ,
+        GridXYZ,
+    }
+
     public interface IRepeaterCopyProvider
     {
         Matrix4x4 GetRepeaterCopyTransform(int copyIndex, float phaseOffset);
@@ -21,15 +29,22 @@ namespace Aetherin
     {
         public bool Enabled;
         public IntParameter Copies = new(3);
+        public RepeaterLayoutMode LayoutMode;
 
-        [Tooltip("コピーごとに累積適用されるトランスフォーム")]
+        [Tooltip("グリッドの1行あたりの個数")]
+        public IntParameter Columns = new(4);
+
+        [Tooltip("3Dグリッドの1層あたりの行数。XY / XZでは使用しません")]
+        public IntParameter Rows = new(4);
+
+        [Tooltip("Linearではコピーごとの移動量、GridではXYZ各軸のセル間隔")]
         public Vector3Parameter Position = new(new Vector3(1f, 0f, 0f));
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
         public Vector3Parameter Anchor = new();
         public RepeaterTransformMode TransformMode;
 
-        [Tooltip("有効時はAE RepeaterのようにPositionも回転しながら累積します。無効時は各コピーを自身の位置で回転します")]
+        [Tooltip("Linear時、有効ならAE RepeaterのようにPositionも回転しながら累積します")]
         public bool RotationAffectsPosition = true;
 
         [Tooltip("コピーごとにLFO / Beat / Barなどの位相をずらす量。1で1周期です")]
@@ -42,6 +57,8 @@ namespace Aetherin
         public void EnsureInitialized(int maxCopies)
         {
             Copies ??= new IntParameter(3);
+            Columns ??= new IntParameter(4);
+            Rows ??= new IntParameter(4);
             Position ??= new Vector3Parameter(new Vector3(1f, 0f, 0f));
             Rotation ??= new Vector3Parameter();
             Scale ??= new Vector3Parameter(Vector3.one);
@@ -56,6 +73,9 @@ namespace Aetherin
     public readonly struct EvaluatedRepeater
     {
         public readonly int Copies;
+        public readonly RepeaterLayoutMode LayoutMode;
+        public readonly int Columns;
+        public readonly int Rows;
         public readonly Vector3 Position;
         public readonly Vector3 Rotation;
         public readonly Vector3 Scale;
@@ -71,6 +91,9 @@ namespace Aetherin
 
         public EvaluatedRepeater(
             int copies,
+            RepeaterLayoutMode layoutMode,
+            int columns,
+            int rows,
             Vector3 position,
             Vector3 rotation,
             Vector3 scale,
@@ -83,6 +106,9 @@ namespace Aetherin
             ModulationContext context = default)
         {
             Copies = copies;
+            LayoutMode = layoutMode;
+            Columns = columns;
+            Rows = rows;
             Position = position;
             Rotation = rotation;
             Scale = scale;
@@ -102,10 +128,14 @@ namespace Aetherin
             int maxCopies)
         {
             if (parameters is not { Enabled: true })
-                return new EvaluatedRepeater(1, Vector3.zero, Vector3.zero, Vector3.one, Vector3.zero, 1f, 1f);
+                return new EvaluatedRepeater(1, RepeaterLayoutMode.Linear, 1, 1,
+                    Vector3.zero, Vector3.zero, Vector3.one, Vector3.zero, 1f, 1f);
 
             return new EvaluatedRepeater(
                 Mathf.Clamp(parameters.Copies?.Evaluate(context) ?? 1, 1, maxCopies),
+                parameters.LayoutMode,
+                Mathf.Max(1, parameters.Columns?.Evaluate(context) ?? 1),
+                Mathf.Max(1, parameters.Rows?.Evaluate(context) ?? 1),
                 parameters.Position?.Evaluate(context) ?? Vector3.zero,
                 parameters.Rotation?.Evaluate(context) ?? Vector3.zero,
                 parameters.Scale?.Evaluate(context) ?? Vector3.one,
@@ -161,6 +191,9 @@ namespace Aetherin
             unchecked
             {
                 int hash = Copies;
+                hash = hash * 31 + (int)LayoutMode;
+                hash = hash * 31 + Columns;
+                hash = hash * 31 + Rows;
                 hash = hash * 31 + Position.GetHashCode();
                 hash = hash * 31 + Rotation.GetHashCode();
                 hash = hash * 31 + Scale.GetHashCode();
@@ -215,7 +248,23 @@ namespace Aetherin
             {
                 repeater.GetTransform(copy, out Vector3 position, out Vector3 rotation,
                     out Vector3 scale, out Vector3 anchor);
-                if (repeater.TransformMode == RepeaterTransformMode.Cumulative &&
+                if (repeater.LayoutMode != RepeaterLayoutMode.Linear)
+                {
+                    Vector3 gridIndex = GetGridIndex(copy, repeater.LayoutMode,
+                        repeater.Columns, repeater.Rows);
+                    Vector3 gridPosition = Vector3.Scale(position, gridIndex);
+                    float index = copy;
+                    accumulated = Matrix4x4.Translate(gridPosition) *
+                                  Matrix4x4.Translate(anchor) *
+                                  Matrix4x4.TRS(Vector3.zero,
+                                      Quaternion.Euler(rotation * index),
+                                      new Vector3(
+                                          Mathf.Pow(scale.x, index),
+                                          Mathf.Pow(scale.y, index),
+                                          Mathf.Pow(scale.z, index))) *
+                                  Matrix4x4.Translate(-anchor);
+                }
+                else if (repeater.TransformMode == RepeaterTransformMode.Cumulative &&
                     repeater.RotationAffectsPosition)
                 {
                     Matrix4x4 step = Matrix4x4.Translate(anchor) *
@@ -274,6 +323,26 @@ namespace Aetherin
         private static void EnsureCapacity<T>(List<T> list, int capacity)
         {
             if (list.Capacity < capacity) list.Capacity = capacity;
+        }
+
+        private static Vector3 GetGridIndex(
+            int copy,
+            RepeaterLayoutMode layout,
+            int columns,
+            int rows)
+        {
+            columns = Mathf.Max(1, columns);
+            rows = Mathf.Max(1, rows);
+            int column = copy % columns;
+            int line = copy / columns;
+
+            return layout switch
+            {
+                RepeaterLayoutMode.GridXY => new Vector3(column, line, 0f),
+                RepeaterLayoutMode.GridXZ => new Vector3(column, 0f, line),
+                RepeaterLayoutMode.GridXYZ => new Vector3(column, line % rows, line / rows),
+                _ => new Vector3(copy, 0f, 0f),
+            };
         }
     }
 }

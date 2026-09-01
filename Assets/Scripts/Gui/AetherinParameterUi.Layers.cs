@@ -121,15 +121,24 @@ namespace Aetherin
             return UI.Column(
                 UI.Toggle(label ?? (LabelElement)"Repeater", () => repeater.Enabled, value => repeater.Enabled = value),
                 UI.DynamicElementIf(() => repeater.Enabled, () => UI.Column(
-                    Param("Copies", repeater.Copies),
-                    Param("Position", repeater.Position),
+                     Param("Copies", repeater.Copies),
+                     UI.Field("Layout", () => repeater.LayoutMode, value => repeater.LayoutMode = value),
+                     UI.DynamicElementIf(
+                         () => repeater.LayoutMode != RepeaterLayoutMode.Linear,
+                         () => UI.Column(
+                             Param("Columns", repeater.Columns),
+                             UI.DynamicElementIf(
+                                 () => repeater.LayoutMode == RepeaterLayoutMode.GridXYZ,
+                                 () => Param("Rows", repeater.Rows)))),
+                     Param("Position", repeater.Position),
                     Param("Rotation", repeater.Rotation),
                     Param("Scale", repeater.Scale),
                     Param("Anchor", repeater.Anchor),
                     UI.Field("Transform Mode", () => repeater.TransformMode,
                         value => repeater.TransformMode = value),
-                    UI.DynamicElementIf(
-                        () => repeater.TransformMode == RepeaterTransformMode.Cumulative,
+                     UI.DynamicElementIf(
+                         () => repeater.LayoutMode == RepeaterLayoutMode.Linear &&
+                               repeater.TransformMode == RepeaterTransformMode.Cumulative,
                         () => UI.Toggle("Rotation Affects Position", () => repeater.RotationAffectsPosition,
                             value => repeater.RotationAffectsPosition = value)),
                     Param("Animation Phase Offset", repeater.AnimationPhaseOffset),
