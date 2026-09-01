@@ -15,6 +15,7 @@ namespace Aetherin
         ElapsedTime,
         BeatAccumulator,
         BarAccumulator,
+        InputVolume,
     }
 
     public enum FloatModulationOperation
@@ -149,6 +150,7 @@ namespace Aetherin
                 FloatModulationSource.ElapsedTime => (float)context.Time + context.AnimationPhaseOffset,
                 FloatModulationSource.Kick => context.Audio?.Kick ?? 0f,
                 FloatModulationSource.SnareClap => context.Audio?.SnareClap ?? 0f,
+                FloatModulationSource.InputVolume => context.Audio?.InputVolume ?? 0f,
                 FloatModulationSource.MidiCc => Midi?.GetValue() ?? 0f,
                 _ => 0f,
             };
