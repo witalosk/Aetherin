@@ -168,8 +168,19 @@ MonoBehaviour:
       _noteNumber: 0
     SubTapButton:
       _noteNumber: 1
+    BeatToggleButtons:
+    - _noteNumber: 2
+    - _noteNumber: 3
+    - _noteNumber: 4
+    - _noteNumber: 5
+    HalfBpmButton:
+      _noteNumber: 6
+    DoubleBpmButton:
+      _noteNumber: 7
     MainColor: {r: 0.35, g: 0.85, b: 1, a: 1}
     SubColor: {r: 1, g: 0.65, b: 0.25, a: 1}
+    BeatToggleColor: {r: 0.75, g: 0.3, b: 1, a: 1}
+    BpmButtonColor: {r: 0.25, g: 1, b: 0.55, a: 1}
     FlashSharpness: 3
     IdleBrightness: 0.08
     BrightnessSteps: 12
@@ -526,8 +537,8 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 735597824}
   - {fileID: 860254698}
+  - {fileID: 735597824}
   m_Father: {fileID: 754430060}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
@@ -542,6 +553,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -592,7 +604,7 @@ Camera:
   far clip plane: 1000
   field of view: 60
   orthographic: 1
-  orthographic size: 7
+  orthographic size: 5.26
   m_Depth: -1
   m_CullingMask:
     serializedVersion: 2
@@ -667,6 +679,22 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 44a391b5a1c1fb44394283b61b518a53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.OrthographicCameraNavigator
+  _minOrthographicSize: 0.1
+  _maxOrthographicSize: 100
+  _zoomSensitivity: 1
+  _panSensitivity: 1
 --- !u!1 &735597822
 GameObject:
   m_ObjectHideFlags: 0
@@ -765,8 +793,8 @@ MonoBehaviour:
   _nextPreviewRenderer: {fileID: 1900000012}
   _crossFadeShader: {fileID: 4800000, guid: ee6c2be7cf2b415d8644748c6d2455bc, type: 3}
   _stages:
-  - {fileID: 735597823}
   - {fileID: 860254699}
+  - {fileID: 735597823}
   _params:
     CrossFader:
       _ccNumber: 56
@@ -1424,6 +1452,14 @@ MonoBehaviour:
           BeatPulseSharpness: 1.16
           Midi:
             _ccNumber: 0
+          AccumulatorInitialValue: 0
+          AccumulatorReset: 0
+          AccumulatorResetAfterEvents: 4
+          AccumulatorLimit: 0
+          AccumulatorMin: 0
+          AccumulatorMax: 1
+          AccumulatorTransition: 0
+          AccumulatorTransitionDuration: 0.15
       YModulation:
         Modulators: []
     Points:
@@ -1435,14 +1471,64 @@ MonoBehaviour:
       Modulation:
         Modulators: []
     EllipseSegments: 64
-    FillColor: {r: 1, g: 1, b: 1, a: 1}
+    FillColor:
+      Mode: 0
+      Color: 2
+      GradientColorA: 2
+      GradientColorB: 3
+      RandomSeed: 0
+      GradientAngle:
+        BaseValue: 0
+        Modulation:
+          Modulators: []
+      GradientOffset:
+        BaseValue: 0
+        Modulation:
+          Modulators: []
+      GradientScale:
+        BaseValue: 2
+        Modulation:
+          Modulators: []
+      Intensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      Alpha:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
     FillEnabled: 0
     StrokeEnabled: 1
     StrokeWidth:
       BaseValue: 0.05
       Modulation:
         Modulators: []
-    StrokeColor: {r: 1, g: 1, b: 1, a: 1}
+    StrokeColor:
+      Mode: 0
+      Color: 3
+      GradientColorA: 2
+      GradientColorB: 3
+      RandomSeed: 0
+      GradientAngle:
+        BaseValue: 0
+        Modulation:
+          Modulators: []
+      GradientOffset:
+        BaseValue: 0
+        Modulation:
+          Modulators: []
+      GradientScale:
+        BaseValue: 2
+        Modulation:
+          Modulators: []
+      Intensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      Alpha:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
     StrokeTrim:
       Enabled: 0
       Start:
@@ -1498,6 +1584,11 @@ MonoBehaviour:
         YModulation:
           Modulators: []
         ZModulation:
+          Modulators: []
+      RotationAffectsPosition: 1
+      AnimationPhaseOffset:
+        BaseValue: 0
+        Modulation:
           Modulators: []
       StartOpacity:
         BaseValue: 1
@@ -1629,7 +1720,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!4 &1444410330
 Transform:
   m_ObjectHideFlags: 0
@@ -1717,6 +1808,7 @@ MonoBehaviour:
     EstimateBeatsPerBar: 1
     BeatsPerBar: 4
     MaxBeatsPerBar: 8
+    EnabledBeats: 01010101
     TapTimeout: 2
     TapHistoryCount: 6
     MinBpm: 40
@@ -1869,7 +1961,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: -3.49, y: 0, z: 0}
-  m_LocalScale: {x: 4.8, y: 2.7, z: 1}
+  m_LocalScale: {x: 6.4, y: 3.6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1444410330}
@@ -1891,7 +1983,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!23 &1900000002
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2048,7 +2140,7 @@ Transform:
   m_GameObject: {fileID: 1900000011}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 2.7, y: 2, z: 0}
+  m_LocalPosition: {x: 3.49, y: 0, z: 0}
   m_LocalScale: {x: 6.4, y: 3.6, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2102,6 +2194,133 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2138134442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2015451730
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2015451733}
+  - component: {fileID: 2015451732}
+  - component: {fileID: 2015451731}
+  m_Layer: 0
+  m_Name: Directional Light
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2015451731
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2015451730}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
+--- !u!108 &2015451732
+Light:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2015451730}
+  m_Enabled: 1
+  serializedVersion: 12
+  m_Type: 1
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Intensity: 1
+  m_Range: 10
+  m_SpotAngle: 30
+  m_InnerSpotAngle: 21.80208
+  m_CookieSize2D: {x: 0.5, y: 0.5}
+  m_Shadows:
+    m_Type: 0
+    m_Resolution: -1
+    m_CustomResolution: -1
+    m_Strength: 1
+    m_Bias: 0.05
+    m_NormalBias: 0.4
+    m_NearPlane: 0.2
+    m_CullingMatrixOverride:
+      e00: 1
+      e01: 0
+      e02: 0
+      e03: 0
+      e10: 0
+      e11: 1
+      e12: 0
+      e13: 0
+      e20: 0
+      e21: 0
+      e22: 1
+      e23: 0
+      e30: 0
+      e31: 0
+      e32: 0
+      e33: 1
+    m_UseCullingMatrixOverride: 0
+  m_Cookie: {fileID: 0}
+  m_DrawHalo: 0
+  m_Flare: {fileID: 0}
+  m_RenderMode: 0
+  m_CullingMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  m_RenderingLayerMask: 1
+  m_Lightmapping: 4
+  m_LightShadowCasterMode: 0
+  m_AreaSize: {x: 1, y: 1}
+  m_BounceIntensity: 1
+  m_ColorTemperature: 6570
+  m_UseColorTemperature: 0
+  m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
+  m_UseBoundingSphereOverride: 0
+  m_UseViewFrustumForShadowCasterCull: 1
+  m_ForceVisible: 0
+  m_ShadowRadius: 0
+  m_ShadowAngle: 0
+  m_LightUnit: 1
+  m_LuxAtDistance: 1
+  m_EnableSpotReflector: 1
+--- !u!4 &2015451733
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2015451730}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0.40821788, y: 0.23456976, z: -0.10938167, w: 0.8754261}
+  m_LocalPosition: {x: -1.23884, y: 0, z: -1.78705}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 50, y: 30, z: 0}
 --- !u!1 &2134490627
 GameObject:
   m_ObjectHideFlags: 0
@@ -2191,6 +2410,7 @@ SceneRoots:
   - {fileID: 159083590}
   - {fileID: 330585546}
   - {fileID: 832575519}
+  - {fileID: 2015451733}
   - {fileID: 2138134442}
   - {fileID: 1535279250}
   - {fileID: 76371272}
