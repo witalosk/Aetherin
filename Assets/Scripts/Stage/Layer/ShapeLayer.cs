@@ -26,6 +26,24 @@ namespace Aetherin
     }
 
     [Serializable]
+    public class RepeaterParams
+    {
+        public bool Enabled;
+
+        public IntParameter Copies = new(3);
+
+        [Tooltip("コピーごとに累積適用されるトランスフォーム")]
+        public Vector3Parameter Position = new(new Vector3(1f, 0f, 0f));
+        public Vector3Parameter Rotation = new();
+        public Vector3Parameter Scale = new(Vector3.one);
+        public Vector3Parameter Anchor = new();
+
+        [Tooltip("最初のコピーの不透明度。最後のコピーに向かってEndOpacityへ補間されます")]
+        public FloatParameter StartOpacity = new(1f);
+        public FloatParameter EndOpacity = new(1f);
+    }
+
+    [Serializable]
     public class ShapeLayerParams : StageLayerParams
     {
         public ShapePrimitive Shape = ShapePrimitive.Rectangle;
@@ -42,8 +60,7 @@ namespace Aetherin
         [Min(3)]
         public int EllipseSegments = 64;
 
-        [ColorUsage(true, true)]
-        public Color FillColor = Color.white;
+        public PaletteColorParameter FillColor = new();
 
         public bool FillEnabled = true;
         public bool StrokeEnabled;
@@ -51,10 +68,10 @@ namespace Aetherin
         [Min(0f)]
         public FloatParameter StrokeWidth = new(0.05f);
 
-        [ColorUsage(true, true)]
-        public Color StrokeColor = Color.white;
+        public PaletteColorParameter StrokeColor = new() { Color = PaletteColorSource.AccentColor2 };
         public StrokeTrimParams StrokeTrim = new();
 
+        public RepeaterParams Repeater = new();
     }
 
     /// <summary>
@@ -66,7 +83,12 @@ namespace Aetherin
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class ShapeLayer : StageLayer
     {
+        private const int MaxRepeaterCopies = 128;
+
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+        private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
+        private static readonly int GradientParamsId = Shader.PropertyToID("_GradientParams");
+        private static readonly int UseGradientId = Shader.PropertyToID("_UseGradient");
         private static readonly int ShapeMatrixId = Shader.PropertyToID("_ShapeMatrix");
 
         [SerializeField] private ShapeLayerParams _params = new();
@@ -90,8 +112,18 @@ namespace Aetherin
         private float _evaluatedTrimStart;
         private float _evaluatedTrimEnd = 1f;
         private float _evaluatedTrimOffset;
+        private int _evaluatedRepeatCopies = 1;
+        private Vector3 _evaluatedRepeatPosition;
+        private Vector3 _evaluatedRepeatRotation;
+        private Vector3 _evaluatedRepeatScale = Vector3.one;
+        private Vector3 _evaluatedRepeatAnchor;
+        private float _evaluatedRepeatStartOpacity = 1f;
+        private float _evaluatedRepeatEndOpacity = 1f;
+        private EvaluatedPaletteColor _evaluatedFillColor;
+        private EvaluatedPaletteColor _evaluatedStrokeColor;
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
+        private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
         private Bounds _geometryBounds;
 
@@ -100,6 +132,7 @@ namespace Aetherin
         private readonly List<Vector2> _strokePath = new();
         private readonly List<float> _cumulativeLengths = new();
         private readonly List<Vector3> _vertices = new();
+        private readonly List<Color> _vertexColors = new();
         private readonly List<int> _fillTriangles = new();
         private readonly List<int> _strokeTriangles = new();
 
@@ -117,10 +150,24 @@ namespace Aetherin
         }
 
         [Inject]
-        private void Construct(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
+        private void Construct(
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager,
+            IDeckStateProvider deckStateProvider)
+        {
+            Initialize(audioFeatureProvider, beatManager, deckStateProvider);
+        }
+
+        /// <summary>実行時に追加されたレイヤーへ依存関係を設定する。</summary>
+        public void Initialize(
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager,
+            IDeckStateProvider deckStateProvider)
         {
             _audioFeatureProvider = audioFeatureProvider;
             _beatManager = beatManager;
+            _deckStateProvider = deckStateProvider;
+            _stage = GetComponentInParent<StageBase>();
         }
 
         private void Awake()
@@ -170,6 +217,19 @@ namespace Aetherin
             _params.StrokeTrim.Start ??= new FloatParameter(0f);
             _params.StrokeTrim.End ??= new FloatParameter(1f);
             _params.StrokeTrim.Offset ??= new FloatParameter(0f);
+            _params.FillColor ??= new PaletteColorParameter();
+            _params.FillColor.EnsureInitialized();
+            _params.StrokeColor ??= new PaletteColorParameter { Color = PaletteColorSource.AccentColor2 };
+            _params.StrokeColor.EnsureInitialized();
+            _params.Repeater ??= new RepeaterParams();
+            _params.Repeater.Copies ??= new IntParameter(3);
+            _params.Repeater.Position ??= new Vector3Parameter(new Vector3(1f, 0f, 0f));
+            _params.Repeater.Rotation ??= new Vector3Parameter();
+            _params.Repeater.Scale ??= new Vector3Parameter(Vector3.one);
+            _params.Repeater.Anchor ??= new Vector3Parameter();
+            _params.Repeater.StartOpacity ??= new FloatParameter(1f);
+            _params.Repeater.EndOpacity ??= new FloatParameter(1f);
+            _params.Repeater.Copies.BaseValue = Mathf.Clamp(_params.Repeater.Copies.BaseValue, 1, MaxRepeaterCopies);
             _params.Points.BaseValue = Mathf.Max(3, _params.Points.BaseValue);
             _params.EllipseSegments = Mathf.Max(3, _params.EllipseSegments);
             _params.Size.BaseValue.x = Mathf.Max(0f, _params.Size.BaseValue.x);
@@ -198,6 +258,8 @@ namespace Aetherin
                 {
                     name = $"{name} Shape Mesh",
                     hideFlags = HideFlags.DontSave,
+                    // Repeaterで頂点数が65535を超えることがある
+                    indexFormat = IndexFormat.UInt32,
                 };
                 _mesh.MarkDynamic();
                 _meshFilter.sharedMesh = _mesh;
@@ -262,9 +324,11 @@ namespace Aetherin
             }
 
             BuildStroke(_strokePath, strokeClosed, fillVertexCount);
+            ApplyRepeater();
 
             _mesh.Clear();
             _mesh.SetVertices(_vertices);
+            _mesh.SetColors(_vertexColors);
             _mesh.subMeshCount = 2;
             _mesh.SetTriangles(_fillTriangles, 0, false);
             _mesh.SetTriangles(_strokeTriangles, 1, false);
@@ -397,6 +461,64 @@ namespace Aetherin
             }
         }
 
+        /// <summary>
+        /// 構築済みの1コピー分の頂点/三角形を、トランスフォームを累積適用しながら複製する
+        /// コピーごとの不透明度は頂点カラーのアルファでシェーダへ渡す
+        /// (Repeaterは_ShapeMatrixより前のメッシュ空間で適用されるため、レイヤーのTransformとは独立して累積する)
+        /// </summary>
+        private void ApplyRepeater()
+        {
+            int baseVertexCount = _vertices.Count;
+            int baseFillCount = _fillTriangles.Count;
+            int baseStrokeCount = _strokeTriangles.Count;
+            int copies = _evaluatedRepeatCopies;
+
+            _vertexColors.Clear();
+            EnsureCapacity(_vertexColors, baseVertexCount * copies);
+            EnsureCapacity(_vertices, baseVertexCount * copies);
+            EnsureCapacity(_fillTriangles, baseFillCount * copies);
+            EnsureCapacity(_strokeTriangles, baseStrokeCount * copies);
+
+            var color = Color.white;
+            color.a = GetRepeatOpacity(0, copies);
+            for (int v = 0; v < baseVertexCount; v++) _vertexColors.Add(color);
+
+            if (copies <= 1) return;
+
+            Matrix4x4 step = Matrix4x4.Translate(_evaluatedRepeatAnchor) *
+                             Matrix4x4.TRS(
+                                 _evaluatedRepeatPosition,
+                                 Quaternion.Euler(_evaluatedRepeatRotation),
+                                 _evaluatedRepeatScale) *
+                             Matrix4x4.Translate(-_evaluatedRepeatAnchor);
+            Matrix4x4 accumulated = Matrix4x4.identity;
+
+            for (int i = 1; i < copies; i++)
+            {
+                accumulated = step * accumulated;
+                color.a = GetRepeatOpacity(i, copies);
+                int indexOffset = baseVertexCount * i;
+
+                for (int v = 0; v < baseVertexCount; v++)
+                {
+                    _vertices.Add(accumulated.MultiplyPoint3x4(_vertices[v]));
+                    _vertexColors.Add(color);
+                }
+
+                for (int t = 0; t < baseFillCount; t++) _fillTriangles.Add(_fillTriangles[t] + indexOffset);
+                for (int t = 0; t < baseStrokeCount; t++) _strokeTriangles.Add(_strokeTriangles[t] + indexOffset);
+            }
+        }
+
+        private float GetRepeatOpacity(int index, int copies)
+        {
+            if (_params.Repeater is not { Enabled: true }) return 1f;
+            if (copies <= 1) return Mathf.Clamp01(_evaluatedRepeatStartOpacity);
+
+            float t = index / (float)(copies - 1);
+            return Mathf.Clamp01(Mathf.LerpUnclamped(_evaluatedRepeatStartOpacity, _evaluatedRepeatEndOpacity, t));
+        }
+
         private static void EnsureCapacity<T>(List<T> list, int capacity)
         {
             if (list.Capacity < capacity) list.Capacity = capacity;
@@ -473,20 +595,33 @@ namespace Aetherin
         private static void Encapsulate(Vector3 point, ref Vector3 min, ref Vector3 max)
         {
             min = Vector3.Min(min, point);
-            max = Vector3.Max(max, point);
+            max = Vector3.Max(max, point); 
         }
 
         private void ApplyAppearance()
         {
             if (_fillMaterial == null || _strokeMaterial == null) return;
 
-            Color fillColor = _params.FillColor;
-            fillColor.a *= _evaluatedOpacity;
-            _fillMaterial.SetColor(BaseColorId, fillColor);
+            ApplyColor(_fillMaterial, _evaluatedFillColor);
+            ApplyColor(_strokeMaterial, _evaluatedStrokeColor);
+        }
 
-            Color strokeColor = _params.StrokeColor;
-            strokeColor.a *= _evaluatedOpacity;
-            _strokeMaterial.SetColor(BaseColorId, strokeColor);
+        private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)
+        {
+            Color colorA = evaluated.ColorA;
+            colorA.a *= _evaluatedOpacity;
+            material.SetColor(BaseColorId, colorA);
+            material.SetFloat(UseGradientId, evaluated.IsGradient ? 1f : 0f);
+
+            if (!evaluated.IsGradient) return;
+
+            Color colorB = evaluated.ColorB;
+            colorB.a *= _evaluatedOpacity;
+            material.SetColor(ColorBId, colorB);
+
+            float radians = evaluated.AngleDegrees * Mathf.Deg2Rad;
+            material.SetVector(GradientParamsId,
+                new Vector4(Mathf.Cos(radians), Mathf.Sin(radians), evaluated.Offset, evaluated.Scale));
         }
 
         private void EvaluateParameters(bool useRuntimeSources = true)
@@ -511,6 +646,29 @@ namespace Aetherin
             _evaluatedTrimOffset = _params.StrokeTrim?.Offset?.Evaluate(context) ?? 0f;
             _evaluatedStrokeWidth = Mathf.Max(0f, _params.StrokeWidth?.Evaluate(context) ?? 0f);
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
+
+            var palette = Application.isPlaying && _deckStateProvider != null
+                ? _deckStateProvider.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
+                : null;
+            _evaluatedFillColor = EvaluatedPaletteColor.Evaluate(_params.FillColor, palette, context);
+            _evaluatedStrokeColor = EvaluatedPaletteColor.Evaluate(_params.StrokeColor, palette, context);
+
+            if (_params.Repeater is { Enabled: true } repeater)
+            {
+                _evaluatedRepeatCopies = Mathf.Clamp(repeater.Copies?.Evaluate(context) ?? 1, 1, MaxRepeaterCopies);
+                _evaluatedRepeatPosition = repeater.Position?.Evaluate(context) ?? Vector3.zero;
+                _evaluatedRepeatRotation = repeater.Rotation?.Evaluate(context) ?? Vector3.zero;
+                _evaluatedRepeatScale = repeater.Scale?.Evaluate(context) ?? Vector3.one;
+                _evaluatedRepeatAnchor = repeater.Anchor?.Evaluate(context) ?? Vector3.zero;
+                _evaluatedRepeatStartOpacity = repeater.StartOpacity?.Evaluate(context) ?? 1f;
+                _evaluatedRepeatEndOpacity = repeater.EndOpacity?.Evaluate(context) ?? 1f;
+            }
+            else
+            {
+                _evaluatedRepeatCopies = 1;
+                _evaluatedRepeatStartOpacity = 1f;
+                _evaluatedRepeatEndOpacity = 1f;
+            }
         }
 
         private int CalculateGeometryHash()
@@ -530,6 +688,13 @@ namespace Aetherin
                 hash = hash * 31 + _evaluatedTrimStart.GetHashCode();
                 hash = hash * 31 + _evaluatedTrimEnd.GetHashCode();
                 hash = hash * 31 + _evaluatedTrimOffset.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatCopies;
+                hash = hash * 31 + _evaluatedRepeatPosition.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatRotation.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatScale.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatAnchor.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatStartOpacity.GetHashCode();
+                hash = hash * 31 + _evaluatedRepeatEndOpacity.GetHashCode();
                 return hash;
             }
         }

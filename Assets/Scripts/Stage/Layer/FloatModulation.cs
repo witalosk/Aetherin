@@ -25,7 +25,7 @@ namespace Aetherin
     public enum LfoWaveform
     {
         Sine,
-        Triangle,
+        Triangle, 
         Saw,
         Square,
     }

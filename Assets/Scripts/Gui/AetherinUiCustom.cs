@@ -17,6 +17,7 @@ namespace Aetherin
         {
             UICustom.RegisterElementCreationFunc<MidiBinding>(CreateMidiBindingElement);
             UICustom.RegisterElementCreationFunc<MidiCcBinding>(CreateMidiCcBindingElement);
+            AetherinParameterUi.Register();
         }
 
         private static Element CreateMidiBindingElement(LabelElement label, IBinder<MidiBinding> binder)

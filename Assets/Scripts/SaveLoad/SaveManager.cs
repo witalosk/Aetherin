@@ -32,7 +32,7 @@ namespace Aetherin
             path ??= GetDefaultPath();
             JObject saveData = new()
             {
-                ["Version"] = 3
+                ["Version"] = 4
             };
             JArray entries = new();
             saveData["Entries"] = entries;
@@ -52,6 +52,26 @@ namespace Aetherin
                     ["ParamsType"] = GetTypeId(target.Params.GetType()),
                     ["Params"] = JObject.Parse(JsonUtility.ToJson(target.Params))
                 });
+
+                if (target is not ICustomSaveTarget customTarget) continue;
+
+                try
+                {
+                    string customJson = customTarget.CaptureSaveData();
+                    if (string.IsNullOrEmpty(customJson)) continue;
+
+                    entries.Add(new JObject
+                    {
+                        ["TargetType"] = $"{GetTypeId(target.GetType())}#Custom",
+                        ["GameObjectName"] = GetGameObjectName(target),
+                        ["ParamsType"] = $"Custom:{customTarget.SaveId}",
+                        ["Params"] = JObject.Parse(customJson)
+                    });
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"Failed to save custom data for '{target.GetType()}'.\n{exception}", this);
+                }
             }
 
             string directory = Path.GetDirectoryName(Path.GetFullPath(path));
@@ -111,6 +131,30 @@ namespace Aetherin
                     Debug.LogError($"Failed to load parameters for '{targetType}'.\n{exception}", this);
                 }
             }
+
+            foreach (ISaveTarget target in _saveTargets)
+            {
+                if (target is not ICustomSaveTarget customTarget) continue;
+
+                string targetType = $"{GetTypeId(target.GetType())}#Custom";
+                string targetId = GetTargetId(targetType, GetGameObjectName(target));
+                if (!TryGetEntry(entriesByTarget, targetId, out SaveEntry entry)) continue;
+
+                if (entry.ParamsType != $"Custom:{customTarget.SaveId}")
+                {
+                    Debug.LogWarning($"Saved custom data type '{entry.ParamsType}' does not match '{customTarget.SaveId}'.", this);
+                    continue;
+                }
+
+                try
+                {
+                    customTarget.RestoreSaveData(entry.ParamsJson);
+                }
+                catch (Exception exception)
+                {
+                    Debug.LogError($"Failed to load custom data for '{targetType}'.\n{exception}", this);
+                }
+            }
         }
 
         private string GetDefaultPath() => Path.Combine(Application.streamingAssetsPath, _saveDataName);
@@ -141,7 +185,8 @@ namespace Aetherin
         private static List<SaveEntry> ParseEntries(string json)
         {
             JObject root = JObject.Parse(json);
-            if (root.Value<int?>("Version") != 3)
+            int? version = root.Value<int?>("Version");
+            if (version is not (3 or 4))
                 throw new InvalidDataException("Unsupported save data version.");
 
             if (root["Entries"] is not JArray jsonEntries) return new List<SaveEntry>();

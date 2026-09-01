@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
+using UnitySimpleContainer;
 
 namespace Aetherin
 {
@@ -11,10 +13,20 @@ namespace Aetherin
     /// </summary>
     public class CameraStage : StageBase
     {
-        public IReadOnlyList<StageLayer> Layers => _layers;
+        public override IReadOnlyList<StageLayer> Layers => _layers;
+        public int LayerRevision { get; private set; }
 
         [SerializeField] private Camera _camera;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
+        private IAudioFeatureProvider _audioFeatureProvider;
+        private IBeatManager _beatManager;
+
+        [Inject]
+        private void ConstructLayers(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
+        {
+            _audioFeatureProvider = audioFeatureProvider;
+            _beatManager = beatManager;
+        }
 
         protected override void Start()
         {
@@ -31,11 +43,19 @@ namespace Aetherin
             RefreshLayers();
         }
 
+        private void Update()
+        {
+            _camera.backgroundColor = _deckStateProvider.GetState(Deck).Palette?.BackgroundColor1 ?? Color.black;
+        }
+
         /// <summary>子にあるレイヤーを、非アクティブなものも含めて描画順に収集する。</summary>
         public void RefreshLayers()
         {
-            _layers = GetComponentsInChildren<StageLayer>(true);
+            _layers = GetComponentsInChildren<StageLayer>(true)
+                .Where(layer => layer != null && layer.gameObject.activeSelf)
+                .ToArray();
             Array.Sort(_layers, (a, b) => a.Order.CompareTo(b.Order));
+            LayerRevision++;
         }
 
         public void SetLayerVisible(int index, bool visible)
@@ -44,10 +64,90 @@ namespace Aetherin
             _layers[index].Visible = visible;
         }
 
+        public ShapeLayer AddShapeLayer()
+        {
+            var layerObject = new GameObject("Shape Layer");
+            layerObject.transform.SetParent(transform, false);
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<ShapeLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
+        public void RemoveLayer(StageLayer layer)
+        {
+            if (layer == null || !Array.Exists(_layers, item => item == layer)) return;
+            layer.gameObject.SetActive(false);
+            Destroy(layer.gameObject);
+            RefreshLayers();
+        }
+
+        public void MoveLayer(StageLayer layer, int direction)
+        {
+            var ordered = _layers.Where(item => item != null).OrderBy(item => item.Order).ToList();
+            int index = ordered.IndexOf(layer);
+            int nextIndex = index + direction;
+            if (index < 0 || nextIndex < 0 || nextIndex >= ordered.Count) return;
+
+            ordered.RemoveAt(index);
+            ordered.Insert(nextIndex, layer);
+            for (int i = 0; i < ordered.Count; i++) ordered[i].Order = i;
+            RefreshLayers();
+        }
+
+        public List<CameraStageLayerSaveData> CaptureLayers()
+        {
+            return _layers
+                .Where(layer => layer is ShapeLayer)
+                .Select(layer => new CameraStageLayerSaveData
+                {
+                    Type = "shape",
+                    Name = layer.gameObject.name,
+                    ParamsJson = JsonUtility.ToJson(layer.Params),
+                })
+                .ToList();
+        }
+
+        public void RestoreLayers(IEnumerable<CameraStageLayerSaveData> savedLayers)
+        {
+            foreach (var layer in _layers.Where(layer => layer != null).ToArray())
+            {
+                layer.gameObject.SetActive(false);
+                Destroy(layer.gameObject);
+            }
+            _layers = Array.Empty<StageLayer>();
+
+            foreach (var savedLayer in savedLayers ?? Enumerable.Empty<CameraStageLayerSaveData>())
+            {
+                if (savedLayer?.Type != "shape")
+                {
+                    Debug.LogWarning($"[CameraStage] 未対応のレイヤー型 '{savedLayer?.Type}' を読み込み時にスキップしました。", this);
+                    continue;
+                }
+
+                var layer = AddShapeLayer();
+                layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? "Shape Layer" : savedLayer.Name;
+                if (!string.IsNullOrEmpty(savedLayer.ParamsJson)) JsonUtility.FromJsonOverwrite(savedLayer.ParamsJson, layer.Params);
+            }
+
+            RefreshLayers();
+        }
+
         protected override void OnDestroy()
         {
             if (_camera != null) _camera.targetTexture = null;
             base.OnDestroy();
         }
+    }
+
+    [Serializable]
+    public sealed class CameraStageLayerSaveData
+    {
+        public string Type;
+        public string Name;
+        public string ParamsJson;
     }
 }

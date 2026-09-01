@@ -37,10 +37,11 @@ namespace Aetherin
     /// スワップ時はNext側を昇格したCurrentのコピーとして作り直すため、
     /// どんな子オブジェクト構成のステージでも、いま出ている絵から続きを操作できる
     /// </summary>
-    public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget
+    public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
         public IParams Params => _params;
         public string Category => UiCategory.Main;
+        public string SaveId => "CameraStageLayers";
 
         /// <summary> MIDIコンやUIからの変更はこちらに書き込まれる </summary>
         public DeckState NextState { get; private set; } = new();
@@ -85,11 +86,16 @@ namespace Aetherin
         private Vector3 _currentSlotOffset;
         private Vector3 _nextSlotOffset;
         private bool _isFaderFlipped;
+
+        /// <summary> デッキを作り直すたびに増える。UIが参照先の作り直しを検知するために使う </summary>
+        private int _deckRevision;
+
         private readonly DeckState _currentState = new();
 
         private IContainer _container;
         private IApplicationManager _applicationManager;
         private Material _crossFadeMaterial;
+        private CameraStageSaveData _pendingCameraStageData;
 
         [Inject]
         public void Construct(IContainer container, IApplicationManager applicationManager)
@@ -107,6 +113,7 @@ namespace Aetherin
             _crossFadeMaterial = new Material(_crossFadeShader);
 
             BuildDecks();
+            ApplyPendingCameraStageData();
 
             if (_outputRenderer != null) _outputRenderer.material.SetTexture(MainTexId, OutputTexture);
         }
@@ -128,6 +135,8 @@ namespace Aetherin
                 _nextStages.Add(CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name));
                 template.gameObject.SetActive(false);
             }
+
+            _deckRevision++;
         }
 
         /// <summary>
@@ -244,6 +253,8 @@ namespace Aetherin
 
             // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
             _currentState.CopyFrom(NextState);
+
+            _deckRevision++;
         }
 
         private static Texture GetStageTexture(List<StageBase> stages, int index)
@@ -254,10 +265,127 @@ namespace Aetherin
             return stage != null && stage.OutputTexture != null ? stage.OutputTexture : Texture2D.blackTexture;
         }
 
+        public string CaptureSaveData()
+        {
+            var data = new CameraStageSaveData();
+            if (_nextStages == null) return JsonUtility.ToJson(data);
+
+            for (int i = 0; i < _nextStages.Count; i++)
+            {
+                if (_nextStages[i] is not CameraStage stage) continue;
+                data.Stages.Add(new CameraStageLayersSaveData { StageIndex = i, Layers = stage.CaptureLayers() });
+            }
+
+            return JsonUtility.ToJson(data);
+        }
+
+        public void RestoreSaveData(string json)
+        {
+            _pendingCameraStageData = JsonUtility.FromJson<CameraStageSaveData>(json);
+            if (_nextStages != null) ApplyPendingCameraStageData();
+        }
+
+        private void ApplyPendingCameraStageData()
+        {
+            if (_pendingCameraStageData?.Stages == null) return;
+
+            foreach (var savedStage in _pendingCameraStageData.Stages)
+            {
+                if (savedStage == null) continue;
+                if (savedStage.StageIndex < 0 || savedStage.StageIndex >= _nextStages.Count) continue;
+
+                if (_nextStages[savedStage.StageIndex] is CameraStage nextStage)
+                    nextStage.RestoreLayers(savedStage.Layers);
+                if (_currentStages[savedStage.StageIndex] is CameraStage currentStage)
+                    currentStage.RestoreLayers(savedStage.Layers);
+            }
+
+            _deckRevision++;
+            _pendingCameraStageData = null;
+        }
+
         private void OnDestroy()
         {
             if (OutputTexture != null) OutputTexture.Release();
             if (_crossFadeMaterial != null) Destroy(_crossFadeMaterial);
+        }
+
+        /// <summary>
+        /// ウィンドウのリサイズにImageが追従するプレビューウィンドウを作る
+        /// Imageはテクスチャの実サイズを本来のサイズとして持つため、
+        /// ウィンドウ側に初期サイズを与えて、Imageは固定サイズを持たせずflexで追従させる
+        /// </summary>
+        private static Element CreatePreviewWindowLauncher(string title, Func<Texture> readTexture)
+        {
+            return UI.WindowLauncher(title,
+                UI.Window(title,
+                    UI.Image(readTexture)
+                        .SetMinWidth(160f)
+                        .SetMinHeight(90f)
+                        .SetFlexGrow(1f)
+                        .SetFlexShrink(1f)
+                        .SetMaxWidth(800f).SetMaxHeight(450f)
+                ));
+        }
+
+        /// <summary>
+        /// 各ステージのレイヤーを編集するウィンドウを開くランチャーの一覧
+        /// 操作対象はMIDIコンと同じNextデッキのインスタンス
+        /// (デッキはスワップで作り直されるため、_deckRevisionの変化で中身を作り直す)
+        /// </summary>
+        private Element CreateStageListElement(IReadOnlyList<string> stageNames)
+        {
+            return UI.Fold("Stages",
+                Enumerable.Range(0, stageNames.Count).Select(index => UI.Row(
+                    UI.Label(stageNames[index]).SetWidth(120f),
+                    UI.WindowLauncher("Layers",
+                        UI.Window($"{stageNames[index]} Layers",
+                            UI.DynamicElementOnStatusChanged(
+                                readStatus: () => _deckRevision * 100000 +
+                                    ((_nextStages != null && index < _nextStages.Count && _nextStages[index] is CameraStage cameraStage)
+                                        ? cameraStage.LayerRevision
+                                        : 0),
+                                build: _ => CreateLayerListElement(index))
+                        ).SetWidth(400f))
+                )));
+        }
+
+        private Element CreateLayerListElement(int stageIndex)
+        {
+            var stage = _nextStages != null && stageIndex < _nextStages.Count ? _nextStages[stageIndex] : null;
+            if (stage == null) return UI.Label("ステージが構築されていません");
+
+            if (stage is not CameraStage cameraStage) return UI.Label("このステージはレイヤー編集に未対応です");
+
+            var layers = stage.Layers;
+
+            return UI.Column(
+                UI.Button("Add Shape Layer", () => cameraStage.AddShapeLayer()),
+                layers.Count == 0
+                    ? UI.Label("レイヤーがありません")
+                    : UI.Column(layers.Select(layer => CreateLayerElement(cameraStage, layer))));
+        }
+
+        private static Element CreateLayerElement(CameraStage stage, StageLayer layer)
+        {
+            return UI.Fold(
+                UI.Row(
+                    UI.Label(() => layer.Visible ? "●" : "○"),
+                    UI.Field(null,
+                            () => layer.gameObject.name,
+                            value => layer.gameObject.name = value)
+                        .SetWidth(180f)),
+                UI.Row(
+                    UI.Toggle("Visible", () => layer.Visible, value => layer.Visible = value),
+                    UI.Button("↑", () => stage.MoveLayer(layer, -1)),
+                    UI.Button("↓", () => stage.MoveLayer(layer, 1)),
+                    UI.Button("Delete", () => stage.RemoveLayer(layer))),
+                new[]
+                {
+                    UI.Field("Order", () => layer.Order, value => layer.Order = value),
+                    UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType()))
+                }
+            );
         }
 
         public Element AdditiveUi()
@@ -269,6 +397,25 @@ namespace Aetherin
             if (stageNames.Count == 0) return UI.Label("ステージが登録されていません");
 
             return UI.Column(
+                UI.Row(
+                    UI.WindowLauncher("Previews", UI.Window(
+                        UI.Column(
+                            UI.Label("Next"),
+                            UI.Image(() => GetStageTexture(_nextStages, _params.NextStageIndex))
+                                .SetMinWidth(160f).SetMinHeight(90f)
+                                .SetFlexGrow(1f).SetFlexShrink(1f)
+                                .SetMaxWidth(600f).SetMaxHeight(310f),
+                            UI.Label("Output"),
+                            UI.Image(() => OutputTexture)
+                                .SetMinWidth(160f).SetMinHeight(90f)
+                                .SetFlexGrow(1f).SetFlexShrink(1f)
+                                .SetMaxWidth(600f).SetMaxHeight(310f)
+                        )
+                    )),
+                    CreatePreviewWindowLauncher("Output Preview", () => OutputTexture),
+                    CreatePreviewWindowLauncher("Current Preview", () => GetStageTexture(_currentStages, _params.CurrentStageIndex)),
+                    CreatePreviewWindowLauncher("Next Preview", () => GetStageTexture(_nextStages, _params.NextStageIndex))
+                ),
                 UI.Dropdown("Current",
                     () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
                     value => _params.CurrentStageIndex = value,
@@ -277,6 +424,7 @@ namespace Aetherin
                     () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
                     value => _params.NextStageIndex = value,
                     stageNames),
+                CreateStageListElement(stageNames),
                 UI.SliderReadOnly("CrossFade (Current ← → Next)", () => CrossFade, 0f, 1f),
                 UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
                 UI.Label(() => IsImmediateMode
@@ -284,5 +432,19 @@ namespace Aetherin
                     : _isFaderFlipped ? "フェーダー: 下に倒すとNextが出ます" : "フェーダー: 上に倒すとNextが出ます")
             );
         }
+    }
+
+    [Serializable]
+    public sealed class CameraStageSaveData
+    {
+        public int Version = 1;
+        public List<CameraStageLayersSaveData> Stages = new();
+    }
+
+    [Serializable]
+    public sealed class CameraStageLayersSaveData
+    {
+        public int StageIndex;
+        public List<CameraStageLayerSaveData> Layers = new();
     }
 }
