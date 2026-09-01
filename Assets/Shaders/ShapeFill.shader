@@ -51,6 +51,14 @@ Shader "Aetherin/Shape Fill"
                 half4 _ColorB;
                 float4 _GradientParams;
                 float _UseGradient;
+                float _UsePaletteRandom;
+                float _PaletteRandomSeed;
+                half4 _PaletteColor0;
+                half4 _PaletteColor1;
+                half4 _PaletteColor2;
+                half4 _PaletteColor3;
+                half4 _PaletteColor4;
+                half4 _PaletteColor5;
                 float4x4 _ShapeMatrix;
             CBUFFER_END
 
@@ -68,7 +76,18 @@ Shader "Aetherin/Shape Fill"
             {
                 half4 color = _BaseColor;
 
-                if (_UseGradient > 0.5)
+                if (_UsePaletteRandom > 0.5)
+                {
+                    float randomValue = frac(sin((input.color.r + _PaletteRandomSeed) * 12.9898 + 78.233) * 43758.5453);
+                    int paletteIndex = min(5, (int)floor(randomValue * 6.0));
+                    color = paletteIndex == 0 ? _PaletteColor0 :
+                            paletteIndex == 1 ? _PaletteColor1 :
+                            paletteIndex == 2 ? _PaletteColor2 :
+                            paletteIndex == 3 ? _PaletteColor3 :
+                            paletteIndex == 4 ? _PaletteColor4 : _PaletteColor5;
+                }
+
+                else if (_UseGradient > 0.5)
                 {
                     // シェイプ空間で、向きベクトルへの射影を0-1に正規化して混ぜる
                     float projection = dot(input.shapePositionXY, _GradientParams.xy) - _GradientParams.z;
@@ -76,7 +95,8 @@ Shader "Aetherin/Shape Fill"
                     color = lerp(_BaseColor, _ColorB, t);
                 }
 
-                return color * input.color;
+                color.a *= input.color.a;
+                return color;
             }
             ENDHLSL
         }

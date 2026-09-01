@@ -48,6 +48,9 @@ namespace Aetherin
         /// <summary> 小節頭からの通算の拍数 </summary>
         int BeatCount { get; }
 
+        /// <summary>BeatManagerの生存中、拍ごとに単調増加するイベントID</summary>
+        long BeatEventId { get; }
+
         /// <summary> 小節内の拍位置 (0..BeatsPerBar-1) </summary>
         int BeatInBar { get; }
 
@@ -65,6 +68,9 @@ namespace Aetherin
         float BarPhase { get; }
 
         int BarCount { get; }
+
+        /// <summary>BeatManagerの生存中、小節頭ごとに単調増加するイベントID</summary>
+        long BarEventId { get; }
 
         /// <summary> このフレームで小節頭が来たか </summary>
         bool WasBar { get; }

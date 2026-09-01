@@ -60,12 +60,14 @@ namespace Aetherin
 
         public float BeatPhase => IsBeatEnabled(BeatInBar) ? _beat.Phase : 1f;
         public int BeatCount => _beat.BeatCount;
+        public long BeatEventId { get; private set; }
         public int BeatInBar => _beat.BeatInBar;
         public bool WasBeat => _beat.WasBeat && IsBeatEnabled(BeatInBar);
 
         // Barモジュレーションは小節全体の進行を表すため、Beatの選択状態では止めない。
         public float BarPhase => BeatsPerBar <= 0 ? 0f : (BeatInBar + _beat.Phase) / BeatsPerBar;
         public int BarCount { get; private set; }
+        public long BarEventId { get; private set; }
         public bool WasBar => _lastBarFrame == Time.frameCount;
 
         public IParams Params => _params;
@@ -221,9 +223,12 @@ namespace Aetherin
 
         private void HandleBeat(int beatCount)
         {
+            BeatEventId++;
+
             if (_beat.BeatInBar == 0)
             {
                 BarCount++;
+                BarEventId++;
                 _lastBarFrame = Time.frameCount;
                 OnBar?.Invoke(BarCount);
             }

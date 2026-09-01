@@ -17,6 +17,7 @@ namespace Aetherin
     {
         Single,
         Gradient,
+        PaletteRandom,
     }
 
     /// <summary>
@@ -34,6 +35,9 @@ namespace Aetherin
         public PaletteColorSource GradientColorA = PaletteColorSource.AccentColor1;
         public PaletteColorSource GradientColorB = PaletteColorSource.AccentColor2;
 
+        [Tooltip("Palette Randomの並びを変える値。同じSeedではコピーごとの色が安定します")]
+        public int RandomSeed;
+
         [Tooltip("グラデーションの向き (度)")]
         public FloatParameter GradientAngle = new(0f);
 
@@ -47,6 +51,8 @@ namespace Aetherin
         public FloatParameter Intensity = new(1f);
 
         public FloatParameter Alpha = new(1f);
+
+        [NonSerialized] private Color[] _paletteBuffer;
 
         /// <summary> パレットが参照できない場合 (エディタ編集時など) のプレビュー用 </summary>
         public static readonly ColorPalette FallbackPalette = new()
@@ -83,6 +89,8 @@ namespace Aetherin
                 _ => palette.AccentColor1,
             };
         }
+
+        internal Color[] GetPaletteBuffer() => _paletteBuffer ??= new Color[6];
     }
 
     /// <summary>
@@ -96,6 +104,9 @@ namespace Aetherin
         public float AngleDegrees;
         public float Offset;
         public float Scale;
+        public bool IsPaletteRandom;
+        public int RandomSeed;
+        public Color[] PaletteColors;
 
         public static EvaluatedPaletteColor Evaluate(
             PaletteColorParameter parameter,
@@ -117,6 +128,18 @@ namespace Aetherin
 
             if (parameter.Mode != PaletteColorMode.Gradient)
             {
+                if (parameter.Mode == PaletteColorMode.PaletteRandom)
+                {
+                    return new EvaluatedPaletteColor
+                    {
+                        ColorA = colorA,
+                        ColorB = colorA,
+                        IsPaletteRandom = true,
+                        RandomSeed = parameter.RandomSeed,
+                        PaletteColors = BuildOutputPalette(parameter, palette, intensity, alpha),
+                    };
+                }
+
                 return new EvaluatedPaletteColor { ColorA = colorA, ColorB = colorA };
             }
 
@@ -136,6 +159,18 @@ namespace Aetherin
             var result = color.linear * intensity;
             result.a = alpha;
             return result;
+        }
+
+        private static Color[] BuildOutputPalette(
+            PaletteColorParameter parameter,
+            ColorPalette palette,
+            float intensity,
+            float alpha)
+        {
+            Color[] colors = parameter.GetPaletteBuffer();
+            for (int i = 0; i < colors.Length; i++)
+                colors[i] = ToOutputColor(PaletteColorParameter.Resolve(palette, (PaletteColorSource)i), intensity, alpha);
+            return colors;
         }
     }
 }

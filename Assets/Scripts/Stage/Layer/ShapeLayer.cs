@@ -63,7 +63,7 @@ namespace Aetherin
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class ShapeLayer : StageLayer
+    public sealed class ShapeLayer : StageLayer, IRepeaterCopyProvider
     {
         private const int MaxRepeaterCopies = 128;
 
@@ -71,6 +71,9 @@ namespace Aetherin
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int GradientParamsId = Shader.PropertyToID("_GradientParams");
         private static readonly int UseGradientId = Shader.PropertyToID("_UseGradient");
+        private static readonly int UsePaletteRandomId = Shader.PropertyToID("_UsePaletteRandom");
+        private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
+        private static readonly int[] PaletteColorIds = CreatePaletteColorIds();
         private static readonly int ShapeMatrixId = Shader.PropertyToID("_ShapeMatrix");
 
         [SerializeField] private ShapeLayerParams _params = new();
@@ -97,6 +100,7 @@ namespace Aetherin
         private EvaluatedRepeater _evaluatedRepeater;
         private EvaluatedPaletteColor _evaluatedFillColor;
         private EvaluatedPaletteColor _evaluatedStrokeColor;
+        private ModulationContext _modulationContext;
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
         private IDeckStateProvider _deckStateProvider;
@@ -440,7 +444,8 @@ namespace Aetherin
             int baseVertexCount = _vertices.Count;
             int baseFillCount = _fillTriangles.Count;
             int baseStrokeCount = _strokeTriangles.Count;
-            RepeaterMeshUtility.ApplyVertices(_vertices, _vertexColors, null, _evaluatedRepeater);
+            RepeaterMeshUtility.ApplyVertices(_vertices, _vertexColors, null, _evaluatedRepeater,
+                _evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource ? this : null);
             RepeaterMeshUtility.ApplyIndices(
                 _fillTriangles, baseFillCount, baseVertexCount, _evaluatedRepeater.Copies);
             RepeaterMeshUtility.ApplyIndices(
@@ -537,19 +542,37 @@ namespace Aetherin
         private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)
         {
             Color colorA = evaluated.ColorA;
-            colorA.a *= _evaluatedOpacity;
+            if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
+                colorA.a *= _evaluatedOpacity;
             material.SetColor(BaseColorId, colorA);
             material.SetFloat(UseGradientId, evaluated.IsGradient ? 1f : 0f);
+            material.SetFloat(UsePaletteRandomId, evaluated.IsPaletteRandom ? 1f : 0f);
+
+            if (evaluated.IsPaletteRandom)
+            {
+                material.SetFloat(PaletteRandomSeedId, evaluated.RandomSeed);
+                for (int i = 0; i < PaletteColorIds.Length; i++)
+                    material.SetColor(PaletteColorIds[i], evaluated.PaletteColors[i]);
+                return;
+            }
 
             if (!evaluated.IsGradient) return;
 
             Color colorB = evaluated.ColorB;
-            colorB.a *= _evaluatedOpacity;
+            if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
+                colorB.a *= _evaluatedOpacity;
             material.SetColor(ColorBId, colorB);
 
             float radians = evaluated.AngleDegrees * Mathf.Deg2Rad;
             material.SetVector(GradientParamsId,
                 new Vector4(Mathf.Cos(radians), Mathf.Sin(radians), evaluated.Offset, evaluated.Scale));
+        }
+
+        private static int[] CreatePaletteColorIds()
+        {
+            var ids = new int[6];
+            for (int i = 0; i < ids.Length; i++) ids[i] = Shader.PropertyToID($"_PaletteColor{i}");
+            return ids;
         }
 
         private void EvaluateParameters(bool useRuntimeSources = true)
@@ -559,6 +582,7 @@ namespace Aetherin
                 useRuntimeSources ? _audioFeatureProvider : null,
                 useRuntimeSources ? _beatManager : null,
                 useRuntimeSources && (_stage == null || _stage.Deck == StageDeck.Next));
+            _modulationContext = context;
 
             _evaluatedRotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
             _evaluatedPosition = _params.Position?.Evaluate(context) ?? Vector3.zero;
@@ -602,8 +626,41 @@ namespace Aetherin
                 hash = hash * 31 + _evaluatedTrimEnd.GetHashCode();
                 hash = hash * 31 + _evaluatedTrimOffset.GetHashCode();
                 hash = hash * 31 + _evaluatedRepeater.GetHashCode();
+                if (_evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource)
+                {
+                    for (int i = 0; i < _evaluatedRepeater.Copies; i++)
+                    {
+                        float phase = _evaluatedRepeater.AnimationPhaseOffset * i;
+                        hash = hash * 31 + GetRepeaterCopyTransform(i, phase).GetHashCode();
+                        hash = hash * 31 + GetRepeaterCopyOpacity(i, phase).GetHashCode();
+                    }
+                }
                 return hash;
             }
+        }
+
+        public Matrix4x4 GetRepeaterCopyTransform(int copyIndex, float phaseOffset)
+        {
+            if (copyIndex == 0) return Matrix4x4.identity;
+            ModulationContext context = _modulationContext.WithAnimationPhaseOffset(phaseOffset);
+            Vector3 position = _params.Position?.Evaluate(context) ?? Vector3.zero;
+            Vector3 rotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
+            Vector3 scale = _params.Scale?.Evaluate(context) ?? Vector3.one;
+            Vector3 anchor = _params.Anchor?.Evaluate(context) ?? Vector3.zero;
+            Matrix4x4 copyMatrix = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale) *
+                                   Matrix4x4.Translate(-anchor);
+            Matrix4x4 baseMatrix = Matrix4x4.TRS(
+                                       _evaluatedPosition,
+                                       Quaternion.Euler(_evaluatedRotation),
+                                       _evaluatedScale) *
+                                   Matrix4x4.Translate(-_evaluatedAnchor);
+            return baseMatrix.inverse * copyMatrix;
+        }
+
+        public float GetRepeaterCopyOpacity(int copyIndex, float phaseOffset)
+        {
+            ModulationContext context = _modulationContext.WithAnimationPhaseOffset(phaseOffset);
+            return Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
         }
 
         private void OnDestroy()
