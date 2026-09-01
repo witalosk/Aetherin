@@ -29,6 +29,12 @@ namespace Aetherin
             _material = new Material(_shader);
         }
 
+        protected override void OnDestroy()
+        {
+            if (_material != null) Destroy(_material);
+            base.OnDestroy();
+        }
+
         private void Update()
         {
             if (_material == null || OutputTexture == null) return;

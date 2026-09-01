@@ -15,6 +15,9 @@ namespace Aetherin
         [Tooltip("即時モード (フェーダーを介さずNextへの操作を最終出力へ即時反映) を切り替えるボタン")]
         public MidiBinding ImmediateModeButton = new();
 
+        [Tooltip("Nextに出すステージを選ぶボタン (登録ステージと同じ並び)")]
+        public List<MidiBinding> StageSelectButtons = new();
+
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -27,9 +30,12 @@ namespace Aetherin
     }
 
     /// <summary>
-    /// 登録されたステージを起動時に複製してCurrent (オリジナル) / Next (複製) の2系統を持ち、
-    /// クロスフェーダーで最終出力をブレンドするマネージャ
+    /// シーンに置かれたステージを非アクティブのテンプレートとして扱い、
+    /// そのクローンでCurrent / Nextの2系統を作ってクロスフェーダーで最終出力をブレンドするマネージャ
     /// MIDIコンから操作するステージは基本的にNext側にして、フェーダーで本番出力に送る運用を想定
+    ///
+    /// スワップ時はNext側を昇格したCurrentのコピーとして作り直すため、
+    /// どんな子オブジェクト構成のステージでも、いま出ている絵から続きを操作できる
     /// </summary>
     public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget
     {
@@ -67,13 +73,17 @@ namespace Aetherin
         [SerializeField] private List<StageBase> _stages;
         [SerializeField] private StageManagerParams _params = new();
 
+        private static readonly Color StageLedColor = new(0.2f, 0.9f, 1f);
+
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int TexAId = Shader.PropertyToID("_TexA");
         private static readonly int TexBId = Shader.PropertyToID("_TexB");
         private static readonly int FadeId = Shader.PropertyToID("_Fade");
 
         private List<StageBase> _currentStages;
-        private List<StageBase> _nextStages = new();
+        private List<StageBase> _nextStages;
+        private Vector3 _currentSlotOffset;
+        private Vector3 _nextSlotOffset;
         private bool _isFaderFlipped;
         private readonly DeckState _currentState = new();
 
@@ -96,30 +106,44 @@ namespace Aetherin
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
 
-            DuplicateStagesForNext();
+            BuildDecks();
 
             if (_outputRenderer != null) _outputRenderer.material.SetTexture(MainTexId, OutputTexture);
         }
 
         /// <summary>
-        /// 複製はシーン起動時のInjectに含まれないため、コンテナ経由でInstantiateして注入する
+        /// シーン上のステージを非アクティブのテンプレートにして、Current / Nextともクローンで構成する
         /// </summary>
-        private void DuplicateStagesForNext()
+        private void BuildDecks()
         {
-            _currentStages = new List<StageBase>(_stages);
+            _currentSlotOffset = Vector3.zero;
+            _nextSlotOffset = _params.NextStageOffset;
 
-            foreach (var stage in _stages)
+            _currentStages = new List<StageBase>();
+            _nextStages = new List<StageBase>();
+
+            foreach (var template in _stages)
             {
-                var clone = _container.Instantiate(stage.gameObject, stage.transform.parent, true);
-                clone.name = $"{stage.name} (Next)";
-
-                // CameraStageなどシーン上に実体を持つステージが複製元と互いに映り込まないようにずらす
-                clone.transform.position += _params.NextStageOffset;
-
-                var nextStage = clone.GetComponent<StageBase>();
-                nextStage.Deck = StageDeck.Next;
-                _nextStages.Add(nextStage);
+                _currentStages.Add(CloneStage(template, StageDeck.Current, _currentSlotOffset, template.name));
+                _nextStages.Add(CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name));
+                template.gameObject.SetActive(false);
             }
+        }
+
+        /// <summary>
+        /// クローンはシーン起動時のInjectに含まれないため、コンテナ経由でInstantiateして注入する
+        /// positionDeltaはCameraStageなどシーン上に実体を持つステージが互いに映り込まないためのずらし
+        /// </summary>
+        private StageBase CloneStage(StageBase source, StageDeck deck, Vector3 positionDelta, string baseName)
+        {
+            var clone = _container.Instantiate(source.gameObject, source.transform.parent, true);
+            clone.name = $"{baseName} ({deck})";
+            clone.transform.position = source.transform.position + positionDelta;
+            clone.SetActive(true);
+
+            var stage = clone.GetComponent<StageBase>();
+            stage.Deck = deck;
+            return stage;
         }
 
         // 各ステージがUpdateで描画した後にブレンドする
@@ -129,6 +153,8 @@ namespace Aetherin
 
             if (_params.ImmediateModeButton.WasNoteOn) SetImmediateMode(!IsImmediateMode);
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
+
+            UpdateStageSelect();
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
@@ -145,8 +171,25 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// 出力される絵は変えずに、以降のMIDI操作対象 (Next) を裏側のデッキに切り替える
+        /// Nextに出すステージをボタンで選択し、LEDに選択状態を表示する
+        /// (点滅: Nextに選択中 / 点灯: Currentに表示中 / 暗: それ以外)
         /// </summary>
+        private void UpdateStageSelect()
+        {
+            int count = Mathf.Min(_stages.Count, _params.StageSelectButtons.Count);
+
+            for (int i = 0; i < count; i++)
+            {
+                var button = _params.StageSelectButtons[i];
+                if (button.WasNoteOn) _params.NextStageIndex = i;
+
+                var ledColor = StageLedColor * 0.15f;
+                if (i == _params.NextStageIndex) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
+                else if (i == _params.CurrentStageIndex) ledColor = StageLedColor;
+                button.SetLed(ledColor);
+            }
+        }
+
         /// <summary>
         /// 解除時は表示中のNextをCurrentへ昇格させ、フェーダー操作へ自然に戻す
         /// </summary>
@@ -158,22 +201,45 @@ namespace Aetherin
             if (!enabled) SwapDecks();
         }
 
+        /// <summary>
+        /// 出力される絵は変えずに、以降のMIDI操作対象 (Next) を裏側のデッキに切り替える
+        /// </summary>
         private void SwapDecks()
         {
             // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
             _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
 
-            (_currentStages, _nextStages) = (_nextStages, _currentStages);
-            (_params.CurrentStageIndex, _params.NextStageIndex) = (_params.NextStageIndex, _params.CurrentStageIndex);
+            // 見えていたNextをCurrentへ昇格させる
+            var retiredStages = _currentStages;
+            _currentStages = _nextStages;
+            (_currentSlotOffset, _nextSlotOffset) = (_nextSlotOffset, _currentSlotOffset);
 
-            foreach (var stage in _currentStages)
+            // NextはCurrentの複製として続きを操作するため、選択も昇格したステージと同じものを指し続ける
+            _params.CurrentStageIndex = _params.NextStageIndex;
+
+            for (int i = 0; i < _currentStages.Count; i++)
             {
-                if (stage != null) stage.Deck = StageDeck.Current;
+                var stage = _currentStages[i];
+                if (stage == null) continue;
+
+                stage.Deck = StageDeck.Current;
+                stage.gameObject.name = $"{_stages[i].name} ({StageDeck.Current})";
             }
 
-            foreach (var stage in _nextStages)
+            // 引退した旧Currentは破棄し、Nextは昇格したCurrentのコピーとして作り直す
+            // (いま出ている絵から続きを操作できるようにする)
+            foreach (var stage in retiredStages)
             {
-                if (stage != null) stage.Deck = StageDeck.Next;
+                if (stage != null) Destroy(stage.gameObject);
+            }
+
+            _nextStages = new List<StageBase>(_currentStages.Count);
+            for (int i = 0; i < _currentStages.Count; i++)
+            {
+                var source = _currentStages[i];
+                _nextStages.Add(source == null
+                    ? null
+                    : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[i].name));
             }
 
             // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
