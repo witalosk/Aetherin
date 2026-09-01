@@ -167,15 +167,22 @@ namespace Aetherin
                     UI.Field(null, () => modulator.Source, value => modulator.Source = value).SetFlexGrow(1f),
                     UI.Field(null, () => modulator.Operation, value => modulator.Operation = value).SetFlexGrow(1f)
                 ),
-                UI.Row(
-                    UI.Field("Amount", () => modulator.Amount, value => modulator.Amount = value).SetFlexGrow(1f),
-                    UI.Field("Offset", () => modulator.Offset, value => modulator.Offset = value).SetFlexGrow(1f)
-                ),
                 UI.DynamicElementOnStatusChanged(
                     readStatus: () => modulator.Source,
-                    build: source => CreateModulatorSourceElement(modulator, source))
+                    build: source => UI.Column(
+                        UI.Row(
+                            UI.Field(IsAccumulator(source) ? "Step" : "Amount",
+                                () => modulator.Amount, value => modulator.Amount = value).SetFlexGrow(1f),
+                            UI.Field("Offset", () => modulator.Offset,
+                                value => modulator.Offset = value).SetFlexGrow(1f)
+                        ),
+                        CreateModulatorSourceElement(modulator, source)))
             );
         }
+
+        private static bool IsAccumulator(FloatModulationSource source) =>
+            source == FloatModulationSource.BeatAccumulator ||
+            source == FloatModulationSource.BarAccumulator;
 
         private static Element CreateModulatorSourceElement(FloatModulator modulator, FloatModulationSource source)
         {
@@ -203,6 +210,38 @@ namespace Aetherin
 
                 case FloatModulationSource.MidiCc:
                     return UI.Field("Fader", Binder.Create(modulator.Midi, typeof(MidiCcBinding)));
+
+                case FloatModulationSource.BeatAccumulator:
+                case FloatModulationSource.BarAccumulator:
+                    return UI.Column(
+                        UI.Field("Initial", () => modulator.AccumulatorInitialValue,
+                            value => modulator.AccumulatorInitialValue = value),
+                        UI.Field("Reset", () => modulator.AccumulatorReset,
+                            value => modulator.AccumulatorReset = value),
+                        UI.DynamicElementIf(
+                            () => modulator.AccumulatorReset == AccumulatorResetMode.AfterNEvents,
+                            () => UI.Field("Reset After", () => modulator.AccumulatorResetAfterEvents,
+                                value => modulator.AccumulatorResetAfterEvents = Math.Max(1, value))),
+                        UI.Field("Limit", () => modulator.AccumulatorLimit,
+                            value => modulator.AccumulatorLimit = value),
+                        UI.DynamicElementIf(
+                            () => modulator.AccumulatorLimit != AccumulatorLimitMode.None,
+                            () => UI.Row(
+                                UI.Field("Min", () => modulator.AccumulatorMin,
+                                    value => modulator.AccumulatorMin = value).SetFlexGrow(1f),
+                                UI.Field("Max", () => modulator.AccumulatorMax,
+                                    value => modulator.AccumulatorMax = value).SetFlexGrow(1f)
+                            )),
+                        UI.Field("Transition", () => modulator.AccumulatorTransition,
+                            value => modulator.AccumulatorTransition = value),
+                        UI.DynamicElementIf(
+                            () => modulator.AccumulatorTransition != AccumulatorTransitionMode.Instant,
+                            () => UI.Field("Duration", () => modulator.AccumulatorTransitionDuration,
+                                value => modulator.AccumulatorTransitionDuration = Math.Max(0.001f, value))),
+                        UI.DynamicElementIf(
+                            () => modulator.AccumulatorTransition == AccumulatorTransitionMode.EaseOut,
+                            () => UI.Slider("Sharpness", () => modulator.AccumulatorTransitionSharpness,
+                                value => modulator.AccumulatorTransitionSharpness = value, 1f, 8f)));
 
                 default:
                     return null;
@@ -246,12 +285,13 @@ namespace Aetherin
                     readStatus: () => parameter.Mode,
                     build: mode => mode == PaletteColorMode.Single
                         ? UI.Field(null, () => parameter.Color, value => parameter.Color = value).SetFlexGrow(1f)
-                        : UI.Row(
+                        : mode == PaletteColorMode.Gradient ? UI.Row(
                             UI.Field(null, () => parameter.GradientColorA,
                                 value => parameter.GradientColorA = value).SetFlexGrow(1f),
                             UI.Field(null, () => parameter.GradientColorB,
                                 value => parameter.GradientColorB = value).SetFlexGrow(1f)
-                        )),
+                        ) : UI.Field("Seed", () => parameter.RandomSeed,
+                            value => parameter.RandomSeed = value).SetFlexGrow(1f)),
                 UI.WindowLauncher("...",
                         UI.Window($"{name} Color",
                             UI.Column(
@@ -349,6 +389,13 @@ namespace Aetherin
                     Param("Rotation", repeater.Rotation),
                     Param("Scale", repeater.Scale),
                     Param("Anchor", repeater.Anchor),
+                    UI.Field("Transform Mode", () => repeater.TransformMode,
+                        value => repeater.TransformMode = value),
+                    UI.DynamicElementIf(
+                        () => repeater.TransformMode == RepeaterTransformMode.Cumulative,
+                        () => UI.Toggle("Rotation Affects Position", () => repeater.RotationAffectsPosition,
+                            value => repeater.RotationAffectsPosition = value)),
+                    Param("Animation Phase Offset", repeater.AnimationPhaseOffset),
                     Param("Opacity Start", repeater.StartOpacity),
                     Param("Opacity End", repeater.EndOpacity)
                 ))
@@ -369,6 +416,7 @@ namespace Aetherin
             return UI.Column(
                 Param("Opacity", p.Opacity),
                 UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
+                UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
                 UI.DynamicElementIf(
                     () => p.Primitive is Primitive3DType.Sphere or Primitive3DType.Cylinder,
                     () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
@@ -383,7 +431,11 @@ namespace Aetherin
                 UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
                 UI.Field("Color A", () => p.ColorA, value => p.ColorA = value),
                 UI.DynamicElementIf(
-                    () => p.ColorMode != Primitive3DColorMode.Solid,
+                    () => p.ColorMode == Primitive3DColorMode.PaletteRandom,
+                    () => UI.Field("Random Seed", () => p.PaletteRandomSeed, value => p.PaletteRandomSeed = value)),
+                UI.DynamicElementIf(
+                    () => p.ColorMode != Primitive3DColorMode.Solid &&
+                          p.ColorMode != Primitive3DColorMode.PaletteRandom,
                     () => UI.Field("Color B", () => p.ColorB, value => p.ColorB = value)),
                 Param("Color Intensity", p.ColorIntensity),
                 Param("Alpha", p.Alpha),
@@ -398,6 +450,13 @@ namespace Aetherin
                 UI.DynamicElementIf(
                     () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
                     () => Param("Toon Threshold", p.ToonThreshold)),
+                UI.DynamicElementIf(
+                    () => p.RenderMode != Primitive3DRenderMode.Surface,
+                    () => UI.Column(
+                        UI.Field("Wire Color", () => p.WireColor, value => p.WireColor = value),
+                        Param("Wire Width", p.WireWidth),
+                        Param("Wire Intensity", p.WireColorIntensity),
+                        Param("Wire Alpha", p.WireAlpha))),
                 Param("Repeater", p.Repeater)
             );
         }

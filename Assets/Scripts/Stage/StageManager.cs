@@ -40,6 +40,7 @@ namespace Aetherin
     public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
         public IParams Params => _params;
+        public bool FoldParams => true;
         public string Category => UiCategory.Main;
         public string SaveId => "CameraStageLayers";
 

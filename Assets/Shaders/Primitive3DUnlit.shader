@@ -56,6 +56,14 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float _ToonThreshold;
                 float4x4 _ShapeMatrix;
                 float4x4 _ShapeNormalMatrix;
+                float _UsePaletteRandom;
+                float _PaletteRandomSeed;
+                half4 _PaletteColor0;
+                half4 _PaletteColor1;
+                half4 _PaletteColor2;
+                half4 _PaletteColor3;
+                half4 _PaletteColor4;
+                half4 _PaletteColor5;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
@@ -74,7 +82,17 @@ Shader "Aetherin/Primitive 3D Unlit"
             {
                 half4 color = _BaseColor;
 
-                if (_ColorMode > 0.5 && _ColorMode < 1.5)
+                if (_UsePaletteRandom > 0.5)
+                {
+                    float randomValue = frac(sin((input.color.r + _PaletteRandomSeed) * 12.9898 + 78.233) * 43758.5453);
+                    int paletteIndex = min(5, (int)floor(randomValue * 6.0));
+                    color = paletteIndex == 0 ? _PaletteColor0 :
+                            paletteIndex == 1 ? _PaletteColor1 :
+                            paletteIndex == 2 ? _PaletteColor2 :
+                            paletteIndex == 3 ? _PaletteColor3 :
+                            paletteIndex == 4 ? _PaletteColor4 : _PaletteColor5;
+                }
+                else if (_ColorMode > 0.5 && _ColorMode < 1.5)
                 {
                     float t = saturate(input.uv.x * _UvParams.x + _UvParams.y);
                     color = lerp(_BaseColor, _ColorB, t);
@@ -86,7 +104,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                     color = lerp(_BaseColor, _ColorB, t);
                 }
 
-                return color * input.color;
+                color.a *= input.color.a;
+                return color;
             }
             ENDHLSL
         }
