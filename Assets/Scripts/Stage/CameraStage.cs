@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 using UnitySimpleContainer;
 
 namespace Aetherin
@@ -40,6 +41,7 @@ namespace Aetherin
             }
 
             _camera.targetTexture = OutputTexture;
+            _camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
             RefreshLayers();
         }
 

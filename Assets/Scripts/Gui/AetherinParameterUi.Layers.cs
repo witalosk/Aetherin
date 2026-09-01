@@ -59,6 +59,7 @@ namespace Aetherin
 
             return UI.Column(
                 Param("Opacity", p.Opacity),
+                UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                 UI.Field("Shape", () => p.Shape, value => p.Shape = value),
                 UI.DynamicElementOnStatusChanged(
                     readStatus: () => p.Shape,
@@ -151,6 +152,9 @@ namespace Aetherin
 
             return UI.Column(
                 Param("Opacity", p.Opacity),
+                UI.DynamicElementIf(
+                    () => p.MaterialMode != Primitive3DMaterialMode.Glass,
+                    () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
                 UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
                 UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
                 UI.DynamicElementIf(
@@ -164,28 +168,12 @@ namespace Aetherin
                 Param("Rotation", p.Rotation),
                 Param("Scale", p.Scale),
                 Param("Anchor", p.Anchor),
-                UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
-                UI.Field("Color A", () => p.ColorA, value => p.ColorA = value),
-                UI.DynamicElementIf(
-                    () => p.ColorMode == Primitive3DColorMode.PaletteRandom,
-                    () => UI.Field("Random Seed", () => p.PaletteRandomSeed, value => p.PaletteRandomSeed = value)),
-                UI.DynamicElementIf(
-                    () => p.ColorMode != Primitive3DColorMode.Solid &&
-                          p.ColorMode != Primitive3DColorMode.PaletteRandom,
-                    () => UI.Field("Color B", () => p.ColorB, value => p.ColorB = value)),
-                Param("Color Intensity", p.ColorIntensity),
-                Param("Alpha", p.Alpha),
-                UI.DynamicElementIf(
-                    () => p.ColorMode == Primitive3DColorMode.UvLerp,
-                    () => UI.Column(
-                        Param("UV Scale", p.UvScale),
-                        Param("UV Offset", p.UvOffset))),
-                UI.DynamicElementIf(
-                    () => p.ColorMode is Primitive3DColorMode.ShadedLerp or Primitive3DColorMode.ToonTwoTone,
-                    () => Param("Light Direction", p.LightDirection)),
-                UI.DynamicElementIf(
-                    () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
-                    () => Param("Toon Threshold", p.ToonThreshold)),
+                UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => p.MaterialMode,
+                    build: mode => mode == Primitive3DMaterialMode.Glass
+                        ? CreateGlassMaterialElement(p)
+                        : CreateStandardMaterialElement(p)),
                 UI.DynamicElementIf(
                     () => p.RenderMode != Primitive3DRenderMode.Surface,
                     () => UI.Column(
@@ -196,6 +184,41 @@ namespace Aetherin
                 Param("Repeater", p.Repeater)
             );
         }
+
+        private static Element CreateStandardMaterialElement(Primitive3DLayerParams p) => UI.Column(
+            UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
+            UI.Field("Color A", () => p.ColorA, value => p.ColorA = value),
+            UI.DynamicElementIf(
+                () => p.ColorMode == Primitive3DColorMode.PaletteRandom,
+                () => UI.Field("Random Seed", () => p.PaletteRandomSeed, value => p.PaletteRandomSeed = value)),
+            UI.DynamicElementIf(
+                () => p.ColorMode != Primitive3DColorMode.Solid &&
+                      p.ColorMode != Primitive3DColorMode.PaletteRandom,
+                () => UI.Field("Color B", () => p.ColorB, value => p.ColorB = value)),
+            Param("Color Intensity", p.ColorIntensity),
+            Param("Alpha", p.Alpha),
+            UI.DynamicElementIf(
+                () => p.ColorMode == Primitive3DColorMode.UvLerp,
+                () => UI.Column(Param("UV Scale", p.UvScale), Param("UV Offset", p.UvOffset))),
+            UI.DynamicElementIf(
+                () => p.ColorMode is Primitive3DColorMode.ShadedLerp or Primitive3DColorMode.ToonTwoTone,
+                () => Param("Light Direction", p.LightDirection)),
+            UI.DynamicElementIf(
+                () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
+                () => Param("Toon Threshold", p.ToonThreshold)));
+
+        private static Element CreateGlassMaterialElement(Primitive3DLayerParams p) => UI.Column(
+            UI.Field("Tint Color", () => p.ColorA, value => p.ColorA = value),
+            UI.Field("Edge Color", () => p.ColorB, value => p.ColorB = value),
+            Param("Color Intensity", p.ColorIntensity),
+            Param("Alpha", p.Alpha),
+            Param("Refraction", p.GlassRefraction),
+            Param("Tint", p.GlassTint),
+            Param("Fresnel Power", p.GlassFresnelPower),
+            Param("Fresnel Intensity", p.GlassFresnelIntensity),
+            Param("Chromatic Aberration", p.GlassChromaticAberration),
+            Param("Distortion", p.GlassDistortion),
+            Param("Distortion Scale", p.GlassDistortionScale));
 
         #endregion
     }

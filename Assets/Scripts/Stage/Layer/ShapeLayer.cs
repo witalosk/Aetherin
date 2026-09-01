@@ -255,6 +255,8 @@ namespace Aetherin
 
             ApplyColor(_fillMaterial, _evaluatedFillColor);
             ApplyColor(_strokeMaterial, _evaluatedStrokeColor);
+            LayerMaterialUtility.ApplyBlendMode(_fillMaterial, _params.BlendMode);
+            LayerMaterialUtility.ApplyBlendMode(_strokeMaterial, _params.BlendMode);
         }
 
         private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)

@@ -27,11 +27,18 @@ namespace Aetherin
         SurfaceAndWireframe,
     }
 
+    public enum Primitive3DMaterialMode
+    {
+        Standard,
+        Glass,
+    }
+
     [Serializable]
     public class Primitive3DLayerParams : StageLayerParams
     {
         public Primitive3DType Primitive;
         public Primitive3DRenderMode RenderMode;
+        public Primitive3DMaterialMode MaterialMode;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -50,6 +57,15 @@ namespace Aetherin
         public int PaletteRandomSeed;
         public FloatParameter ColorIntensity = new(1f);
         public FloatParameter Alpha = new(1f);
+
+        [Tooltip("背景をずらして見せる疑似屈折の強さ")]
+        public FloatParameter GlassRefraction = new(0.025f);
+        public FloatParameter GlassTint = new(0.2f);
+        public FloatParameter GlassFresnelPower = new(3f);
+        public FloatParameter GlassFresnelIntensity = new(0.8f);
+        public FloatParameter GlassChromaticAberration = new(0.002f);
+        public FloatParameter GlassDistortion = new(0.003f);
+        public FloatParameter GlassDistortionScale = new(12f);
 
         public PaletteColorSource WireColor = PaletteColorSource.AccentColor1;
         [Tooltip("ワイヤーの太さ（プリミティブのローカル空間）")]

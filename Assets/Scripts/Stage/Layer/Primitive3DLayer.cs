@@ -22,6 +22,14 @@ namespace Aetherin
         private static readonly int UvParamsId = Shader.PropertyToID("_UvParams");
         private static readonly int LightDirectionId = Shader.PropertyToID("_LightDirection");
         private static readonly int ToonThresholdId = Shader.PropertyToID("_ToonThreshold");
+        private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
+        private static readonly int GlassRefractionId = Shader.PropertyToID("_GlassRefraction");
+        private static readonly int GlassTintId = Shader.PropertyToID("_GlassTint");
+        private static readonly int GlassFresnelPowerId = Shader.PropertyToID("_GlassFresnelPower");
+        private static readonly int GlassFresnelIntensityId = Shader.PropertyToID("_GlassFresnelIntensity");
+        private static readonly int GlassChromaticAberrationId = Shader.PropertyToID("_GlassChromaticAberration");
+        private static readonly int GlassDistortionId = Shader.PropertyToID("_GlassDistortion");
+        private static readonly int GlassDistortionScaleId = Shader.PropertyToID("_GlassDistortionScale");
         private static readonly int ShapeMatrixId = Shader.PropertyToID("_ShapeMatrix");
         private static readonly int ShapeNormalMatrixId = Shader.PropertyToID("_ShapeNormalMatrix");
         private static readonly int UsePaletteRandomId = Shader.PropertyToID("_UsePaletteRandom");
@@ -65,6 +73,13 @@ namespace Aetherin
         private float _evaluatedUvOffset;
         private Vector3 _evaluatedLightDirection = Vector3.up;
         private float _evaluatedToonThreshold = 0.5f;
+        private float _evaluatedGlassRefraction = 0.025f;
+        private float _evaluatedGlassTint = 0.2f;
+        private float _evaluatedGlassFresnelPower = 3f;
+        private float _evaluatedGlassFresnelIntensity = 0.8f;
+        private float _evaluatedGlassChromaticAberration = 0.002f;
+        private float _evaluatedGlassDistortion = 0.003f;
+        private float _evaluatedGlassDistortionScale = 12f;
         private EvaluatedRepeater _evaluatedRepeater;
         private Color _evaluatedColorA = Color.white;
         private Color _evaluatedColorB = Color.white;
@@ -174,6 +189,13 @@ namespace Aetherin
             _params.UvOffset ??= new FloatParameter(0f);
             _params.LightDirection ??= new Vector3Parameter(new Vector3(0.3f, 0.8f, -0.5f));
             _params.ToonThreshold ??= new FloatParameter(0.5f);
+            _params.GlassRefraction ??= new FloatParameter(0.025f);
+            _params.GlassTint ??= new FloatParameter(0.2f);
+            _params.GlassFresnelPower ??= new FloatParameter(3f);
+            _params.GlassFresnelIntensity ??= new FloatParameter(0.8f);
+            _params.GlassChromaticAberration ??= new FloatParameter(0.002f);
+            _params.GlassDistortion ??= new FloatParameter(0.003f);
+            _params.GlassDistortionScale ??= new FloatParameter(12f);
             _params.Repeater ??= new RepeaterParams();
             _params.Repeater.EnsureInitialized(MaxRepeaterCopies);
         }
@@ -284,6 +306,15 @@ namespace Aetherin
             if (_evaluatedLightDirection.sqrMagnitude < 0.000001f) _evaluatedLightDirection = Vector3.up;
             _evaluatedLightDirection.Normalize();
             _evaluatedToonThreshold = Mathf.Clamp01(_params.ToonThreshold?.Evaluate(context) ?? 0.5f);
+            _evaluatedGlassRefraction = Mathf.Max(0f, _params.GlassRefraction?.Evaluate(context) ?? 0.025f);
+            _evaluatedGlassTint = Mathf.Clamp01(_params.GlassTint?.Evaluate(context) ?? 0.2f);
+            _evaluatedGlassFresnelPower = Mathf.Max(0.01f, _params.GlassFresnelPower?.Evaluate(context) ?? 3f);
+            _evaluatedGlassFresnelIntensity = Mathf.Max(0f, _params.GlassFresnelIntensity?.Evaluate(context) ?? 0.8f);
+            _evaluatedGlassChromaticAberration = Mathf.Max(0f,
+                _params.GlassChromaticAberration?.Evaluate(context) ?? 0.002f);
+            _evaluatedGlassDistortion = Mathf.Max(0f, _params.GlassDistortion?.Evaluate(context) ?? 0.003f);
+            _evaluatedGlassDistortionScale = Mathf.Max(0.01f,
+                _params.GlassDistortionScale?.Evaluate(context) ?? 12f);
             _evaluatedRepeater = EvaluatedRepeater.Evaluate(_params.Repeater, context, MaxRepeaterCopies);
 
             ColorPalette palette = Application.isPlaying && _deckStateProvider != null
@@ -320,6 +351,17 @@ namespace Aetherin
             _material.SetVector(UvParamsId, new Vector4(_evaluatedUvScale, _evaluatedUvOffset, 0f, 0f));
             _material.SetVector(LightDirectionId, _evaluatedLightDirection);
             _material.SetFloat(ToonThresholdId, _evaluatedToonThreshold);
+            bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
+            _material.SetFloat(MaterialModeId, glass ? 1f : 0f);
+            LayerMaterialUtility.ApplyBlendMode(_material,
+                glass ? LayerBlendMode.Transparent : _params.BlendMode);
+            _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
+            _material.SetFloat(GlassTintId, _evaluatedGlassTint);
+            _material.SetFloat(GlassFresnelPowerId, _evaluatedGlassFresnelPower);
+            _material.SetFloat(GlassFresnelIntensityId, _evaluatedGlassFresnelIntensity);
+            _material.SetFloat(GlassChromaticAberrationId, _evaluatedGlassChromaticAberration);
+            _material.SetFloat(GlassDistortionId, _evaluatedGlassDistortion);
+            _material.SetFloat(GlassDistortionScaleId, _evaluatedGlassDistortionScale);
             ApplyRandomPalette();
 
             Vector3 rotation = new(
@@ -346,6 +388,11 @@ namespace Aetherin
             _wireMaterial.SetColor(BaseColorId, _evaluatedWireColor);
             _wireMaterial.SetColor(ColorBId, _evaluatedWireColor);
             _wireMaterial.SetFloat(ColorModeId, (float)Primitive3DColorMode.Solid);
+            _wireMaterial.SetFloat(MaterialModeId, 0f);
+            LayerMaterialUtility.ApplyBlendMode(_wireMaterial,
+                _params.MaterialMode == Primitive3DMaterialMode.Glass
+                    ? LayerBlendMode.Transparent
+                    : _params.BlendMode);
             _wireMaterial.SetFloat(UsePaletteRandomId, 0f);
             _wireMaterial.SetMatrix(ShapeMatrixId, matrix);
             _wireMaterial.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
