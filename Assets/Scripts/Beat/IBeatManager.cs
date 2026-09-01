@@ -31,8 +31,19 @@ namespace Aetherin
 
         #region 拍 (サブ拍)
 
-        /// <summary> 拍内の位置 (0..1)。拍の頭が0 </summary>
+        /// <summary>
+        /// 有効な拍の拍内位置 (0..1)。無効な拍では常に1となり、Beatモジュレーションは発火しない。
+        /// </summary>
         float BeatPhase { get; }
+
+        /// <summary>指定した小節内の拍を Beat モジュレーションの対象にするか。</summary>
+        bool IsBeatEnabled(int beatInBar);
+
+        /// <summary>指定した小節内の拍の Beat モジュレーション対象を切り替える。</summary>
+        void SetBeatEnabled(int beatInBar, bool enabled);
+
+        /// <summary>指定した小節内の拍の Beat モジュレーション対象を反転する。</summary>
+        void ToggleBeatEnabled(int beatInBar);
 
         /// <summary> 小節頭からの通算の拍数 </summary>
         int BeatCount { get; }
@@ -81,6 +92,12 @@ namespace Aetherin
         void Stop();
 
         void SetBpm(float bpm);
+
+        /// <summary>現在のBPMを2倍にする。拍内位相は維持する。</summary>
+        void DoubleBpm();
+
+        /// <summary>現在のBPMを半分にする。拍内位相は維持する。</summary>
+        void HalfBpm();
 
         /// <summary>
         /// 推定を上書きする

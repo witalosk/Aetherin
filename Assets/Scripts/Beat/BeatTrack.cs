@@ -110,6 +110,7 @@ namespace Aetherin
             // UIから毎フレーム同じ値が書き込まれてもタップ列を壊さないようにする
             if (Mathf.Approximately(Bpm, clamped)) return;
 
+            // Phase は変更しない。テンポ変更後も、現在の拍内位置から新しい速度で進める。
             Bpm = clamped;
 
             // 手動でBPMを変えた場合はタップ列を破棄する (次のタップから測り直す)

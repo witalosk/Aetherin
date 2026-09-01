@@ -25,6 +25,9 @@ namespace Aetherin
         [Range(2, 16)]
         public int MaxBeatsPerBar = 8;
 
+        [Tooltip("小節内の各拍を Beat モジュレーションとして扱うか。1番目が小節頭です")]
+        public List<bool> EnabledBeats = new() { true, true, true, true };
+
         [Tooltip("この秒数タップが途切れたらタップ列をリセットする")]
         public float TapTimeout = 2f;
 
@@ -55,12 +58,13 @@ namespace Aetherin
         public int CountingBeats => _tapsSinceMainTap;
         public bool IsBeatsPerBarEstimated { get; private set; }
 
-        public float BeatPhase => _beat.Phase;
+        public float BeatPhase => IsBeatEnabled(BeatInBar) ? _beat.Phase : 1f;
         public int BeatCount => _beat.BeatCount;
         public int BeatInBar => _beat.BeatInBar;
-        public bool WasBeat => _beat.WasBeat;
+        public bool WasBeat => _beat.WasBeat && IsBeatEnabled(BeatInBar);
 
-        public float BarPhase => BeatsPerBar <= 0 ? 0f : (BeatInBar + BeatPhase) / BeatsPerBar;
+        // Barモジュレーションは小節全体の進行を表すため、Beatの選択状態では止めない。
+        public float BarPhase => BeatsPerBar <= 0 ? 0f : (BeatInBar + _beat.Phase) / BeatsPerBar;
         public int BarCount { get; private set; }
         public bool WasBar => _lastBarFrame == Time.frameCount;
 
@@ -137,7 +141,26 @@ namespace Aetherin
 
         public void SetBpm(float bpm) => _beat.SetBpm(bpm);
 
+        public void DoubleBpm() => SetBpm(Bpm * 2f);
+
+        public void HalfBpm() => SetBpm(Bpm * 0.5f);
+
         public void SetBeatsPerBar(int beatsPerBar) => _params.BeatsPerBar = Mathf.Clamp(beatsPerBar, 1, 16);
+
+        public bool IsBeatEnabled(int beatInBar)
+        {
+            EnsureEnabledBeatCount();
+            return beatInBar >= 0 && beatInBar < _params.EnabledBeats.Count && _params.EnabledBeats[beatInBar];
+        }
+
+        public void SetBeatEnabled(int beatInBar, bool enabled)
+        {
+            EnsureEnabledBeatCount();
+            if (beatInBar < 0 || beatInBar >= _params.EnabledBeats.Count) return;
+            _params.EnabledBeats[beatInBar] = enabled;
+        }
+
+        public void ToggleBeatEnabled(int beatInBar) => SetBeatEnabled(beatInBar, !IsBeatEnabled(beatInBar));
 
         /// <summary>
         /// 主拍から次の主拍までに数えたタップ数を拍子として採用する
@@ -188,6 +211,7 @@ namespace Aetherin
 
         private void ApplyParams()
         {
+            EnsureEnabledBeatCount();
             _beat.BeatsPerBar = _params.BeatsPerBar;
             _beat.TapTimeout = _params.TapTimeout;
             _beat.TapHistoryCount = _params.TapHistoryCount;
@@ -204,7 +228,14 @@ namespace Aetherin
                 OnBar?.Invoke(BarCount);
             }
 
-            OnBeat?.Invoke(beatCount);
+            if (IsBeatEnabled(_beat.BeatInBar)) OnBeat?.Invoke(beatCount);
+        }
+
+        private void EnsureEnabledBeatCount()
+        {
+            _params.EnabledBeats ??= new List<bool>();
+            int count = Mathf.Clamp(_params.BeatsPerBar, 1, 16);
+            while (_params.EnabledBeats.Count < count) _params.EnabledBeats.Add(true);
         }
 
         private void ReadKeyboard()
@@ -262,9 +293,15 @@ namespace Aetherin
                         readStatus: () => BeatsPerBar,
                         build: _ => UI.Row(CreateBeatCells()))
                 ),
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => BeatsPerBar,
+                    build: _ => UI.Row(CreateBeatToggleElements())),
                 CreatePhaseBarElement("Beat", () => BeatPhase, BeatColor),
                 CreatePhaseBarElement("Bar ", () => BarPhase, BarColor),
-                UI.Slider("BPM", () => Bpm, SetBpm, _params.MinBpm, _params.MaxBpm),
+                UI.Row(
+                    UI.Slider("BPM", () => Bpm, SetBpm, _params.MinBpm, _params.MaxBpm),
+                    UI.Button("÷2", HalfBpm),
+                    UI.Button("×2", DoubleBpm)),
                 UI.Slider("Beats / Bar", () => BeatsPerBar, SetBeatsPerBar, 1, 16),
                 UI.Row(
                     UI.Button(UI.Label(() => $"Tap Main [{_params.MainTapKey}]"), TapMain),
@@ -308,9 +345,20 @@ namespace Aetherin
                     .RegisterUpdateCallback(element =>
                     {
                         bool isCurrent = IsRunning && BeatInBar == index;
-                        var baseColor = index == 0 ? BarColor : BeatColor;
+                        var baseColor = IsBeatEnabled(index) ? (index == 0 ? BarColor : BeatColor) : Color.gray;
                         element.SetBackgroundColor(isCurrent ? baseColor : baseColor * 0.18f);
                     });
+            }
+        }
+
+        private IEnumerable<Element> CreateBeatToggleElements()
+        {
+            for (int i = 0; i < BeatsPerBar; i++)
+            {
+                int index = i;
+                yield return UI.Toggle($"Beat {index + 1}",
+                    () => IsBeatEnabled(index),
+                    enabled => SetBeatEnabled(index, enabled));
             }
         }
 
