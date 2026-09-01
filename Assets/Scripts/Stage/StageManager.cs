@@ -27,6 +27,9 @@ namespace Aetherin
         [Tooltip("フェーダーがこの値まで振り切ったらCurrent / Nextを入れ替える")]
         [Range(0.9f, 1f)]
         public float SwapThreshold = 0.99f;
+
+        [Tooltip("Current / Next / 合成後Outputへ即時適用するポストエフェクト。メインCrossFaderからは独立しています")]
+        public PostEffectManagerParams PostEffects = new();
     }
 
     /// <summary>
@@ -71,6 +74,7 @@ namespace Aetherin
         [SerializeField] private Renderer _nextPreviewRenderer;
         [Space]
         [SerializeField] private Shader _crossFadeShader;
+        [SerializeField] private Shader _postEffectShader;
         [Space]
         [SerializeField] private List<StageBase> _stages;
         [SerializeField] private StageManagerParams _params = new();
@@ -95,14 +99,26 @@ namespace Aetherin
 
         private IContainer _container;
         private IApplicationManager _applicationManager;
+        private IAudioFeatureProvider _audioFeatureProvider;
+        private IBeatManager _beatManager;
         private Material _crossFadeMaterial;
+        private RenderTexture _crossFadeTexture;
+        private PostEffectManager _postEffectManager;
+        private Texture _currentPostTexture;
+        private Texture _nextPostTexture;
         private CameraStageSaveData _pendingCameraStageData;
 
         [Inject]
-        public void Construct(IContainer container, IApplicationManager applicationManager)
+        public void Construct(
+            IContainer container,
+            IApplicationManager applicationManager,
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager)
         {
             _container = container;
             _applicationManager = applicationManager;
+            _audioFeatureProvider = audioFeatureProvider;
+            _beatManager = beatManager;
         }
 
         public DeckState GetState(StageDeck deck) => deck == StageDeck.Current ? _currentState : NextState;
@@ -111,7 +127,11 @@ namespace Aetherin
         {
             OutputTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0,
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            _crossFadeTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0,
+                RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
+            _postEffectManager = new PostEffectManager(
+                _postEffectShader != null ? _postEffectShader : Shader.Find("Hidden/Aetherin/PostEffectStack"));
 
             BuildDecks();
             ApplyPendingCameraStageData();
@@ -171,13 +191,24 @@ namespace Aetherin
             var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
             var nextTexture = GetStageTexture(_nextStages, _params.NextStageIndex);
 
-            _crossFadeMaterial.SetTexture(TexAId, currentTexture);
-            _crossFadeMaterial.SetTexture(TexBId, nextTexture);
-            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
-            Graphics.Blit(null, OutputTexture, _crossFadeMaterial);
+            var modulationContext = new ModulationContext(
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+            _params.PostEffects ??= new PostEffectManagerParams();
+            _currentPostTexture = _postEffectManager.ProcessCurrent(
+                currentTexture, _params.PostEffects.Current, modulationContext);
+            _nextPostTexture = _postEffectManager.ProcessNext(
+                nextTexture, _params.PostEffects.Next, modulationContext);
 
-            if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, currentTexture);
-            if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, nextTexture);
+            _crossFadeMaterial.SetTexture(TexAId, _currentPostTexture);
+            _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
+            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
+            Graphics.Blit(null, _crossFadeTexture, _crossFadeMaterial);
+            var outputPostTexture = _postEffectManager.ProcessOutput(
+                _crossFadeTexture, _params.PostEffects.Output, modulationContext);
+            Graphics.Blit(outputPostTexture, OutputTexture);
+
+            if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, _currentPostTexture);
+            if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, _nextPostTexture);
         }
 
         /// <summary>
@@ -308,7 +339,9 @@ namespace Aetherin
         private void OnDestroy()
         {
             if (OutputTexture != null) OutputTexture.Release();
+            if (_crossFadeTexture != null) _crossFadeTexture.Release();
             if (_crossFadeMaterial != null) Destroy(_crossFadeMaterial);
+            _postEffectManager?.Dispose();
         }
 
         /// <summary>
@@ -416,8 +449,8 @@ namespace Aetherin
                         )
                     )),
                     CreatePreviewWindowLauncher("Output Preview", () => OutputTexture),
-                    CreatePreviewWindowLauncher("Current Preview", () => GetStageTexture(_currentStages, _params.CurrentStageIndex)),
-                    CreatePreviewWindowLauncher("Next Preview", () => GetStageTexture(_nextStages, _params.NextStageIndex))
+                    CreatePreviewWindowLauncher("Current Preview", () => _currentPostTexture),
+                    CreatePreviewWindowLauncher("Next Preview", () => _nextPostTexture)
                 ),
                 UI.Dropdown("Current",
                     () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),

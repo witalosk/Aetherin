@@ -26,6 +26,9 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<RepeaterParams>(CreateRepeaterElement);
             UICustom.RegisterElementCreationFunc<ShapeLayerParams>(CreateShapeLayerParamsElement);
             UICustom.RegisterElementCreationFunc<Primitive3DLayerParams>(CreatePrimitive3DLayerParamsElement);
+            UICustom.RegisterElementCreationFunc<PostEffectManagerParams>(CreatePostEffectManagerElement);
+            UICustom.RegisterElementCreationFunc<PostEffectStack>(CreatePostEffectStackElement);
+            UICustom.RegisterElementCreationFunc<PostEffectModule>(CreatePostEffectModuleElement);
         }
 
         private static string LabelText(LabelElement label) => label?.Value ?? "Parameter";
