@@ -37,8 +37,8 @@ namespace Aetherin
         
         public Element CreateElement(LabelElement label)
         {
-            return UI.Column(
-                UI.Field(UI.Label(() => Palette.Name), Binder.Create(Palette, typeof(ColorPalette))),
+            return UI.Fold(UI.Label(() => $"<color=#{ColorUtility.ToHtmlStringRGB(Palette.BackgroundColor1)}>■</color> <color=#{ColorUtility.ToHtmlStringRGB(Palette.AccentColor1)}>■</color> <color=#{ColorUtility.ToHtmlStringRGB(Palette.SubAccentColor1)}>■</color> {Palette.Name}"),
+                UI.Field(null, Binder.Create(Palette, typeof(ColorPalette))),
                 UI.Field("Binding", Binder.Create(Binding, typeof(MidiBinding)))
             ).SetBackgroundColor(Palette.AccentColor1 * 0.5f);
         }
