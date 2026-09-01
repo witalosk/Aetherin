@@ -18,6 +18,12 @@ namespace Aetherin
         [Tooltip("Nextに出すステージを選ぶボタン (登録ステージと同じ並び)")]
         public List<MidiBinding> StageSelectButtons = new();
 
+        [Tooltip("選択中のNext CameraStageにあるレイヤーを、リストのインデックス順でON/OFFするPad")]
+        public List<MidiBinding> LayerToggleButtons = new();
+
+        [Tooltip("表示中レイヤーに対応するPadのLED色")]
+        public Color LayerToggleColor = new(0.3f, 1f, 0.35f);
+
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -185,6 +191,7 @@ namespace Aetherin
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
 
             UpdateStageSelect();
+            UpdateLayerToggleButtons();
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
@@ -228,6 +235,38 @@ namespace Aetherin
                 if (i == _params.NextStageIndex) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
                 else if (i == _params.CurrentStageIndex) ledColor = StageLedColor;
                 button.SetLed(ledColor);
+            }
+        }
+
+        /// <summary>
+        /// Binding自体をレイヤーへ持たせず、選択中Nextステージのレイヤーリスト位置へ対応させる。
+        /// レイヤーを並び替えた場合、Padの対象も新しいインデックスへ追従する。
+        /// </summary>
+        private void UpdateLayerToggleButtons()
+        {
+            _params.LayerToggleButtons ??= new List<MidiBinding>();
+
+            IReadOnlyList<StageLayer> layers = null;
+            if (_nextStages != null && _nextStages.Count > 0)
+            {
+                int stageIndex = Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1);
+                if (_nextStages[stageIndex] is CameraStage cameraStage) layers = cameraStage.Layers;
+            }
+
+            for (int index = 0; index < _params.LayerToggleButtons.Count; index++)
+            {
+                MidiBinding button = _params.LayerToggleButtons[index];
+                if (button == null) continue;
+
+                StageLayer layer = layers != null && index < layers.Count ? layers[index] : null;
+                if (layer == null)
+                {
+                    button.ClearLed();
+                    continue;
+                }
+
+                if (button.WasNoteOn) layer.Visible = !layer.Visible;
+                button.SetLed(layer.Visible ? _params.LayerToggleColor : _params.LayerToggleColor * 0.08f);
             }
         }
 
