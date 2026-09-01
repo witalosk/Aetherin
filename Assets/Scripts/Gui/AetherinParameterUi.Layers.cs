@@ -1,0 +1,202 @@
+using System;
+using System.Collections.Generic;
+using RosettaUI;
+
+namespace Aetherin
+{
+    public static partial class AetherinParameterUi
+    {
+        #region PaletteColor
+
+        private static Element CreatePaletteColorElement(LabelElement label, IBinder<PaletteColorParameter> binder)
+        {
+            var parameter = binder.Get();
+            if (parameter == null) return UI.Row(label, UI.Label("-"));
+
+            string name = LabelText(label);
+
+            return UI.Row(
+                UI.Field(label, () => parameter.Mode, value => parameter.Mode = value).SetFlexGrow(1f),
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => parameter.Mode,
+                    build: mode => mode == PaletteColorMode.Single
+                        ? UI.Field(null, () => parameter.Color, value => parameter.Color = value).SetFlexGrow(1f)
+                        : mode == PaletteColorMode.Gradient ? UI.Row(
+                            UI.Field(null, () => parameter.GradientColorA,
+                                value => parameter.GradientColorA = value).SetFlexGrow(1f),
+                            UI.Field(null, () => parameter.GradientColorB,
+                                value => parameter.GradientColorB = value).SetFlexGrow(1f)
+                        ) : UI.Field("Seed", () => parameter.RandomSeed,
+                            value => parameter.RandomSeed = value).SetFlexGrow(1f)),
+                UI.WindowLauncher("...",
+                        UI.Window($"{name} Color",
+                            UI.Column(
+                                Param("Intensity", parameter.Intensity),
+                                Param("Alpha", parameter.Alpha),
+                                UI.DynamicElementIf(() => parameter.Mode == PaletteColorMode.Gradient,
+                                    () => UI.Column(
+                                        Param("Angle", parameter.GradientAngle),
+                                        Param("Offset", parameter.GradientOffset),
+                                        Param("Scale", parameter.GradientScale)
+                                    ))
+                            )).SetWidth(DetailWindowWidth))
+                    .SetWidth(32f)
+            );
+        }
+
+        #endregion
+
+        #region ShapeLayer
+
+        /// <summary>
+        /// 現在の設定で効かない項目は表示しない
+        /// (Shapeに関係ないパラメータ、Fill / Stroke無効時の色や幅など)
+        /// </summary>
+        private static Element CreateShapeLayerParamsElement(LabelElement label, IBinder<ShapeLayerParams> binder)
+        {
+            var p = binder.Get();
+            if (p == null) return UI.Label("-");
+
+            return UI.Column(
+                Param("Opacity", p.Opacity),
+                UI.Field("Shape", () => p.Shape, value => p.Shape = value),
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => p.Shape,
+                    build: shape => CreateShapeSpecificElement(p, shape)),
+                Param("Size", p.Size),
+                Param("Position", p.Position),
+                Param("Rotation", p.Rotation),
+                Param("Scale", p.Scale),
+                Param("Anchor", p.Anchor),
+                UI.Toggle("Fill", () => p.FillEnabled, value => p.FillEnabled = value),
+                UI.DynamicElementIf(() => p.FillEnabled, () => Param("Fill Color", p.FillColor)),
+                UI.Toggle("Stroke", () => p.StrokeEnabled, value => p.StrokeEnabled = value),
+                UI.DynamicElementIf(() => p.StrokeEnabled, () => UI.Column(
+                    Param("Stroke Width", p.StrokeWidth),
+                    Param("Stroke Color", p.StrokeColor),
+                    Param("Stroke Trim", p.StrokeTrim)
+                )),
+                Param("Repeater", p.Repeater)
+            );
+        }
+
+        private static Element CreateShapeSpecificElement(ShapeLayerParams p, ShapePrimitive shape)
+        {
+            return shape switch
+            {
+                ShapePrimitive.Ellipse => UI.Field("Segments",
+                    () => p.EllipseSegments, value => p.EllipseSegments = value),
+                ShapePrimitive.Polygon => Param("Points", p.Points),
+                ShapePrimitive.Star => UI.Column(
+                    Param("Points", p.Points),
+                    Param("Inner Radius", p.InnerRadius)),
+                _ => null,
+            };
+        }
+
+        /// <summary>
+        /// Enabledのときだけ中身を並べる (Foldを増やさずに済ませる)
+        /// </summary>
+        private static Element CreateStrokeTrimElement(LabelElement label, IBinder<StrokeTrimParams> binder)
+        {
+            var trim = binder.Get();
+            if (trim == null) return UI.Label("-");
+
+            return UI.Column(
+                UI.Toggle(label ?? (LabelElement)"Stroke Trim", () => trim.Enabled, value => trim.Enabled = value),
+                UI.DynamicElementIf(() => trim.Enabled, () => UI.Column(
+                    Param("Trim Start", trim.Start),
+                    Param("Trim End", trim.End),
+                    Param("Trim Offset", trim.Offset)
+                ))
+            );
+        }
+
+        private static Element CreateRepeaterElement(LabelElement label, IBinder<RepeaterParams> binder)
+        {
+            var repeater = binder.Get();
+            if (repeater == null) return UI.Label("-");
+
+            return UI.Column(
+                UI.Toggle(label ?? (LabelElement)"Repeater", () => repeater.Enabled, value => repeater.Enabled = value),
+                UI.DynamicElementIf(() => repeater.Enabled, () => UI.Column(
+                    Param("Copies", repeater.Copies),
+                    Param("Position", repeater.Position),
+                    Param("Rotation", repeater.Rotation),
+                    Param("Scale", repeater.Scale),
+                    Param("Anchor", repeater.Anchor),
+                    UI.Field("Transform Mode", () => repeater.TransformMode,
+                        value => repeater.TransformMode = value),
+                    UI.DynamicElementIf(
+                        () => repeater.TransformMode == RepeaterTransformMode.Cumulative,
+                        () => UI.Toggle("Rotation Affects Position", () => repeater.RotationAffectsPosition,
+                            value => repeater.RotationAffectsPosition = value)),
+                    Param("Animation Phase Offset", repeater.AnimationPhaseOffset),
+                    Param("Opacity Start", repeater.StartOpacity),
+                    Param("Opacity End", repeater.EndOpacity)
+                ))
+            );
+        }
+
+        #endregion
+
+        #region Primitive3DLayer
+
+        private static Element CreatePrimitive3DLayerParamsElement(
+            LabelElement label,
+            IBinder<Primitive3DLayerParams> binder)
+        {
+            var p = binder.Get();
+            if (p == null) return UI.Label("-");
+
+            return UI.Column(
+                Param("Opacity", p.Opacity),
+                UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
+                UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
+                UI.DynamicElementIf(
+                    () => p.Primitive is Primitive3DType.Sphere or Primitive3DType.Cylinder,
+                    () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
+                UI.DynamicElementIf(
+                    () => p.Primitive == Primitive3DType.Sphere,
+                    () => UI.Field("Latitude Segments", () => p.LatitudeSegments, value => p.LatitudeSegments = value)),
+                Param("Size", p.Size),
+                Param("Position", p.Position),
+                Param("Rotation", p.Rotation),
+                Param("Scale", p.Scale),
+                Param("Anchor", p.Anchor),
+                UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
+                UI.Field("Color A", () => p.ColorA, value => p.ColorA = value),
+                UI.DynamicElementIf(
+                    () => p.ColorMode == Primitive3DColorMode.PaletteRandom,
+                    () => UI.Field("Random Seed", () => p.PaletteRandomSeed, value => p.PaletteRandomSeed = value)),
+                UI.DynamicElementIf(
+                    () => p.ColorMode != Primitive3DColorMode.Solid &&
+                          p.ColorMode != Primitive3DColorMode.PaletteRandom,
+                    () => UI.Field("Color B", () => p.ColorB, value => p.ColorB = value)),
+                Param("Color Intensity", p.ColorIntensity),
+                Param("Alpha", p.Alpha),
+                UI.DynamicElementIf(
+                    () => p.ColorMode == Primitive3DColorMode.UvLerp,
+                    () => UI.Column(
+                        Param("UV Scale", p.UvScale),
+                        Param("UV Offset", p.UvOffset))),
+                UI.DynamicElementIf(
+                    () => p.ColorMode is Primitive3DColorMode.ShadedLerp or Primitive3DColorMode.ToonTwoTone,
+                    () => Param("Light Direction", p.LightDirection)),
+                UI.DynamicElementIf(
+                    () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
+                    () => Param("Toon Threshold", p.ToonThreshold)),
+                UI.DynamicElementIf(
+                    () => p.RenderMode != Primitive3DRenderMode.Surface,
+                    () => UI.Column(
+                        UI.Field("Wire Color", () => p.WireColor, value => p.WireColor = value),
+                        Param("Wire Width", p.WireWidth),
+                        Param("Wire Intensity", p.WireColorIntensity),
+                        Param("Wire Alpha", p.WireAlpha))),
+                Param("Repeater", p.Repeater)
+            );
+        }
+
+        #endregion
+    }
+}
