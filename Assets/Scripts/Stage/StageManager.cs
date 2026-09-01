@@ -360,7 +360,9 @@ namespace Aetherin
             var layers = stage.Layers;
 
             return UI.Column(
-                UI.Button("Add Shape Layer", () => cameraStage.AddShapeLayer()),
+                UI.Row(
+                    UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
+                    UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer())),
                 layers.Count == 0
                     ? UI.Label("レイヤーがありません")
                     : UI.Column(layers.Select(layer => CreateLayerElement(cameraStage, layer))));

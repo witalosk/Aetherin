@@ -25,6 +25,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<StrokeTrimParams>(CreateStrokeTrimElement);
             UICustom.RegisterElementCreationFunc<RepeaterParams>(CreateRepeaterElement);
             UICustom.RegisterElementCreationFunc<ShapeLayerParams>(CreateShapeLayerParamsElement);
+            UICustom.RegisterElementCreationFunc<Primitive3DLayerParams>(CreatePrimitive3DLayerParamsElement);
         }
 
         #region AnimatedParameter
@@ -351,6 +352,53 @@ namespace Aetherin
                     Param("Opacity Start", repeater.StartOpacity),
                     Param("Opacity End", repeater.EndOpacity)
                 ))
+            );
+        }
+
+        #endregion
+
+        #region Primitive3DLayer
+
+        private static Element CreatePrimitive3DLayerParamsElement(
+            LabelElement label,
+            IBinder<Primitive3DLayerParams> binder)
+        {
+            var p = binder.Get();
+            if (p == null) return UI.Label("-");
+
+            return UI.Column(
+                Param("Opacity", p.Opacity),
+                UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
+                UI.DynamicElementIf(
+                    () => p.Primitive is Primitive3DType.Sphere or Primitive3DType.Cylinder,
+                    () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
+                UI.DynamicElementIf(
+                    () => p.Primitive == Primitive3DType.Sphere,
+                    () => UI.Field("Latitude Segments", () => p.LatitudeSegments, value => p.LatitudeSegments = value)),
+                Param("Size", p.Size),
+                Param("Position", p.Position),
+                Param("Rotation", p.Rotation),
+                Param("Scale", p.Scale),
+                Param("Anchor", p.Anchor),
+                UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
+                UI.Field("Color A", () => p.ColorA, value => p.ColorA = value),
+                UI.DynamicElementIf(
+                    () => p.ColorMode != Primitive3DColorMode.Solid,
+                    () => UI.Field("Color B", () => p.ColorB, value => p.ColorB = value)),
+                Param("Color Intensity", p.ColorIntensity),
+                Param("Alpha", p.Alpha),
+                UI.DynamicElementIf(
+                    () => p.ColorMode == Primitive3DColorMode.UvLerp,
+                    () => UI.Column(
+                        Param("UV Scale", p.UvScale),
+                        Param("UV Offset", p.UvOffset))),
+                UI.DynamicElementIf(
+                    () => p.ColorMode is Primitive3DColorMode.ShadedLerp or Primitive3DColorMode.ToonTwoTone,
+                    () => Param("Light Direction", p.LightDirection)),
+                UI.DynamicElementIf(
+                    () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
+                    () => Param("Toon Threshold", p.ToonThreshold)),
+                Param("Repeater", p.Repeater)
             );
         }
 

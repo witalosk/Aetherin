@@ -77,6 +77,19 @@ namespace Aetherin
             return layer;
         }
 
+        public Primitive3DLayer AddPrimitive3DLayer()
+        {
+            var layerObject = new GameObject("Primitive 3D Layer");
+            layerObject.transform.SetParent(transform, false);
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<Primitive3DLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
         public void RemoveLayer(StageLayer layer)
         {
             if (layer == null || !Array.Exists(_layers, item => item == layer)) return;
@@ -101,10 +114,10 @@ namespace Aetherin
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers
-                .Where(layer => layer is ShapeLayer)
+                .Where(layer => layer is ShapeLayer or Primitive3DLayer)
                 .Select(layer => new CameraStageLayerSaveData
                 {
-                    Type = "shape",
+                    Type = layer is ShapeLayer ? "shape" : "primitive3d",
                     Name = layer.gameObject.name,
                     ParamsJson = JsonUtility.ToJson(layer.Params),
                 })
@@ -122,14 +135,21 @@ namespace Aetherin
 
             foreach (var savedLayer in savedLayers ?? Enumerable.Empty<CameraStageLayerSaveData>())
             {
-                if (savedLayer?.Type != "shape")
+                StageLayer layer = savedLayer?.Type switch
+                {
+                    "shape" => AddShapeLayer(),
+                    "primitive3d" => AddPrimitive3DLayer(),
+                    _ => null,
+                };
+
+                if (layer == null)
                 {
                     Debug.LogWarning($"[CameraStage] 未対応のレイヤー型 '{savedLayer?.Type}' を読み込み時にスキップしました。", this);
                     continue;
                 }
 
-                var layer = AddShapeLayer();
-                layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? "Shape Layer" : savedLayer.Name;
+                string fallbackName = layer is ShapeLayer ? "Shape Layer" : "Primitive 3D Layer";
+                layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;
                 if (!string.IsNullOrEmpty(savedLayer.ParamsJson)) JsonUtility.FromJsonOverwrite(savedLayer.ParamsJson, layer.Params);
             }
 
