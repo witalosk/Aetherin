@@ -1,0 +1,789 @@
+{
+  "Version": 4,
+  "Entries": [
+    {
+      "TargetType": "Aetherin.ShapeLayer",
+      "GameObjectName": "ShapeLayer",
+      "ParamsType": "Aetherin.ShapeLayerParams",
+      "Params": {
+        "Visible": true,
+        "Opacity": {
+          "BaseValue": 1.0,
+          "Modulation": {
+            "Modulators": []
+          }
+        },
+        "Order": 0,
+        "Shape": 0,
+        "Position": {
+          "BaseValue": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ApplyXModulationToAllAxes": false,
+          "XModulation": {
+            "Modulators": []
+          },
+          "YModulation": {
+            "Modulators": []
+          },
+          "ZModulation": {
+            "Modulators": []
+          }
+        },
+        "Rotation": {
+          "BaseValue": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ApplyXModulationToAllAxes": false,
+          "XModulation": {
+            "Modulators": []
+          },
+          "YModulation": {
+            "Modulators": []
+          },
+          "ZModulation": {
+            "Modulators": []
+          }
+        },
+        "Scale": {
+          "BaseValue": {
+            "x": 1.0,
+            "y": 1.0,
+            "z": 1.0
+          },
+          "ApplyXModulationToAllAxes": false,
+          "XModulation": {
+            "Modulators": []
+          },
+          "YModulation": {
+            "Modulators": []
+          },
+          "ZModulation": {
+            "Modulators": []
+          }
+        },
+        "Anchor": {
+          "BaseValue": {
+            "x": 0.0,
+            "y": 0.0,
+            "z": 0.0
+          },
+          "ApplyXModulationToAllAxes": false,
+          "XModulation": {
+            "Modulators": []
+          },
+          "YModulation": {
+            "Modulators": []
+          },
+          "ZModulation": {
+            "Modulators": []
+          }
+        },
+        "Size": {
+          "BaseValue": {
+            "x": 21.760000228881836,
+            "y": 12.960000038146973
+          },
+          "ApplyXModulationToBothAxes": true,
+          "XModulation": {
+            "Modulators": [
+              {
+                "Enabled": false,
+                "Source": 4,
+                "Operation": 0,
+                "Amount": 1.0,
+                "Offset": 0.0,
+                "LfoFrequency": 0.0,
+                "LfoPhase": 0.0,
+                "LfoWaveform": 0,
+                "LfoUnipolar": false,
+                "BeatPulseSharpness": 1.1599999666213989,
+                "Midi": {
+                  "_ccNumber": 0
+                }
+              }
+            ]
+          },
+          "YModulation": {
+            "Modulators": []
+          }
+        },
+        "Points": {
+          "BaseValue": 5,
+          "Modulation": {
+            "Modulators": []
+          }
+        },
+        "InnerRadius": {
+          "BaseValue": 0.5,
+          "Modulation": {
+            "Modulators": []
+          }
+        },
+        "EllipseSegments": 64,
+        "FillColor": {
+          "Mode": 0,
+          "Color": 2,
+          "GradientColorA": 2,
+          "GradientColorB": 3,
+          "GradientAngle": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "GradientOffset": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "GradientScale": {
+            "BaseValue": 2.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Intensity": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Alpha": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          }
+        },
+        "FillEnabled": false,
+        "StrokeEnabled": true,
+        "StrokeWidth": {
+          "BaseValue": 0.05000000074505806,
+          "Modulation": {
+            "Modulators": []
+          }
+        },
+        "StrokeColor": {
+          "Mode": 0,
+          "Color": 3,
+          "GradientColorA": 2,
+          "GradientColorB": 3,
+          "GradientAngle": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "GradientOffset": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "GradientScale": {
+            "BaseValue": 2.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Intensity": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Alpha": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          }
+        },
+        "StrokeTrim": {
+          "Enabled": false,
+          "Start": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "End": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Offset": {
+            "BaseValue": 0.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          }
+        },
+        "Repeater": {
+          "Enabled": false,
+          "Copies": {
+            "BaseValue": 3,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "Position": {
+            "BaseValue": {
+              "x": 1.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "ApplyXModulationToAllAxes": false,
+            "XModulation": {
+              "Modulators": []
+            },
+            "YModulation": {
+              "Modulators": []
+            },
+            "ZModulation": {
+              "Modulators": []
+            }
+          },
+          "Rotation": {
+            "BaseValue": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "ApplyXModulationToAllAxes": false,
+            "XModulation": {
+              "Modulators": []
+            },
+            "YModulation": {
+              "Modulators": []
+            },
+            "ZModulation": {
+              "Modulators": []
+            }
+          },
+          "Scale": {
+            "BaseValue": {
+              "x": 1.0,
+              "y": 1.0,
+              "z": 1.0
+            },
+            "ApplyXModulationToAllAxes": false,
+            "XModulation": {
+              "Modulators": []
+            },
+            "YModulation": {
+              "Modulators": []
+            },
+            "ZModulation": {
+              "Modulators": []
+            }
+          },
+          "Anchor": {
+            "BaseValue": {
+              "x": 0.0,
+              "y": 0.0,
+              "z": 0.0
+            },
+            "ApplyXModulationToAllAxes": false,
+            "XModulation": {
+              "Modulators": []
+            },
+            "YModulation": {
+              "Modulators": []
+            },
+            "ZModulation": {
+              "Modulators": []
+            }
+          },
+          "StartOpacity": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          },
+          "EndOpacity": {
+            "BaseValue": 1.0,
+            "Modulation": {
+              "Modulators": []
+            }
+          }
+        }
+      }
+    },
+    {
+      "TargetType": "Aetherin.BeatMidiBinding",
+      "GameObjectName": "BeatMidiBinding",
+      "ParamsType": "Aetherin.BeatMidiBindingParams",
+      "Params": {
+        "MainTapButton": {
+          "_noteNumber": 15
+        },
+        "SubTapButton": {
+          "_noteNumber": 7
+        },
+        "BeatToggleButtons": [
+          {
+            "_noteNumber": 63
+          },
+          {
+            "_noteNumber": 55
+          },
+          {
+            "_noteNumber": 47
+          },
+          {
+            "_noteNumber": 39
+          }
+        ],
+        "HalfBpmButton": {
+          "_noteNumber": 23
+        },
+        "DoubleBpmButton": {
+          "_noteNumber": 31
+        },
+        "MainColor": {
+          "r": 0.34999999403953552,
+          "g": 0.85000002384185791,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "SubColor": {
+          "r": 1.0,
+          "g": 0.64999997615814209,
+          "b": 0.25,
+          "a": 1.0
+        },
+        "BeatToggleColor": {
+          "r": 0.75,
+          "g": 0.30000001192092896,
+          "b": 1.0,
+          "a": 1.0
+        },
+        "BpmButtonColor": {
+          "r": 0.25,
+          "g": 1.0,
+          "b": 0.550000011920929,
+          "a": 1.0
+        },
+        "FlashSharpness": 8.0,
+        "IdleBrightness": 0.079999998211860657,
+        "BrightnessSteps": 12
+      }
+    },
+    {
+      "TargetType": "Aetherin.ColorPaletteManager",
+      "GameObjectName": "ColorPalette",
+      "ParamsType": "Aetherin.ColorPaletteManagerParams",
+      "Params": {
+        "PaletteBindings": [
+          {
+            "Palette": {
+              "Name": "White",
+              "BackgroundColor1": {
+                "r": 0.0,
+                "g": 0.0,
+                "b": 0.0,
+                "a": 1.0
+              },
+              "BackgroundColor2": {
+                "r": 0.24237559735774994,
+                "g": 0.24945509433746338,
+                "b": 0.27044016122817993,
+                "a": 1.0
+              },
+              "AccentColor1": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "AccentColor2": {
+                "r": 0.70440244674682617,
+                "g": 0.70440244674682617,
+                "b": 0.70440244674682617,
+                "a": 1.0
+              },
+              "SubAccentColor1": {
+                "r": 0.6603773832321167,
+                "g": 0.6603773832321167,
+                "b": 0.6603773832321167,
+                "a": 1.0
+              },
+              "SubAccentColor2": {
+                "r": 0.2767295241355896,
+                "g": 0.2767295241355896,
+                "b": 0.2767295241355896,
+                "a": 1.0
+              }
+            },
+            "Binding": {
+              "_noteNumber": 1
+            }
+          },
+          {
+            "Palette": {
+              "Name": "BlueOrange",
+              "BackgroundColor1": {
+                "r": 0.057330403476953506,
+                "g": 0.12412676215171814,
+                "b": 0.27764904499053955,
+                "a": 1.0
+              },
+              "BackgroundColor2": {
+                "r": 0.086912438273429871,
+                "g": 0.17218734323978424,
+                "b": 0.3527987003326416,
+                "a": 1.0
+              },
+              "AccentColor1": {
+                "r": 1.0,
+                "g": 0.57090193033218384,
+                "b": 0.0,
+                "a": 1.0
+              },
+              "AccentColor2": {
+                "r": 0.91372549533843994,
+                "g": 0.60784316062927246,
+                "b": 0.0,
+                "a": 1.0
+              },
+              "SubAccentColor1": {
+                "r": 0.99215686321258545,
+                "g": 1.0,
+                "b": 0.0,
+                "a": 1.0
+              },
+              "SubAccentColor2": {
+                "r": 0.99247843027114868,
+                "g": 1.0,
+                "b": 0.041000008583068848,
+                "a": 1.0
+              }
+            },
+            "Binding": {
+              "_noteNumber": 9
+            }
+          },
+          {
+            "Palette": {
+              "Name": "Pink",
+              "BackgroundColor1": {
+                "r": 1.0,
+                "g": 5.9604644775390625E-08,
+                "b": 0.45060589909553528,
+                "a": 1.0
+              },
+              "BackgroundColor2": {
+                "r": 1.0,
+                "g": 0.0,
+                "b": 0.065503120422363281,
+                "a": 1.0
+              },
+              "AccentColor1": {
+                "r": 1.0,
+                "g": 0.741823673248291,
+                "b": 0.89700043201446533,
+                "a": 1.0
+              },
+              "AccentColor2": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 0.0
+              },
+              "SubAccentColor1": {
+                "r": 0.6691591739654541,
+                "g": 0.0,
+                "b": 0.91815692186355591,
+                "a": 1.0
+              },
+              "SubAccentColor2": {
+                "r": 0.49066877365112305,
+                "g": 0.0,
+                "b": 1.0,
+                "a": 1.0
+              }
+            },
+            "Binding": {
+              "_noteNumber": 17
+            }
+          },
+          {
+            "Palette": {
+              "Name": "GreenWhitePink",
+              "BackgroundColor1": {
+                "r": 1.0,
+                "g": 1.0,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "BackgroundColor2": {
+                "r": 1.0,
+                "g": 0.99999994039535522,
+                "b": 0.99999994039535522,
+                "a": 1.0
+              },
+              "AccentColor1": {
+                "r": 0.22379285097122192,
+                "g": 0.97299998998641968,
+                "b": 5.799531876959918E-08,
+                "a": 1.0
+              },
+              "AccentColor2": {
+                "r": 0.58092999458312988,
+                "g": 0.9649999737739563,
+                "b": 0.0,
+                "a": 1.0
+              },
+              "SubAccentColor1": {
+                "r": 0.99999988079071045,
+                "g": 0.0,
+                "b": 0.77504098415374756,
+                "a": 1.0
+              },
+              "SubAccentColor2": {
+                "r": 1.0,
+                "g": 0.0,
+                "b": 0.92844676971435547,
+                "a": 1.0
+              }
+            },
+            "Binding": {
+              "_noteNumber": 25
+            }
+          },
+          {
+            "Palette": {
+              "Name": "Blue",
+              "BackgroundColor1": {
+                "r": 0.8781667947769165,
+                "g": 0.95665937662124634,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "BackgroundColor2": {
+                "r": 0.0760151743888855,
+                "g": 0.10180651396512985,
+                "b": 0.16500000655651093,
+                "a": 1.0
+              },
+              "AccentColor1": {
+                "r": 5.3410332157000084E-08,
+                "g": 0.19787143170833588,
+                "b": 0.89607667922973633,
+                "a": 1.0
+              },
+              "AccentColor2": {
+                "r": 0.45105040073394775,
+                "g": 0.24800002574920654,
+                "b": 1.0,
+                "a": 1.0
+              },
+              "SubAccentColor1": {
+                "r": 0.9403836727142334,
+                "g": 0.96700000762939453,
+                "b": 0.12184198945760727,
+                "a": 1.0
+              },
+              "SubAccentColor2": {
+                "r": 0.24131670594215393,
+                "g": 0.585857093334198,
+                "b": 0.64104807376861572,
+                "a": 1.0
+              }
+            },
+            "Binding": {
+              "_noteNumber": 33
+            }
+          }
+        ]
+      }
+    },
+    {
+      "TargetType": "Aetherin.ApplicationManager",
+      "GameObjectName": "ApplicationManager",
+      "ParamsType": "Aetherin.ApplicaitonManagerParams",
+      "Params": {
+        "TargetFps": 60,
+        "VSyncCOUnt": 0,
+        "Resolution": {
+          "x": 3840,
+          "y": 2160
+        }
+      }
+    },
+    {
+      "TargetType": "Aetherin.WasapiLoopbackInput",
+      "GameObjectName": "WasapiLoopbackInput",
+      "ParamsType": "Aetherin.WasapiLoopbackInputParams",
+      "Params": {
+        "DeviceId": "{0.0.0.00000000}.{7e63f38c-fcf5-4e1b-a730-274fdf418d2b}",
+        "FftSize": 1024,
+        "WaveformSamples": 1024,
+        "Gain": -4.1999998092651367,
+        "DynamicRange": 107.59999847412109
+      }
+    },
+    {
+      "TargetType": "Aetherin.AudioFeatureProvider",
+      "GameObjectName": "WasapiLoopbackInput",
+      "ParamsType": "Aetherin.AudioFeatureProviderParams",
+      "Params": {
+        "KickMinFrequency": 35.0,
+        "KickSplitFrequency": 80.0,
+        "KickMaxFrequency": 160.0,
+        "KickSensitivity": 1.3500000238418579,
+        "SnareMinFrequency": 180.0,
+        "SnareBodyMaxFrequency": 520.0,
+        "SnareNoiseMinFrequency": 700.0,
+        "SnareNoiseSplitFrequency": 2800.0,
+        "SnareMaxFrequency": 9000.0,
+        "SnareSensitivity": 1.5499999523162842,
+        "FluxThreshold": 1.7999999523162842,
+        "AdaptationTime": 0.89999997615814209,
+        "NoiseGate": 0.0040000001899898052,
+        "KickToSnareRejection": 0.40000000596046448,
+        "TriggerThreshold": 0.11999999731779099,
+        "ReleaseTime": 0.14000000059604645,
+        "Cooldown": 0.090000003576278687
+      }
+    },
+    {
+      "TargetType": "Aetherin.StageManager",
+      "GameObjectName": "Stages",
+      "ParamsType": "Aetherin.StageManagerParams",
+      "Params": {
+        "CrossFader": {
+          "_ccNumber": 48
+        },
+        "ImmediateModeButton": {
+          "_noteNumber": 100
+        },
+        "StageSelectButtons": [
+          {
+            "_noteNumber": 0
+          },
+          {
+            "_noteNumber": 8
+          }
+        ],
+        "CurrentStageIndex": 1,
+        "NextStageIndex": 1,
+        "NextStageOffset": {
+          "x": 0.0,
+          "y": 1000.0,
+          "z": 0.0
+        },
+        "SwapThreshold": 0.99000000953674316
+      }
+    },
+    {
+      "TargetType": "Aetherin.StageManager#Custom",
+      "GameObjectName": "Stages",
+      "ParamsType": "Custom:CameraStageLayers",
+      "Params": {
+        "Version": 1,
+        "Stages": [
+          {
+            "StageIndex": 1,
+            "Layers": [
+              {
+                "Type": "shape",
+                "Name": "ShapeLayer",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":0,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":21.760000228881837,\"y\":12.960000038146973},\"ApplyXModulationToBothAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":4,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":0.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":1.159999966621399,\"Midi\":{\"_ccNumber\":0}}]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":false,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":1.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "ShapeLayer",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":0,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":21.760000228881837,\"y\":12.960000038146973},\"ApplyXModulationToBothAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":4,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":0.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":1.159999966621399,\"Midi\":{\"_ccNumber\":0}}]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":false,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":1.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "Circles",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":0,\"Shape\":1,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":28.489999771118165,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":10.0,\"y\":10.0},\"ApplyXModulationToBothAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":4,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":0.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":1.159999966621399,\"Midi\":{\"_ccNumber\":0}}]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":true,\"Start\":{\"BaseValue\":0.3799999952316284,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":0.7699999809265137,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.6399999856948853,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":10,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":118.69999694824219},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":107.0,\"Offset\":113.4000015258789,\"LfoFrequency\":0.10000000149011612,\"LfoPhase\":0.21899999678134919,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":2.359999895095825,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":0.800000011920929,\"y\":0.800000011920929,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "Rect",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":1,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":21.760000228881837,\"y\":12.960000038146973},\"ApplyXModulationToBothAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":4,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":0.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":1.159999966621399,\"Midi\":{\"_ccNumber\":0}}]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":1,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":180.0,\"Offset\":0.0,\"LfoFrequency\":0.10000000149011612,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":true,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":false,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":1.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "LeftBar",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":3.5399999618530275,\"Modulation\":{\"Modulators\":[]}},\"Order\":2,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":-11.760000228881836,\"y\":-4.659999847412109,\"z\":0.38999998569488528},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":6,\"Operation\":0,\"Amount\":-89.9000015258789,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":0,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":11.789999961853028,\"y\":1.190000057220459},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":1,\"Operation\":0,\"Amount\":2.109999895095825,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":true,\"StrokeEnabled\":false,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":false,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":7.989999771118164,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":1.0,\"Offset\":0.0,\"LfoFrequency\":0.10999999940395355,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":12.079999923706055},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":2.140000104904175,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "PolarBar",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":3,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":30.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":-3.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":2.0,\"y\":0.10000000149011612},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":true,\"StrokeEnabled\":false,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":7,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":3,\"Operation\":0,\"Amount\":12.739999771118164,\"Offset\":-3.2100000381469728,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":49}}]}},\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":72.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.4900000095367432,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":-3.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              },
+              {
+                "Type": "shape",
+                "Name": "Stars",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Order\":4,\"Shape\":3,\"Position\":{\"BaseValue\":{\"x\":9.529999732971192,\"y\":5.659999847412109,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":14.420000076293946},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":false,\"Source\":6,\"Operation\":0,\"Amount\":36.97999954223633,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":0.3100000023841858,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1}}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":2.0,\"y\":2.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Points\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.30000001192092898,\"Modulation\":{\"Modulators\":[]}},\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"Color\":4,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"FillEnabled\":true,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"Color\":3,\"GradientColorA\":2,\"GradientColorB\":3,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":2,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.7300000190734863,\"y\":-0.9399999976158142,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":22.700000762939454},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.5,\"y\":0.5,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "TargetType": "Aetherin.MidiOutput",
+      "GameObjectName": "MidiOutput",
+      "ParamsType": "Aetherin.MidiOutputParams",
+      "Params": {
+        "PortNameFilter": "APC mini mk2",
+        "ReconnectInterval": 2.0,
+        "ClearLedsOnDisable": true
+      }
+    },
+    {
+      "TargetType": "Aetherin.BeatManager",
+      "GameObjectName": "BeatManager",
+      "ParamsType": "Aetherin.BeatManagerParams",
+      "Params": {
+        "MainTapKey": 40,
+        "SubTapKey": 38,
+        "EstimateBeatsPerBar": true,
+        "BeatsPerBar": 4,
+        "MaxBeatsPerBar": 8,
+        "EnabledBeats": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "TapTimeout": 2.0,
+        "TapHistoryCount": 9,
+        "MinBpm": 40.0,
+        "MaxBpm": 300.0,
+        "CellSize": 19.200000762939453
+      }
+    },
+    {
+      "TargetType": "Aetherin.MidiInput",
+      "GameObjectName": "MidiInput",
+      "ParamsType": "Aetherin.MidiInputParams",
+      "Params": {
+        "ShowAllCc": false
+      }
+    },
+    {
+      "TargetType": "Aetherin.MidiSurface",
+      "GameObjectName": "MidiSurface",
+      "ParamsType": "Aetherin.MidiSurfaceParams",
+      "Params": {
+        "PadSize": 26.0,
+        "FaderWidth": 260.0,
+        "AlwaysAllowEmulation": false
+      }
+    }
+  ]
+}

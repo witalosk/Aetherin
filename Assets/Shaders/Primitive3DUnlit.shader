@@ -49,6 +49,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4 positionCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
                 float2 uv : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
                 half4 color : COLOR;
             };
 
