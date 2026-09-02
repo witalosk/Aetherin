@@ -92,6 +92,17 @@ namespace Aetherin
             return layer;
         }
 
+        public GpuParticleLayer AddGpuParticleLayer()
+        {
+            var layerObject = new GameObject("GPU Particle Layer");
+            layerObject.transform.SetParent(transform, false);
+            var layer = layerObject.AddComponent<GpuParticleLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
         public void RemoveLayer(StageLayer layer)
         {
             if (layer == null || !Array.Exists(_layers, item => item == layer)) return;
@@ -116,10 +127,16 @@ namespace Aetherin
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers
-                .Where(layer => layer is ShapeLayer or Primitive3DLayer)
+                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer)
                 .Select(layer => new CameraStageLayerSaveData
                 {
-                    Type = layer is ShapeLayer ? "shape" : "primitive3d",
+                    Type = layer switch
+                    {
+                        ShapeLayer => "shape",
+                        Primitive3DLayer => "primitive3d",
+                        GpuParticleLayer => "gpu-particle",
+                        _ => string.Empty,
+                    },
                     Name = layer.gameObject.name,
                     ParamsJson = JsonUtility.ToJson(layer.Params),
                 })
@@ -141,6 +158,7 @@ namespace Aetherin
                 {
                     "shape" => AddShapeLayer(),
                     "primitive3d" => AddPrimitive3DLayer(),
+                    "gpu-particle" => AddGpuParticleLayer(),
                     _ => null,
                 };
 
@@ -150,7 +168,13 @@ namespace Aetherin
                     continue;
                 }
 
-                string fallbackName = layer is ShapeLayer ? "Shape Layer" : "Primitive 3D Layer";
+                string fallbackName = layer switch
+                {
+                    ShapeLayer => "Shape Layer",
+                    Primitive3DLayer => "Primitive 3D Layer",
+                    GpuParticleLayer => "GPU Particle Layer",
+                    _ => "Layer",
+                };
                 layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;
                 if (!string.IsNullOrEmpty(savedLayer.ParamsJson)) JsonUtility.FromJsonOverwrite(savedLayer.ParamsJson, layer.Params);
             }

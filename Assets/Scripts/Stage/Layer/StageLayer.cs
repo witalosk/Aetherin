@@ -102,7 +102,8 @@ namespace Aetherin
         public Renderer Renderer => LayerRenderer;
 
         protected abstract StageLayerParams LayerParams { get; }
-        protected abstract Renderer LayerRenderer { get; }
+        /// <summary>通常Rendererを持たないGPU/VFXレイヤーではnullでよい。</summary>
+        protected virtual Renderer LayerRenderer => null;
 
         protected virtual void LateUpdate()
         {
@@ -114,14 +115,21 @@ namespace Aetherin
             ApplyLayerState();
         }
 
-        protected void ApplyLayerState()
+        protected virtual void ApplyLayerState()
         {
             var renderer = LayerRenderer;
             var layerParams = LayerParams;
-            if (renderer == null || layerParams == null) return;
+            if (layerParams == null) return;
 
-            renderer.forceRenderingOff = !layerParams.Visible;
-            renderer.sortingOrder = layerParams.Order;
+            if (renderer != null)
+            {
+                renderer.forceRenderingOff = !layerParams.Visible;
+                renderer.sortingOrder = layerParams.Order;
+            }
+
+            ApplyCustomLayerState(layerParams.Visible, layerParams.Order);
         }
+
+        protected virtual void ApplyCustomLayerState(bool visible, int order) { }
     }
 }
