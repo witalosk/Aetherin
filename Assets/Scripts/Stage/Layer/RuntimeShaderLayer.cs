@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityRuntimeShader;
@@ -36,10 +35,14 @@ namespace Aetherin
         private Vector2Int _runtimeResolution;
         private bool _hasCompiled;
         private bool _compileTaskRunning;
+        private bool _compilePending;
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
+
+        // UnityRuntimeShaderの現行ネイティブプラグインはUnity 6/D3D11でEditorを停止させる。
+        private static bool RuntimeCompilerSupported => !Application.unityVersion.StartsWith("6000.");
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -64,11 +67,20 @@ namespace Aetherin
         private void Awake() => InitializeLayer();
         private void OnEnable() => InitializeLayer();
 
+        private void Start()
+        {
+            if (!Application.isPlaying || !RuntimeCompilerSupported || _runtimeRenderer == null) return;
+            // ShaderRenderer.Awakeがネイティブインスタンス生成と初回コンパイルを行う。
+            _hasCompiled = true;
+            _params.LastCompileSucceeded = true;
+            _params.CompileMessage = "Compiled on renderer initialization";
+        }
+
         private void InitializeLayer()
         {
             _params ??= new RuntimeShaderLayerParams();
             _params.EnsureInitialized();
-            _params.CompileRequested = CompileRuntimeShader;
+            _params.CompileRequested = RequestCompile;
             _stage = GetComponentInParent<StageBase>();
             EnsureResources();
             ApplyLayerState();
@@ -78,6 +90,7 @@ namespace Aetherin
         {
             _params.EnsureInitialized();
             EnsureResources();
+            if (_compilePending) CompileRuntimeShaderOnMainThread();
             if (_material == null) return;
 
             bool runtime = Application.isPlaying;
@@ -126,6 +139,13 @@ namespace Aetherin
 
         private void EnsureResources()
         {
+            if (!RuntimeCompilerSupported && !Application.isPlaying)
+            {
+                var unsupportedRenderer = GetComponent<ShaderRenderer>();
+                if (unsupportedRenderer != null) DestroyImmediate(unsupportedRenderer);
+                _runtimeRenderer = null;
+            }
+
             if (_meshFilter == null) _meshFilter = GetComponent<MeshFilter>();
             if (_meshRenderer == null) _meshRenderer = GetComponent<MeshRenderer>();
             if (_mesh == null)
@@ -150,14 +170,18 @@ namespace Aetherin
                 }
             }
 
-            if (_runtimeRenderer == null)
+            if (RuntimeCompilerSupported && _runtimeRenderer == null)
             {
                 _runtimeRenderer = GetComponent<ShaderRenderer>() ?? gameObject.AddComponent<ShaderRenderer>();
                 _runtimeRenderer.RenderEveryFrame = false;
             }
 
-            EnsureRuntimeTexture(GetResolution());
-            if (!_hasCompiled) CompileRuntimeShader();
+            // Play Mode開始時のShaderRenderer.Awakeが、この保存コードを1回だけコンパイルする。
+            if (!Application.isPlaying && _runtimeRenderer != null) _runtimeRenderer.ShaderCode = _params.ShaderCode;
+
+            if (_runtimeRenderer != null) EnsureRuntimeTexture(GetResolution());
+            else if (!RuntimeCompilerSupported)
+                _params.CompileMessage = "Runtime compiler is disabled on Unity 6 (native plugin incompatibility)";
         }
 
         private void EnsureRuntimeTexture(Vector2Int resolution)
@@ -181,8 +205,51 @@ namespace Aetherin
             _runtimeResolution = resolution;
         }
 
-        private async void CompileRuntimeShader()
+        private void RequestCompile()
         {
+            if (!RuntimeCompilerSupported)
+            {
+                _compilePending = false;
+                _hasCompiled = false;
+                _params.LastCompileSucceeded = false;
+                _params.CompileMessage = "Runtime compiler is disabled on Unity 6 (native plugin incompatibility)";
+                return;
+            }
+
+            if (!Application.isPlaying)
+            {
+                _compilePending = false;
+                _hasCompiled = false;
+                _params.LastCompileSucceeded = false;
+                _params.CompileMessage = "Runtime shader compilation is available in Play Mode";
+                return;
+            }
+
+            if (_compileTaskRunning)
+            {
+                _params.CompileMessage = "Compile is already running";
+                return;
+            }
+
+            _compilePending = true;
+            _hasCompiled = false;
+            _params.CompileMessage = "Compile queued";
+        }
+
+        /// <summary>
+        /// UnityRuntimeShaderのネイティブコンパイラはUnityオブジェクトを参照するため、
+        /// 必ずEditor/Playerのメインスレッドから呼び出す。
+        /// </summary>
+        private void CompileRuntimeShaderOnMainThread()
+        {
+            _compilePending = false;
+            if (!Application.isPlaying)
+            {
+                _params.LastCompileSucceeded = false;
+                _params.CompileMessage = "Runtime shader compilation is available in Play Mode";
+                return;
+            }
+
             if (_runtimeRenderer == null)
             {
                 _params.CompileMessage = "Renderer is not initialized";
@@ -197,38 +264,25 @@ namespace Aetherin
             }
 
             _compileTaskRunning = true;
-            // ネイティブコンパイラと描画は同じ内部状態を使うため、並行実行させない。
             _hasCompiled = false;
             _params.CompileMessage = "Compiling...";
             string code = _params.ShaderCode;
-            var compileTask = Task.Run(() =>
+            try
             {
-                try
-                {
-                    bool succeeded = _runtimeRenderer.CompileShaderFromString(code, out string error);
-                    return (Succeeded: succeeded, Error: error, Exception: (System.Exception)null);
-                }
-                catch (System.Exception exception)
-                {
-                    return (Succeeded: false, Error: (string)null, Exception: exception);
-                }
-            });
-
-            if (await Task.WhenAny(compileTask, Task.Delay(5000)) != compileTask)
-                _params.CompileMessage = "Compile timeout (compiler is still running)";
-
-            var result = await compileTask;
-            _compileTaskRunning = false;
-            if (result.Exception != null)
+                bool succeeded = _runtimeRenderer.CompileShaderFromString(code, out string error);
+                _hasCompiled = succeeded;
+                _params.LastCompileSucceeded = succeeded;
+                _params.CompileMessage = succeeded ? "Compiled" : error;
+            }
+            catch (System.Exception exception)
             {
                 _params.LastCompileSucceeded = false;
-                _params.CompileMessage = result.Exception.Message;
-                return;
+                _params.CompileMessage = exception.Message;
             }
-
-            _hasCompiled = result.Succeeded;
-            _params.LastCompileSucceeded = result.Succeeded;
-            _params.CompileMessage = result.Succeeded ? "Compiled" : result.Error;
+            finally
+            {
+                _compileTaskRunning = false;
+            }
         }
 
         private void RenderRuntimeShader(in ModulationContext context, Vector2Int resolution)
