@@ -28,6 +28,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<Primitive3DLayerParams>(CreatePrimitive3DLayerParamsElement);
             UICustom.RegisterElementCreationFunc<PostEffectManagerParams>(CreatePostEffectManagerElement);
             UICustom.RegisterElementCreationFunc<PostEffectStack>(CreatePostEffectStackElement);
+            UICustom.RegisterElementCreationFunc<PostEffectDeck>(CreatePostEffectDeckElement);
             UICustom.RegisterElementCreationFunc<PostEffectModule>(CreatePostEffectModuleElement);
             UICustom.RegisterElementCreationFunc<GpuParticleLayerParams>(CreateGpuParticleLayerParamsElement);
             UICustom.RegisterElementCreationFunc<ParticleSimulationModule>(CreateParticleSimulationModuleElement);

@@ -1927,33 +1927,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PostEffectManager
   _shader: {fileID: 4800000, guid: 09e24602631035546aba142dec7dc527, type: 3}
   _params:
-    Output:
-      Enabled: 1
-      Strength:
-        BaseValue: 1
-        Modulation:
-          Modulators: []
-      FxCc:
-        _ccNumber: -1
-      Modules: []
     Current:
-      Enabled: 1
-      Strength:
-        BaseValue: 1
-        Modulation:
-          Modulators: []
-      FxCc:
-        _ccNumber: -1
-      Modules: []
+      Decks: []
     Next:
-      Enabled: 1
-      Strength:
-        BaseValue: 1
-        Modulation:
-          Modulators: []
-      FxCc:
-        _ccNumber: -1
-      Modules: []
+      Decks: []
 --- !u!1 &2134490627
 GameObject:
   m_ObjectHideFlags: 0

@@ -54,7 +54,7 @@ namespace Aetherin
             return Process(source, _params.Current, _current, context);
         }
 
-        public Texture ProcessNext(Texture source)
+        public Texture ProcessNext(Texture source) 
         {
             var context = new ModulationContext(
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
@@ -73,6 +73,16 @@ namespace Aetherin
             _params.Current ??= new PostEffectStack();
             _params.Next ??= new PostEffectStack();
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.Next), _params.Current);
+            if (_params.Current.Decks != null)
+            {
+                foreach (var deck in _params.Current.Decks)
+                {
+                    if (deck == null) continue;
+                    deck.CurrentFaderValue = deck.Fader?.IsAssigned == true
+                        ? deck.Fader.GetValue(1f)
+                        : 1f;
+                }
+            }
 
             _current.Dispose();
             _current = _next;
@@ -81,13 +91,8 @@ namespace Aetherin
 
         private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context)
         {
-            if (source == null || _material == null || stack == null || !stack.Enabled || stack.Modules == null)
+            if (source == null || _material == null || stack?.Decks == null)
                 return source;
-
-            float stackStrength = Mathf.Clamp01(stack.Strength?.Evaluate(context) ?? 1f);
-            if (context.AllowMidi && stack.FxCc?.IsAssigned == true)
-                stackStrength *= stack.FxCc.GetValue(1f);
-            if (stackStrength <= 0f) return source;
 
             int width = source.width;
             int height = source.height;
@@ -95,25 +100,36 @@ namespace Aetherin
             Texture input = source;
             bool wroteAny = false;
 
-            foreach (var module in stack.Modules)
+            foreach (var deck in stack.Decks)
             {
-                if (module == null || !module.Enabled) continue;
-                float strength = stackStrength * Mathf.Clamp01(module.Strength?.Evaluate(context) ?? 1f);
-                if (strength <= 0f) continue;
+                if (deck == null || !deck.Enabled || deck.Modules == null) continue;
 
-                RenderTexture target = runtime.NextTarget(input);
-                _material.SetTexture(SourceTexId, input);
-                _material.SetTexture(HistoryTexId, runtime.HistoryValid ? runtime.History : input);
-                _material.SetInt(EffectTypeId, (int)module.Type);
-                _material.SetFloat(StrengthId, strength);
-                _material.SetFloat(AmountId, module.Amount?.Evaluate(context) ?? 0f);
-                _material.SetFloat(ScaleId, module.Scale?.Evaluate(context) ?? 1f);
-                _material.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
-                _material.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 0f);
-                _material.SetFloat(TimeValueId, (float)context.Time);
-                Graphics.Blit(input, target, _material);
-                input = target;
-                wroteAny = true;
+                float deckStrength = Mathf.Clamp01(deck.Strength?.Evaluate(context) ?? 1f);
+                deckStrength *= context.AllowMidi
+                    ? deck.Fader?.IsAssigned == true ? deck.Fader.GetValue(1f) : 1f
+                    : deck.CurrentFaderValue;
+                if (deckStrength <= 0f) continue;
+
+                foreach (var module in deck.Modules)
+                {
+                    if (module == null || !module.Enabled) continue;
+                    float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(context) ?? 1f);
+                    if (strength <= 0f) continue;
+
+                    RenderTexture target = runtime.NextTarget(input);
+                    _material.SetTexture(SourceTexId, input);
+                    _material.SetTexture(HistoryTexId, runtime.HistoryValid ? runtime.History : input);
+                    _material.SetInt(EffectTypeId, (int)module.Type);
+                    _material.SetFloat(StrengthId, strength);
+                    _material.SetFloat(AmountId, module.Amount?.Evaluate(context) ?? 0f);
+                    _material.SetFloat(ScaleId, module.Scale?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 0f);
+                    _material.SetFloat(TimeValueId, (float)context.Time);
+                    Graphics.Blit(input, target, _material);
+                    input = target;
+                    wroteAny = true;
+                }
             }
 
             if (wroteAny)

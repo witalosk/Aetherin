@@ -23,16 +23,29 @@ namespace Aetherin
             var stack = binder.Get();
             if (stack == null) return UI.Label("-");
 
+            return UI.List("Decks",
+                () => stack.Decks,
+                value => stack.Decks = value,
+                new ListViewOption(reorderable: true, fixedSize: false, header: true, suppressAutoIndent: true));
+        }
+
+        private static Element CreatePostEffectDeckElement(LabelElement label, IBinder<PostEffectDeck> binder)
+        {
+            var deck = binder.Get();
+            if (deck == null) return UI.Label("-");
+
             return UI.Column(
                 UI.Row(
-                    UI.Toggle("Enabled", () => stack.Enabled, value => stack.Enabled = value),
-                    UI.Slider("Fader", () => stack.Strength.BaseValue,
-                        value => stack.Strength.BaseValue = value, 0f, 1f).SetFlexGrow(1f),
-                    CreateModulationLauncher("Post Effect Strength", stack.Strength.Modulation)),
-                UI.Field("FX (CC)", Binder.Create(stack.FxCc, typeof(MidiCcBinding))),
+                    UI.Toggle(null, () => deck.Enabled, value => deck.Enabled = value).SetWidth(20f),
+                    UI.Field("Name", () => deck.Name, value => deck.Name = value).SetFlexGrow(1f)),
+                UI.Row(
+                    UI.Slider("Strength", () => deck.Strength.BaseValue,
+                        value => deck.Strength.BaseValue = value, 0f, 1f).SetFlexGrow(1f),
+                    CreateModulationLauncher($"{deck.Name} Strength", deck.Strength.Modulation)),
+                UI.Field("Fader (CC)", Binder.Create(deck.Fader, typeof(MidiCcBinding))),
                 UI.List("Modules",
-                    () => stack.Modules,
-                    value => stack.Modules = value,
+                    () => deck.Modules,
+                    value => deck.Modules = value,
                     new ListViewOption(reorderable: true, fixedSize: false, header: true, suppressAutoIndent: true)));
         }
 

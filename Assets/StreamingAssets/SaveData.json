@@ -465,185 +465,7 @@
           "y": 1000.0,
           "z": 0.0
         },
-        "SwapThreshold": 0.99000000953674316,
-        "PostEffects": {
-          "Output": {
-            "Enabled": true,
-            "Strength": {
-              "BaseValue": 1.0,
-              "Modulation": {
-                "Modulators": []
-              }
-            },
-            "FxCc": {
-              "_ccNumber": -1
-            },
-            "Modules": []
-          },
-          "Current": {
-            "Enabled": true,
-            "Strength": {
-              "BaseValue": 1.0,
-              "Modulation": {
-                "Modulators": []
-              }
-            },
-            "FxCc": {
-              "_ccNumber": -1
-            },
-            "Modules": []
-          },
-          "Next": {
-            "Enabled": false,
-            "Strength": {
-              "BaseValue": 1.0,
-              "Modulation": {
-                "Modulators": []
-              }
-            },
-            "FxCc": {
-              "_ccNumber": 56
-            },
-            "Modules": [
-              {
-                "Enabled": true,
-                "Type": 0,
-                "Strength": {
-                  "BaseValue": 3.9500000476837158,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Amount": {
-                  "BaseValue": 0.070000000298023224,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Scale": {
-                  "BaseValue": 4.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Speed": {
-                  "BaseValue": 1.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Secondary": {
-                  "BaseValue": 0.5,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                }
-              },
-              {
-                "Enabled": true,
-                "Type": 2,
-                "Strength": {
-                  "BaseValue": 14.3100004196167,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Amount": {
-                  "BaseValue": 1.7100000381469727,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Scale": {
-                  "BaseValue": 4.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Speed": {
-                  "BaseValue": 1.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Secondary": {
-                  "BaseValue": 0.5,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                }
-              },
-              {
-                "Enabled": true,
-                "Type": 6,
-                "Strength": {
-                  "BaseValue": 2.5299999713897705,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Amount": {
-                  "BaseValue": 0.019999999552965164,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Scale": {
-                  "BaseValue": 4.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Speed": {
-                  "BaseValue": 1.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Secondary": {
-                  "BaseValue": 0.5,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                }
-              },
-              {
-                "Enabled": true,
-                "Type": 4,
-                "Strength": {
-                  "BaseValue": 1.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Amount": {
-                  "BaseValue": 0.019999999552965164,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Scale": {
-                  "BaseValue": 4.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Speed": {
-                  "BaseValue": 1.0,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                },
-                "Secondary": {
-                  "BaseValue": 0.5,
-                  "Modulation": {
-                    "Modulators": []
-                  }
-                }
-              }
-            ]
-          }
-        }
+        "SwapThreshold": 0.99000000953674316
       }
     },
     {
@@ -751,6 +573,221 @@
       "ParamsType": "Aetherin.MidiInputParams",
       "Params": {
         "ShowAllCc": false
+      }
+    },
+    {
+      "TargetType": "Aetherin.PostEffectManager",
+      "GameObjectName": "PostEffectManager",
+      "ParamsType": "Aetherin.PostEffectManagerParams",
+      "Params": {
+        "Current": {
+          "Decks": [
+            {
+              "Name": "Deck",
+              "Enabled": true,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "Fader": {
+                "_ccNumber": 56
+              },
+              "CurrentFaderValue": 1.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 0,
+                  "Strength": {
+                    "BaseValue": 1.190000057220459,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.019999999552965164,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "Name": "Deck",
+              "Enabled": true,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "Fader": {
+                "_ccNumber": 55
+              },
+              "CurrentFaderValue": 1.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 1,
+                  "Strength": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.0010000000474974513,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.88999998569488525,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "Next": {
+          "Decks": [
+            {
+              "Name": "Deck",
+              "Enabled": true,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "Fader": {
+                "_ccNumber": 56
+              },
+              "CurrentFaderValue": 1.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 0,
+                  "Strength": {
+                    "BaseValue": 1.190000057220459,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.019999999552965164,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  }
+                }
+              ]
+            },
+            {
+              "Name": "Deck",
+              "Enabled": true,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "Fader": {
+                "_ccNumber": 55
+              },
+              "CurrentFaderValue": 1.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 1,
+                  "Strength": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.0010000000474974513,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.88999998569488525,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
       }
     },
     {
