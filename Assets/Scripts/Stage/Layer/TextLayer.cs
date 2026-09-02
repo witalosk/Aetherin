@@ -204,6 +204,7 @@ namespace Aetherin
             RestoreBaseMesh();
 
             TMP_TextInfo info = _text.textInfo;
+            ApplyPathLayout(info, baseContext);
             ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Current).Palette;
             EvaluatedPaletteColor baseColor = EvaluatedPaletteColor.Evaluate(_params.Color, palette, baseContext);
             Vector3 anchor = _params.Anchor?.Evaluate(baseContext) ?? Vector3.zero;
@@ -267,7 +268,55 @@ namespace Aetherin
             {
                 info.meshInfo[i].mesh.vertices = info.meshInfo[i].vertices;
                 info.meshInfo[i].mesh.colors32 = info.meshInfo[i].colors32;
+                info.meshInfo[i].mesh.RecalculateBounds();
                 _text.UpdateGeometry(info.meshInfo[i].mesh, i);
+            }
+        }
+
+        private void ApplyPathLayout(TMP_TextInfo info, in ModulationContext context)
+        {
+            if (_params.Layout == TextLayoutMode.Linear || info.characterCount == 0) return;
+
+            int visibleCount = 0;
+            for (int i = 0; i < info.characterCount; i++)
+                if (info.characterInfo[i].isVisible) visibleCount++;
+            if (visibleCount == 0) return;
+
+            float radius = Mathf.Max(0f, _params.PathRadius?.Evaluate(context) ?? 0f);
+            float startAngle = _params.PathStartAngle?.Evaluate(context) ?? 90f;
+            float endAngle = _params.PathEndAngle?.Evaluate(context) ?? -90f;
+            float rotationOffset = _params.PathRotationOffset?.Evaluate(context) ?? 0f;
+            float direction = _params.PathClockwise ? -1f : 1f;
+            float span = _params.Layout == TextLayoutMode.Circle
+                ? 360f
+                : Mathf.Abs(endAngle - startAngle);
+            int visibleIndex = 0;
+
+            for (int characterIndex = 0; characterIndex < info.characterCount; characterIndex++)
+            {
+                TMP_CharacterInfo character = info.characterInfo[characterIndex];
+                if (!character.isVisible) continue;
+
+                float t = _params.Layout == TextLayoutMode.Circle
+                    ? visibleIndex / (float)visibleCount
+                    : visibleCount <= 1 ? 0f : visibleIndex / (float)(visibleCount - 1);
+                float angle = startAngle + direction * span * t;
+                float radians = angle * Mathf.Deg2Rad;
+                Vector3 targetCenter = new(Mathf.Cos(radians) * radius, Mathf.Sin(radians) * radius, 0f);
+
+                int materialIndex = character.materialReferenceIndex;
+                int vertexIndex = character.vertexIndex;
+                Vector3[] vertices = info.meshInfo[materialIndex].vertices;
+                Vector3 center = (vertices[vertexIndex] + vertices[vertexIndex + 2]) * 0.5f;
+                float glyphRotation = _params.OrientToPath
+                    ? angle + (_params.PathClockwise ? -90f : 90f) + rotationOffset
+                    : 0f;
+                Matrix4x4 matrix = Matrix4x4.Translate(targetCenter) *
+                                   Matrix4x4.Rotate(Quaternion.Euler(0f, 0f, glyphRotation)) *
+                                   Matrix4x4.Translate(-center);
+                for (int corner = 0; corner < 4; corner++)
+                    vertices[vertexIndex + corner] = matrix.MultiplyPoint3x4(vertices[vertexIndex + corner]);
+                visibleIndex++;
             }
         }
 

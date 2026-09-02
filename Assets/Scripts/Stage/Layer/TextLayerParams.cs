@@ -22,6 +22,13 @@ namespace Aetherin
         Smooth,
     }
 
+    public enum TextLayoutMode
+    {
+        Linear,
+        Circle,
+        Arc,
+    }
+
     [Serializable]
     public sealed class TextRangeSelectorParams
     {
@@ -79,6 +86,14 @@ namespace Aetherin
         public FloatParameter LineSpacing = new(0f);
         public TextAlignmentOptions Alignment = TextAlignmentOptions.Center;
 
+        public TextLayoutMode Layout;
+        public FloatParameter PathRadius = new(3f);
+        public FloatParameter PathStartAngle = new(90f);
+        public FloatParameter PathEndAngle = new(-90f);
+        public bool PathClockwise = true;
+        public bool OrientToPath = true;
+        public FloatParameter PathRotationOffset = new(0f);
+
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -108,6 +123,10 @@ namespace Aetherin
             CharacterSpacing ??= new FloatParameter(0f);
             WordSpacing ??= new FloatParameter(0f);
             LineSpacing ??= new FloatParameter(0f);
+            PathRadius ??= new FloatParameter(3f);
+            PathStartAngle ??= new FloatParameter(90f);
+            PathEndAngle ??= new FloatParameter(-90f);
+            PathRotationOffset ??= new FloatParameter(0f);
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
             Scale ??= new Vector3Parameter(Vector3.one);

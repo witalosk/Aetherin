@@ -31,6 +31,20 @@ namespace Aetherin
                 Param("Word Spacing", p.WordSpacing),
                 Param("Line Spacing", p.LineSpacing),
                 UI.Field("Alignment", () => p.Alignment, value => p.Alignment = value),
+                UI.Field("Layout", () => p.Layout, value => p.Layout = value),
+                UI.DynamicElementIf(
+                    () => p.Layout != TextLayoutMode.Linear,
+                    () => UI.Column(
+                        Param("Radius", p.PathRadius),
+                        Param("Start Angle", p.PathStartAngle),
+                        UI.DynamicElementIf(
+                            () => p.Layout == TextLayoutMode.Arc,
+                            () => Param("End Angle", p.PathEndAngle)),
+                        UI.Toggle("Clockwise", () => p.PathClockwise, value => p.PathClockwise = value),
+                        UI.Toggle("Orient To Path", () => p.OrientToPath, value => p.OrientToPath = value),
+                        UI.DynamicElementIf(
+                            () => p.OrientToPath,
+                            () => Param("Rotation Offset", p.PathRotationOffset)))),
                 Param("Position", p.Position),
                 Param("Rotation", p.Rotation),
                 Param("Scale", p.Scale),
