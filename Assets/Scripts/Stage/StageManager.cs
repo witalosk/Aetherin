@@ -311,7 +311,12 @@ namespace Aetherin
             // (いま出ている絵から続きを操作できるようにする)
             foreach (var stage in retiredStages)
             {
-                if (stage != null) Destroy(stage.gameObject);
+                if (stage == null) continue;
+
+                // Destroyはフレーム末まで遅延するため、先に無効化して
+                // 同じ位置へ作る新Nextと一時的に二重描画されるのを防ぐ。
+                stage.gameObject.SetActive(false);
+                Destroy(stage.gameObject);
             }
 
             _nextStages = new List<StageBase>(_currentStages.Count);
