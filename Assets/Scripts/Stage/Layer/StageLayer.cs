@@ -121,13 +121,22 @@ namespace Aetherin
             var layerParams = LayerParams;
             if (layerParams == null) return;
 
+            bool effectiveVisible = layerParams.Visible;
+            Transform ancestor = transform.parent;
+            while (effectiveVisible && ancestor != null)
+            {
+                var group = ancestor.GetComponent<GroupLayer>();
+                if (group != null && !group.Visible) effectiveVisible = false;
+                ancestor = ancestor.parent;
+            }
+
             if (renderer != null)
             {
-                renderer.forceRenderingOff = !layerParams.Visible;
+                renderer.forceRenderingOff = !effectiveVisible;
                 renderer.sortingOrder = layerParams.Order;
             }
 
-            ApplyCustomLayerState(layerParams.Visible, layerParams.Order);
+            ApplyCustomLayerState(effectiveVisible, layerParams.Order);
         }
 
         protected virtual void ApplyCustomLayerState(bool visible, int order) { }

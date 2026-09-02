@@ -436,6 +436,7 @@ namespace Aetherin
                     UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
                     UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer()),
                     UI.Button("Add Model", () => cameraStage.AddModelLayer()),
+                    UI.Button("Add Group", () => cameraStage.AddGroupLayer()),
                     UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer()),
                     UI.Button("Add Text", () => cameraStage.AddTextLayer()),
                     UI.Button("Add Runtime Shader", () => cameraStage.AddRuntimeShaderLayer())),
@@ -446,6 +447,32 @@ namespace Aetherin
 
         private Element CreateLayerElement(CameraStage stage, StageLayer layer)
         {
+            if (layer is GroupLayer group)
+            {
+                var children = group.Children.Select(child => CreateLayerElement(stage, child)).ToArray();
+                return UI.Fold(
+                    CreateLayerHeader(stage, layer),
+                    new Element[] { UI.Column(
+                        UI.Row(
+                            UI.Button("+ Shape", () => stage.AddShapeLayer(group.transform)),
+                            UI.Button("+ 3D", () => stage.AddPrimitive3DLayer(group.transform)),
+                            UI.Button("+ Model", () => stage.AddModelLayer(group.transform)),
+                            UI.Button("+ GPU", () => stage.AddGpuParticleLayer(group.transform)),
+                            UI.Button("+ Text", () => stage.AddTextLayer(group.transform)),
+                            UI.Button("+ Group", () => stage.AddGroupLayer(group.transform))),
+                        UI.Button("Move Selected Here", () =>
+                        {
+                            if (_inspectedLayer != null) stage.MoveLayerToGroup(_inspectedLayer, group);
+                        }),
+                        children.Length == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) });
+            }
+
+            return CreateLayerHeader(stage, layer);
+        }
+
+        private Element CreateLayerHeader(CameraStage stage, StageLayer layer)
+        {
+            bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
             return UI.Row(
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
@@ -454,6 +481,7 @@ namespace Aetherin
                     .SetFlexGrow(1f),
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(32f),
+                insideGroup ? UI.Button("Out", () => stage.MoveLayerOutOfGroup(layer)).SetWidth(38f) : null,
                 UI.Button("Delete", () => RemoveLayer(stage, layer)));
         }
 
