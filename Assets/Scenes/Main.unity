@@ -792,7 +792,6 @@ MonoBehaviour:
   _currentPreviewRenderer: {fileID: 1900000002}
   _nextPreviewRenderer: {fileID: 1900000012}
   _crossFadeShader: {fileID: 4800000, guid: ee6c2be7cf2b415d8644748c6d2455bc, type: 3}
-  _postEffectShader: {fileID: 0}
   _stages:
   - {fileID: 860254699}
   - {fileID: 735597823}
@@ -808,34 +807,6 @@ MonoBehaviour:
     NextStageIndex: 0
     NextStageOffset: {x: 0, y: 1000, z: 0}
     SwapThreshold: 0.99
-    PostEffects:
-      Output:
-        Enabled: 1
-        Strength:
-          BaseValue: 1
-          Modulation:
-            Modulators: []
-        FxCc:
-          _ccNumber: -1
-        Modules: []
-      Current:
-        Enabled: 1
-        Strength:
-          BaseValue: 1
-          Modulation:
-            Modulators: []
-        FxCc:
-          _ccNumber: -1
-        Modules: []
-      Next:
-        Enabled: 1
-        Strength:
-          BaseValue: 1
-          Modulation:
-            Modulators: []
-        FxCc:
-          _ccNumber: -1
-        Modules: []
 --- !u!1 &823168519
 GameObject:
   m_ObjectHideFlags: 0
@@ -1910,6 +1881,79 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: 30, z: 0}
+--- !u!1 &2100000000
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2100000001}
+  - component: {fileID: 2100000002}
+  m_Layer: 0
+  m_Name: PostEffectManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2100000001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000000}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2100000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100000000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 52bc035cbbe725e49a44fcd50460f28a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PostEffectManager
+  _shader: {fileID: 4800000, guid: 09e24602631035546aba142dec7dc527, type: 3}
+  _params:
+    Output:
+      Enabled: 1
+      Strength:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      FxCc:
+        _ccNumber: -1
+      Modules: []
+    Current:
+      Enabled: 1
+      Strength:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      FxCc:
+        _ccNumber: -1
+      Modules: []
+    Next:
+      Enabled: 1
+      Strength:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      FxCc:
+        _ccNumber: -1
+      Modules: []
 --- !u!1 &2134490627
 GameObject:
   m_ObjectHideFlags: 0
@@ -2002,6 +2046,7 @@ SceneRoots:
   - {fileID: 2015451733}
   - {fileID: 2138134442}
   - {fileID: 1535279250}
+  - {fileID: 2100000001}
   - {fileID: 76371272}
   - {fileID: 934651080}
   - {fileID: 754430060}

@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnitySimpleContainer;
 
 namespace Aetherin
 {
@@ -7,8 +8,14 @@ namespace Aetherin
     /// Nextへ直列ポストエフェクトを実行する。
     /// 一時RTと前フレーム履歴を保持し、フレーム中のGCを発生させない。
     /// </summary>
-    public sealed class PostEffectManager : IDisposable
+    public sealed class PostEffectManager : MonoBehaviour, IPostEffectManager, ISaveAndUiTarget, IDisposable
     {
+        public IParams Params => _params;
+        public string Category => UiCategory.Main;
+
+        [SerializeField] private Shader _shader;
+        [SerializeField] private PostEffectManagerParams _params = new();
+
         private static readonly int SourceTexId = Shader.PropertyToID("_MainTex");
         private static readonly int HistoryTexId = Shader.PropertyToID("_HistoryTex");
         private static readonly int EffectTypeId = Shader.PropertyToID("_EffectType");
@@ -19,16 +26,58 @@ namespace Aetherin
         private static readonly int SecondaryId = Shader.PropertyToID("_Secondary");
         private static readonly int TimeValueId = Shader.PropertyToID("_TimeValue");
 
-        private readonly Material _material;
-        private readonly StackRuntime _next = new();
+        private Material _material;
+        private StackRuntime _current = new();
+        private StackRuntime _next = new();
+        private IAudioFeatureProvider _audioFeatureProvider;
+        private IBeatManager _beatManager;
 
-        public PostEffectManager(Shader shader)
+        [Inject]
+        public void Construct(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
         {
+            _audioFeatureProvider = audioFeatureProvider;
+            _beatManager = beatManager;
+        }
+
+        private void Awake()
+        {
+            Shader shader = _shader != null ? _shader : Shader.Find("Hidden/Aetherin/PostEffectStack");
             if (shader != null) _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
         }
 
-        public Texture ProcessNext(Texture source, PostEffectStack stack, in ModulationContext context) =>
-            Process(source, stack, _next, context);
+        public Texture ProcessCurrent(Texture source)
+        {
+            var context = new ModulationContext(
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false);
+            _params ??= new PostEffectManagerParams();
+            _params.Current ??= new PostEffectStack();
+            return Process(source, _params.Current, _current, context);
+        }
+
+        public Texture ProcessNext(Texture source)
+        {
+            var context = new ModulationContext(
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+            _params ??= new PostEffectManagerParams();
+            _params.Next ??= new PostEffectStack();
+            return Process(source, _params.Next, _next, context);
+        }
+
+        /// <summary>
+        /// フェーダー到達時に、編集対象だったNextをCurrentへ昇格する。
+        /// PreviousFrameBlendの履歴も一緒に移し、新しいNextは履歴なしで開始する。
+        /// </summary>
+        public void PromoteNextToCurrent()
+        {
+            _params ??= new PostEffectManagerParams();
+            _params.Current ??= new PostEffectStack();
+            _params.Next ??= new PostEffectStack();
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.Next), _params.Current);
+
+            _current.Dispose();
+            _current = _next;
+            _next = new StackRuntime();
+        }
 
         private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context)
         {
@@ -78,6 +127,7 @@ namespace Aetherin
 
         public void Dispose()
         {
+            _current.Dispose();
             _next.Dispose();
             if (_material != null)
             {
@@ -85,6 +135,8 @@ namespace Aetherin
                 else UnityEngine.Object.DestroyImmediate(_material);
             }
         }
+
+        private void OnDestroy() => Dispose();
 
         private sealed class StackRuntime : IDisposable
         {

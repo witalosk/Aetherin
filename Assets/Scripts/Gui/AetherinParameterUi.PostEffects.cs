@@ -14,7 +14,8 @@ namespace Aetherin
 
             return UI.Column(
                 label,
-                UI.Fold("Next (before crossfade)", UI.Field(null, Binder.Create(manager.Next, typeof(PostEffectStack)))));
+                UI.Label("編集対象: Next（フェーダー到達時にCurrentへ昇格）"),
+                UI.Fold("Next", UI.Field(null, Binder.Create(manager.Next, typeof(PostEffectStack)))));
         }
 
         private static Element CreatePostEffectStackElement(LabelElement label, IBinder<PostEffectStack> binder)

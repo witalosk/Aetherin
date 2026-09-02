@@ -48,7 +48,7 @@ namespace Aetherin
     }
 
     [Serializable]
-    public sealed class PostEffectManagerParams
+    public sealed class PostEffectManagerParams : IParams
     {
         [HideInInspector]
         public PostEffectStack Output = new();
