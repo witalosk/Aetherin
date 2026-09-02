@@ -150,6 +150,15 @@ namespace Aetherin
             RefreshLayers();
         }
 
+        public void SetLayerOrder(IReadOnlyList<StageLayer> orderedLayers)
+        {
+            if (orderedLayers == null || orderedLayers.Count != _layers.Length) return;
+            if (orderedLayers.Any(layer => layer == null || !Array.Exists(_layers, existing => existing == layer))) return;
+
+            for (int i = 0; i < orderedLayers.Count; i++) orderedLayers[i].Order = i;
+            RefreshLayers();
+        }
+
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers

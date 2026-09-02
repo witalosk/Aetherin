@@ -14,8 +14,6 @@ namespace Aetherin
 
             return UI.Column(
                 label,
-                UI.Fold("Output (after crossfade)", UI.Field(null, Binder.Create(manager.Output, typeof(PostEffectStack)))),
-                UI.Fold("Current (before crossfade)", UI.Field(null, Binder.Create(manager.Current, typeof(PostEffectStack)))),
                 UI.Fold("Next (before crossfade)", UI.Field(null, Binder.Create(manager.Next, typeof(PostEffectStack)))));
         }
 
@@ -30,6 +28,7 @@ namespace Aetherin
                     UI.Slider("Fader", () => stack.Strength.BaseValue,
                         value => stack.Strength.BaseValue = value, 0f, 1f).SetFlexGrow(1f),
                     CreateModulationLauncher("Post Effect Strength", stack.Strength.Modulation)),
+                UI.Field("FX (CC)", Binder.Create(stack.FxCc, typeof(MidiCcBinding))),
                 UI.List("Modules",
                     () => stack.Modules,
                     value => stack.Modules = value,

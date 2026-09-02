@@ -76,7 +76,7 @@ namespace Aetherin
 
             return UI.WindowLauncher(
                     UI.Label(() => DescribeStack(stack)),
-                    UI.Window($"{name} Modulation", CreateModulationStackBody(stack))
+                    UI.Window($"{name} Modulation", UI.Lazy(() => CreateModulationStackBody(stack)))
                         .SetWidth(DetailWindowWidth))
                 .SetWidth(LauncherWidth);
         }
@@ -90,12 +90,12 @@ namespace Aetherin
             return UI.WindowLauncher(
                     UI.Label(() => DescribeAxes(readShared(), axes)),
                     UI.Window($"{name} Modulation",
-                        UI.Column(
+                        UI.Lazy(() => UI.Column(
                             UI.Toggle("X を全軸へ適用", readShared, writeShared),
                             UI.DynamicElementOnStatusChanged(
                                 readStatus: readShared,
                                 build: shared => UI.Column(CreateAxisStackElements(shared, axes)))
-                        )).SetWidth(DetailWindowWidth))
+                        ))).SetWidth(DetailWindowWidth))
                 .SetWidth(LauncherWidth);
         }
 

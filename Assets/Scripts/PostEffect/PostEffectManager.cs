@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Aetherin
 {
     /// <summary>
-    /// Current / Next / Outputそれぞれの直列ポストエフェクトを実行する。
-    /// 一時RTと前フレーム履歴は系統ごとに保持し、フレーム中のGCを発生させない。
+    /// Nextへ直列ポストエフェクトを実行する。
+    /// 一時RTと前フレーム履歴を保持し、フレーム中のGCを発生させない。
     /// </summary>
     public sealed class PostEffectManager : IDisposable
     {
@@ -20,8 +20,6 @@ namespace Aetherin
         private static readonly int TimeValueId = Shader.PropertyToID("_TimeValue");
 
         private readonly Material _material;
-        private readonly StackRuntime _output = new();
-        private readonly StackRuntime _current = new();
         private readonly StackRuntime _next = new();
 
         public PostEffectManager(Shader shader)
@@ -29,14 +27,8 @@ namespace Aetherin
             if (shader != null) _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
         }
 
-        public Texture ProcessCurrent(Texture source, PostEffectStack stack, in ModulationContext context) =>
-            Process(source, stack, _current, context);
-
         public Texture ProcessNext(Texture source, PostEffectStack stack, in ModulationContext context) =>
             Process(source, stack, _next, context);
-
-        public Texture ProcessOutput(Texture source, PostEffectStack stack, in ModulationContext context) =>
-            Process(source, stack, _output, context);
 
         private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context)
         {
@@ -44,6 +36,8 @@ namespace Aetherin
                 return source;
 
             float stackStrength = Mathf.Clamp01(stack.Strength?.Evaluate(context) ?? 1f);
+            if (context.AllowMidi && stack.FxCc?.IsAssigned == true)
+                stackStrength *= stack.FxCc.GetValue(1f);
             if (stackStrength <= 0f) return source;
 
             int width = source.width;
@@ -84,8 +78,6 @@ namespace Aetherin
 
         public void Dispose()
         {
-            _output.Dispose();
-            _current.Dispose();
             _next.Dispose();
             if (_material != null)
             {

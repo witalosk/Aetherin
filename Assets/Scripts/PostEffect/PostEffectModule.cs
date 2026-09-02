@@ -42,13 +42,17 @@ namespace Aetherin
     {
         public bool Enabled = true;
         [Range(0f, 1f)] public FloatParameter Strength = new(1f);
+        [Tooltip("FX全体の強度を0..1で直接操作するCC。未割り当て時はStrengthのみを使用します")]
+        public MidiCcBinding FxCc = new();
         public System.Collections.Generic.List<PostEffectModule> Modules = new();
     }
 
     [Serializable]
     public sealed class PostEffectManagerParams
     {
+        [HideInInspector]
         public PostEffectStack Output = new();
+        [HideInInspector]
         public PostEffectStack Current = new();
         public PostEffectStack Next = new();
     }
