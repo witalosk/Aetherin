@@ -150,6 +150,47 @@ namespace Aetherin
 
         #endregion
 
+        #region RuntimeShaderLayer
+
+        private static Element CreateRuntimeShaderLayerParamsElement(
+            LabelElement label,
+            IBinder<RuntimeShaderLayerParams> binder)
+        {
+            var p = binder.Get();
+            if (p == null) return UI.Label("-");
+            p.EnsureInitialized();
+
+            return UI.Column(
+                UI.Field("Shader", () => p.Shader, value =>
+                {
+                    p.Shader = value;
+                    if (value != null) p.ShaderName = value.name;
+                }),
+                UI.Field("Shader Name", () => p.ShaderName, value =>
+                {
+                    p.ShaderName = value;
+                    p.Shader = null;
+                }),
+                Param("Opacity", p.Opacity),
+                UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
+                Param("Size", p.Size),
+                Param("Position", p.Position),
+                Param("Rotation", p.Rotation),
+                Param("Scale", p.Scale),
+                Param("Anchor", p.Anchor),
+                UI.Fold("User Parameters", UI.Column(
+                    Param("Float 0", p.UserFloat0),
+                    Param("Float 1", p.UserFloat1),
+                    Param("Float 2", p.UserFloat2),
+                    Param("Float 3", p.UserFloat3),
+                    Param("Vector 0", p.UserVector0),
+                    Param("Vector 1", p.UserVector1),
+                    Param("Vector 2", p.UserVector2),
+                    Param("Vector 3", p.UserVector3))));
+        }
+
+        #endregion
+
         #region Primitive3DLayer
 
         private static Element CreatePrimitive3DLayerParamsElement(

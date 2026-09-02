@@ -34,6 +34,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<TextLayerParams>(CreateTextLayerParamsElement);
             UICustom.RegisterElementCreationFunc<TextAnimatorParams>(CreateTextAnimatorElement);
             UICustom.RegisterElementCreationFunc<TextRangeSelectorParams>(CreateTextRangeSelectorElement);
+            UICustom.RegisterElementCreationFunc<RuntimeShaderLayerParams>(CreateRuntimeShaderLayerParamsElement);
         }
 
         private static string LabelText(LabelElement label) => label?.Value ?? "Parameter";

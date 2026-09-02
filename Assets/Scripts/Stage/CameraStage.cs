@@ -116,6 +116,19 @@ namespace Aetherin
             return layer;
         }
 
+        public RuntimeShaderLayer AddRuntimeShaderLayer()
+        {
+            var layerObject = new GameObject("Runtime Shader Layer");
+            layerObject.transform.SetParent(transform, false);
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<RuntimeShaderLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
         public void RemoveLayer(StageLayer layer)
         {
             if (layer == null || !Array.Exists(_layers, item => item == layer)) return;
@@ -140,7 +153,7 @@ namespace Aetherin
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers
-                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer or TextLayer)
+                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer or TextLayer or RuntimeShaderLayer)
                 .Select(layer => new CameraStageLayerSaveData
                 {
                     Type = layer switch
@@ -149,6 +162,7 @@ namespace Aetherin
                         Primitive3DLayer => "primitive3d",
                         GpuParticleLayer => "gpu-particle",
                         TextLayer => "text",
+                        RuntimeShaderLayer => "runtime-shader",
                         _ => string.Empty,
                     },
                     Name = layer.gameObject.name,
@@ -174,6 +188,7 @@ namespace Aetherin
                     "primitive3d" => AddPrimitive3DLayer(),
                     "gpu-particle" => AddGpuParticleLayer(),
                     "text" => AddTextLayer(),
+                    "runtime-shader" => AddRuntimeShaderLayer(),
                     _ => null,
                 };
 
@@ -189,6 +204,7 @@ namespace Aetherin
                     Primitive3DLayer => "Primitive 3D Layer",
                     GpuParticleLayer => "GPU Particle Layer",
                     TextLayer => "Text Layer",
+                    RuntimeShaderLayer => "Runtime Shader Layer",
                     _ => "Layer",
                 };
                 layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;
