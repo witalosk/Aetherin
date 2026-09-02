@@ -161,16 +161,12 @@ namespace Aetherin
             p.EnsureInitialized();
 
             return UI.Column(
-                UI.Field("Shader", () => p.Shader, value =>
-                {
-                    p.Shader = value;
-                    if (value != null) p.ShaderName = value.name;
-                }),
-                UI.Field("Shader Name", () => p.ShaderName, value =>
-                {
-                    p.ShaderName = value;
-                    p.Shader = null;
-                }),
+                UI.Label("Runtime HLSL"),
+                UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
+                    .SetMinHeight(320f),
+                UI.Row(
+                    UI.Button("Compile", () => p.CompileRequested?.Invoke()).SetWidth(100f),
+                    UI.Label(() => p.CompileMessage).SetFlexGrow(1f)),
                 Param("Opacity", p.Opacity),
                 UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                 Param("Size", p.Size),

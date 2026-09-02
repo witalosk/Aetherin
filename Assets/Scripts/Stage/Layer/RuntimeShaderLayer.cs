@@ -1,5 +1,8 @@
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityRuntimeShader;
 using UnitySimpleContainer;
 
 namespace Aetherin
@@ -28,7 +31,11 @@ namespace Aetherin
         private MeshRenderer _meshRenderer;
         private Mesh _mesh;
         private Material _material;
-        private Shader _activeShader;
+        private ShaderRenderer _runtimeRenderer;
+        private RenderTexture _runtimeTexture;
+        private Vector2Int _runtimeResolution;
+        private bool _hasCompiled;
+        private bool _compileTaskRunning;
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
         private IDeckStateProvider _deckStateProvider;
@@ -61,6 +68,7 @@ namespace Aetherin
         {
             _params ??= new RuntimeShaderLayerParams();
             _params.EnsureInitialized();
+            _params.CompileRequested = CompileRuntimeShader;
             _stage = GetComponentInParent<StageBase>();
             EnsureResources();
             ApplyLayerState();
@@ -108,6 +116,7 @@ namespace Aetherin
             _material.SetTexture(SpectrumTexId, _audio?.SpectrumTexture ?? Texture2D.blackTexture);
             _material.SetFloat(OpacityId, opacity);
             SetUserParameters(context);
+            RenderRuntimeShader(context, resolution);
 
             ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette;
             palette?.ApplyToMaterial(_material);
@@ -125,20 +134,132 @@ namespace Aetherin
                 _meshFilter.sharedMesh = _mesh;
             }
 
-            Shader shader = _params.Shader;
-            if (shader != null) _params.ShaderName = shader.name;
-            else if (!string.IsNullOrWhiteSpace(_params.ShaderName)) shader = Shader.Find(_params.ShaderName);
-            if (shader == null) shader = Shader.Find("Aetherin/Runtime Shader Layer Example");
-            if (shader == null || shader == _activeShader && _material != null) return;
+            if (_material == null)
+            {
+                Shader shader = Shader.Find("Hidden/Aetherin/Runtime Shader Output");
+                if (shader != null)
+                {
+                    _material = new Material(shader)
+                    {
+                        name = $"{name} Runtime Shader Material",
+                        hideFlags = HideFlags.DontSave,
+                    };
+                    _meshRenderer.sharedMaterial = _material;
+                    _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                    _meshRenderer.receiveShadows = false;
+                }
+            }
 
-            DestroyResource(_material);
-            _activeShader = shader;
-            _params.Shader = shader;
-            _params.ShaderName = shader.name;
-            _material = new Material(shader) { name = $"{name} Runtime Shader Material", hideFlags = HideFlags.DontSave };
-            _meshRenderer.sharedMaterial = _material;
-            _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _meshRenderer.receiveShadows = false;
+            if (_runtimeRenderer == null)
+            {
+                _runtimeRenderer = GetComponent<ShaderRenderer>() ?? gameObject.AddComponent<ShaderRenderer>();
+                _runtimeRenderer.RenderEveryFrame = false;
+            }
+
+            EnsureRuntimeTexture(GetResolution());
+            if (!_hasCompiled) CompileRuntimeShader();
+        }
+
+        private void EnsureRuntimeTexture(Vector2Int resolution)
+        {
+            resolution.x = Mathf.Max(1, resolution.x);
+            resolution.y = Mathf.Max(1, resolution.y);
+            if (_runtimeTexture != null && _runtimeResolution == resolution) return;
+
+            var next = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.ARGB32)
+            {
+                name = $"{name} Runtime Shader Output",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
+            next.Create();
+            _runtimeRenderer.TargetTexture = next;
+            _material?.SetTexture("_MainTex", next);
+
+            if (_runtimeTexture != null) DestroyResource(_runtimeTexture);
+            _runtimeTexture = next;
+            _runtimeResolution = resolution;
+        }
+
+        private async void CompileRuntimeShader()
+        {
+            if (_runtimeRenderer == null)
+            {
+                _params.CompileMessage = "Renderer is not initialized";
+                _params.LastCompileSucceeded = false;
+                return;
+            }
+
+            if (_compileTaskRunning)
+            {
+                _params.CompileMessage = "Compile is already running";
+                return;
+            }
+
+            _compileTaskRunning = true;
+            // ネイティブコンパイラと描画は同じ内部状態を使うため、並行実行させない。
+            _hasCompiled = false;
+            _params.CompileMessage = "Compiling...";
+            string code = _params.ShaderCode;
+            var compileTask = Task.Run(() =>
+            {
+                try
+                {
+                    bool succeeded = _runtimeRenderer.CompileShaderFromString(code, out string error);
+                    return (Succeeded: succeeded, Error: error, Exception: (System.Exception)null);
+                }
+                catch (System.Exception exception)
+                {
+                    return (Succeeded: false, Error: (string)null, Exception: exception);
+                }
+            });
+
+            if (await Task.WhenAny(compileTask, Task.Delay(5000)) != compileTask)
+                _params.CompileMessage = "Compile timeout (compiler is still running)";
+
+            var result = await compileTask;
+            _compileTaskRunning = false;
+            if (result.Exception != null)
+            {
+                _params.LastCompileSucceeded = false;
+                _params.CompileMessage = result.Exception.Message;
+                return;
+            }
+
+            _hasCompiled = result.Succeeded;
+            _params.LastCompileSucceeded = result.Succeeded;
+            _params.CompileMessage = result.Succeeded ? "Compiled" : result.Error;
+        }
+
+        private void RenderRuntimeShader(in ModulationContext context, Vector2Int resolution)
+        {
+            if (_runtimeRenderer == null || !_hasCompiled) return;
+            EnsureRuntimeTexture(resolution);
+
+            var globals = new RuntimeShaderGlobals
+            {
+                Time = new Vector4((float)context.Time, Time.deltaTime,
+                    Mathf.Sin((float)context.Time), Mathf.Cos((float)context.Time)),
+                Frame = new Vector4(Time.frameCount, Time.timeScale, Time.unscaledTime, Time.unscaledDeltaTime),
+                Resolution = new Vector4(resolution.x, resolution.y,
+                    1f / Mathf.Max(1, resolution.x), 1f / Mathf.Max(1, resolution.y)),
+                Audio = new Vector4(_audio?.InputVolume ?? 0f, _audio?.Kick ?? 0f,
+                    _audio?.SnareClap ?? 0f, (_audio?.WasKick ?? false) || (_audio?.WasSnareClap ?? false) ? 1f : 0f),
+                Beat = new Vector4(_beat?.BeatPhase ?? 1f, _beat?.BeatCount ?? 0,
+                    _beat?.BeatInBar ?? 0, _beat?.WasBeat == true ? 1f : 0f),
+                Bar = new Vector4(_beat?.BarPhase ?? 1f, _beat?.BarCount ?? 0,
+                    _beat?.BeatsPerBar ?? 4, _beat?.WasBar == true ? 1f : 0f),
+                UserFloat = new Vector4(_params.UserFloat0.Evaluate(context), _params.UserFloat1.Evaluate(context),
+                    _params.UserFloat2.Evaluate(context), _params.UserFloat3.Evaluate(context)),
+                UserVector0 = _params.UserVector0.Evaluate(context),
+                UserVector1 = _params.UserVector1.Evaluate(context),
+                UserVector2 = _params.UserVector2.Evaluate(context),
+                UserVector3 = _params.UserVector3.Evaluate(context),
+            };
+            _runtimeRenderer.SetConstantBuffer(0, globals);
+            _runtimeRenderer.SetTexture(0, _audio?.WaveformTexture ?? Texture2D.blackTexture);
+            _runtimeRenderer.SetTexture(1, _audio?.SpectrumTexture ?? Texture2D.blackTexture);
+            _runtimeRenderer.BlitNow();
         }
 
         private void SetUserParameters(in ModulationContext context)
@@ -176,8 +297,26 @@ namespace Aetherin
 
         private void OnDestroy()
         {
+            if (_params != null) _params.CompileRequested = null;
             DestroyResource(_material);
             DestroyResource(_mesh);
+            DestroyResource(_runtimeTexture);
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RuntimeShaderGlobals
+        {
+            public Vector4 Time;
+            public Vector4 Frame;
+            public Vector4 Resolution;
+            public Vector4 Audio;
+            public Vector4 Beat;
+            public Vector4 Bar;
+            public Vector4 UserFloat;
+            public Vector4 UserVector0;
+            public Vector4 UserVector1;
+            public Vector4 UserVector2;
+            public Vector4 UserVector3;
         }
 
         private static void DestroyResource(Object resource)
