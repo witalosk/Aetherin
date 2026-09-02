@@ -15,6 +15,7 @@ namespace Aetherin
         private static readonly Color KickColor = new(1f, 0.42f, 0.08f);
         private static readonly Color SnareColor = new(0.25f, 0.8f, 1f);
 
+        public float InputVolume => _audioInput?.RmsLevel ?? 0f;
         public float Kick => _kick;
         public float SnareClap => _snareClap;
         public bool WasKick => _lastKickFrame == Time.frameCount;

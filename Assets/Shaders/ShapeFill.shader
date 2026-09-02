@@ -7,6 +7,9 @@ Shader "Aetherin/Shape Fill"
         // xy: グラデーションの向き / z: オフセット / w: 横切る幅
         _GradientParams ("Gradient Params", Vector) = (1, 0, 0, 2)
         [Toggle] _UseGradient ("Use Gradient", Float) = 0
+        [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
+        [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _ZWrite ("ZWrite", Float) = 0
     }
 
     SubShader
@@ -23,9 +26,9 @@ Shader "Aetherin/Shape Fill"
             Name "ShapeFill"
             Tags { "LightMode" = "UniversalForward" }
 
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend [_SrcBlend] [_DstBlend]
             Cull Off
-            ZWrite Off
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma vertex Vert

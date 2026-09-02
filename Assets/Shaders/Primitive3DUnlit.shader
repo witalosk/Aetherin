@@ -4,6 +4,9 @@ Shader "Aetherin/Primitive 3D Unlit"
     {
         [HDR] _BaseColor ("Color A", Color) = (1, 1, 1, 1)
         [HDR] _ColorB ("Color B", Color) = (0.5, 0.5, 0.5, 1)
+        [HideInInspector] _ZWrite ("ZWrite", Float) = 1
+        [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
+        [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
     }
 
     SubShader
@@ -20,16 +23,17 @@ Shader "Aetherin/Primitive 3D Unlit"
             Name "Primitive3DUnlit"
             Tags { "LightMode" = "UniversalForward" }
 
-            Blend SrcAlpha OneMinusSrcAlpha
+            Blend [_SrcBlend] [_DstBlend]
             Cull Back
             ZTest LEqual
-            ZWrite On
+            ZWrite [_ZWrite]
 
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
 
             struct Attributes
             {
@@ -37,6 +41,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float3 normalOS : NORMAL;
                 float2 uv : TEXCOORD0;
                 half4 color : COLOR;
+                float3 positionWS : TEXCOORD2;
             };
 
             struct Varyings
@@ -44,6 +49,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4 positionCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
                 float2 uv : TEXCOORD1;
+                float3 positionWS : TEXCOORD2;
                 half4 color : COLOR;
             };
 
@@ -58,6 +64,14 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4x4 _ShapeNormalMatrix;
                 float _UsePaletteRandom;
                 float _PaletteRandomSeed;
+                float _MaterialMode;
+                float _GlassRefraction;
+                float _GlassTint;
+                float _GlassFresnelPower;
+                float _GlassFresnelIntensity;
+                float _GlassChromaticAberration;
+                float _GlassDistortion;
+                float _GlassDistortionScale;
                 half4 _PaletteColor0;
                 half4 _PaletteColor1;
                 half4 _PaletteColor2;
@@ -75,12 +89,37 @@ Shader "Aetherin/Primitive 3D Unlit"
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 output.uv = input.uv;
                 output.color = input.color;
+                output.positionWS = TransformObjectToWorld(shapePosition);
                 return output;
             }
 
             half4 Frag(Varyings input) : SV_Target
             {
                 half4 color = _BaseColor;
+
+                if (_MaterialMode > 0.5)
+                {
+                    float2 screenUv = GetNormalizedScreenSpaceUV(input.positionCS);
+                    float3 normalWS = normalize(input.normalWS);
+                    float3 normalVS = mul((float3x3)GetWorldToViewMatrix(), normalWS);
+                    float wave = sin((screenUv.x + _Time.y * 0.07) * _GlassDistortionScale) *
+                                 cos((screenUv.y - _Time.y * 0.05) * _GlassDistortionScale * 1.17);
+                    float2 distortion = normalVS.xy * _GlassRefraction + wave * _GlassDistortion;
+                    float2 chroma = normalize(distortion + float2(0.00001, 0.00001)) *
+                                    _GlassChromaticAberration;
+                    float3 refracted;
+                    refracted.r = SampleSceneColor(screenUv + distortion + chroma).r;
+                    refracted.g = SampleSceneColor(screenUv + distortion).g;
+                    refracted.b = SampleSceneColor(screenUv + distortion - chroma).b;
+
+                    float3 viewDirection = normalize(GetWorldSpaceViewDir(input.positionWS));
+                    float fresnel = pow(1.0 - saturate(dot(normalWS, viewDirection)),
+                                        _GlassFresnelPower) * _GlassFresnelIntensity;
+                    float3 tinted = lerp(refracted, refracted * _BaseColor.rgb, _GlassTint);
+                    color.rgb = tinted + _ColorB.rgb * fresnel;
+                    color.a = _BaseColor.a * input.color.a;
+                    return color;
+                }
 
                 if (_UsePaletteRandom > 0.5)
                 {

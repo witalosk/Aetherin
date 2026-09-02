@@ -5,6 +5,9 @@ namespace Aetherin
     /// <summary>オーディオ解析結果を演出やシェーダーへ提供する。</summary>
     public interface IAudioFeatureProvider
     {
+        /// <summary>入力全体のRMS音量。0～1。</summary>
+        float InputVolume { get; }
+
         /// <summary>バスドラムの立ち上がり。0～1。</summary>
         float Kick { get; }
 

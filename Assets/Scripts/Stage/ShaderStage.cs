@@ -13,13 +13,11 @@ namespace Aetherin
         
         private Material _material;
         private IAudioFeatureProvider _audioFeatureProvider;
-        private IDeckStateProvider _deckStateProvider;
 
         [Inject]
-        private void Construct(IAudioFeatureProvider audioFeatureProvider, IDeckStateProvider deckStateProvider)
+        private void Construct(IAudioFeatureProvider audioFeatureProvider)
         {
             _audioFeatureProvider = audioFeatureProvider;
-            _deckStateProvider = deckStateProvider;
         }
 
         protected override void Start()

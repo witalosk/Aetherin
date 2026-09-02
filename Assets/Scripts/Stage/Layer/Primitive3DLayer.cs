@@ -6,73 +6,6 @@ using UnitySimpleContainer;
 
 namespace Aetherin
 {
-    public enum Primitive3DType
-    {
-        Cube,
-        Sphere,
-        Tetrahedron,
-        Cylinder,
-    }
-
-    public enum Primitive3DColorMode
-    {
-        Solid,
-        UvLerp,
-        ShadedLerp,
-        ToonTwoTone,
-        PaletteRandom,
-    }
-
-    public enum Primitive3DRenderMode
-    {
-        Surface,
-        Wireframe,
-        SurfaceAndWireframe,
-    }
-
-    [Serializable]
-    public class Primitive3DLayerParams : StageLayerParams
-    {
-        public Primitive3DType Primitive;
-        public Primitive3DRenderMode RenderMode;
-        public Vector3Parameter Position = new();
-        public Vector3Parameter Rotation = new();
-        public Vector3Parameter Scale = new(Vector3.one);
-        public Vector3Parameter Anchor = new();
-        public Vector3Parameter Size = new(Vector3.one);
-
-        [Min(3)]
-        public int RadialSegments = 32;
-
-        [Min(2)]
-        public int LatitudeSegments = 16;
-
-        public Primitive3DColorMode ColorMode;
-        public PaletteColorSource ColorA = PaletteColorSource.AccentColor1;
-        public PaletteColorSource ColorB = PaletteColorSource.AccentColor2;
-        public int PaletteRandomSeed;
-        public FloatParameter ColorIntensity = new(1f);
-        public FloatParameter Alpha = new(1f);
-
-        public PaletteColorSource WireColor = PaletteColorSource.AccentColor1;
-        [Tooltip("ワイヤーの太さ（プリミティブのローカル空間）")]
-        public FloatParameter WireWidth = new(0.015f);
-        public FloatParameter WireColorIntensity = new(1f);
-        public FloatParameter WireAlpha = new(1f);
-
-        [Tooltip("UVのU座標へ掛ける値")]
-        public FloatParameter UvScale = new(1f);
-        public FloatParameter UvOffset = new(0f);
-
-        [Tooltip("Shadingで使う、面から光へ向かう方向")]
-        public Vector3Parameter LightDirection = new(new Vector3(0.3f, 0.8f, -0.5f));
-
-        [Range(0f, 1f)]
-        public FloatParameter ToonThreshold = new(0.5f);
-
-        public RepeaterParams Repeater = new();
-    }
-
     /// <summary>
     /// CameraStageへ直接描画するプリミティブ立体レイヤー。
     /// TransformとSizeはShader行列で処理し、形状または分割数が変わったときだけMeshを再生成する。
@@ -80,7 +13,7 @@ namespace Aetherin
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class Primitive3DLayer : StageLayer, IRepeaterCopyProvider
+    public sealed partial class Primitive3DLayer : StageLayer, IRepeaterCopyProvider
     {
         private const int MaxRepeaterCopies = 128;
         private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
@@ -89,6 +22,14 @@ namespace Aetherin
         private static readonly int UvParamsId = Shader.PropertyToID("_UvParams");
         private static readonly int LightDirectionId = Shader.PropertyToID("_LightDirection");
         private static readonly int ToonThresholdId = Shader.PropertyToID("_ToonThreshold");
+        private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
+        private static readonly int GlassRefractionId = Shader.PropertyToID("_GlassRefraction");
+        private static readonly int GlassTintId = Shader.PropertyToID("_GlassTint");
+        private static readonly int GlassFresnelPowerId = Shader.PropertyToID("_GlassFresnelPower");
+        private static readonly int GlassFresnelIntensityId = Shader.PropertyToID("_GlassFresnelIntensity");
+        private static readonly int GlassChromaticAberrationId = Shader.PropertyToID("_GlassChromaticAberration");
+        private static readonly int GlassDistortionId = Shader.PropertyToID("_GlassDistortion");
+        private static readonly int GlassDistortionScaleId = Shader.PropertyToID("_GlassDistortionScale");
         private static readonly int ShapeMatrixId = Shader.PropertyToID("_ShapeMatrix");
         private static readonly int ShapeNormalMatrixId = Shader.PropertyToID("_ShapeNormalMatrix");
         private static readonly int UsePaletteRandomId = Shader.PropertyToID("_UsePaletteRandom");
@@ -125,6 +66,7 @@ namespace Aetherin
         private Vector3 _evaluatedScale = Vector3.one;
         private Vector3 _evaluatedAnchor;
         private Vector3 _evaluatedSize = Vector3.one;
+        private float _evaluatedCornerRadius = 0.15f;
         private float _evaluatedOpacity = 1f;
         private float _evaluatedColorIntensity = 1f;
         private float _evaluatedAlpha = 1f;
@@ -132,6 +74,13 @@ namespace Aetherin
         private float _evaluatedUvOffset;
         private Vector3 _evaluatedLightDirection = Vector3.up;
         private float _evaluatedToonThreshold = 0.5f;
+        private float _evaluatedGlassRefraction = 0.025f;
+        private float _evaluatedGlassTint = 0.2f;
+        private float _evaluatedGlassFresnelPower = 3f;
+        private float _evaluatedGlassFresnelIntensity = 0.8f;
+        private float _evaluatedGlassChromaticAberration = 0.002f;
+        private float _evaluatedGlassDistortion = 0.003f;
+        private float _evaluatedGlassDistortionScale = 12f;
         private EvaluatedRepeater _evaluatedRepeater;
         private Color _evaluatedColorA = Color.white;
         private Color _evaluatedColorB = Color.white;
@@ -209,6 +158,7 @@ namespace Aetherin
             EnsureParameterObjects();
             _params.RadialSegments = Mathf.Max(3, _params.RadialSegments);
             _params.LatitudeSegments = Mathf.Max(2, _params.LatitudeSegments);
+            _params.CornerSegments = Mathf.Max(1, _params.CornerSegments);
             _params.Size.BaseValue.x = Mathf.Max(0f, _params.Size.BaseValue.x);
             _params.Size.BaseValue.y = Mathf.Max(0f, _params.Size.BaseValue.y);
             _params.Size.BaseValue.z = Mathf.Max(0f, _params.Size.BaseValue.z);
@@ -232,6 +182,7 @@ namespace Aetherin
             _params.Scale ??= new Vector3Parameter(Vector3.one);
             _params.Anchor ??= new Vector3Parameter();
             _params.Size ??= new Vector3Parameter(Vector3.one);
+            _params.CornerRadius ??= new FloatParameter(0.15f);
             _params.ColorIntensity ??= new FloatParameter(1f);
             _params.Alpha ??= new FloatParameter(1f);
             _params.WireWidth ??= new FloatParameter(0.015f);
@@ -241,6 +192,13 @@ namespace Aetherin
             _params.UvOffset ??= new FloatParameter(0f);
             _params.LightDirection ??= new Vector3Parameter(new Vector3(0.3f, 0.8f, -0.5f));
             _params.ToonThreshold ??= new FloatParameter(0.5f);
+            _params.GlassRefraction ??= new FloatParameter(0.025f);
+            _params.GlassTint ??= new FloatParameter(0.2f);
+            _params.GlassFresnelPower ??= new FloatParameter(3f);
+            _params.GlassFresnelIntensity ??= new FloatParameter(0.8f);
+            _params.GlassChromaticAberration ??= new FloatParameter(0.002f);
+            _params.GlassDistortion ??= new FloatParameter(0.003f);
+            _params.GlassDistortionScale ??= new FloatParameter(12f);
             _params.Repeater ??= new RepeaterParams();
             _params.Repeater.EnsureInitialized(MaxRepeaterCopies);
         }
@@ -324,380 +282,6 @@ namespace Aetherin
             _wireRenderer.receiveShadows = false;
         }
 
-        private void RebuildGeometry()
-        {
-            if (_mesh == null) return;
-
-            _vertices.Clear();
-            _uvs.Clear();
-            _vertexColors.Clear();
-            _triangles.Clear();
-            _wireVertices.Clear();
-            _wireUvs.Clear();
-            _wireVertexColors.Clear();
-            _wireTriangles.Clear();
-
-            switch (_params.Primitive)
-            {
-                case Primitive3DType.Cube:
-                    BuildCube();
-                    break;
-                case Primitive3DType.Sphere:
-                    BuildSphere();
-                    break;
-                case Primitive3DType.Tetrahedron:
-                    BuildTetrahedron();
-                    break;
-                case Primitive3DType.Cylinder:
-                    BuildCylinder();
-                    break;
-            }
-
-            BuildWireframe();
-
-            int baseIndexCount = _triangles.Count;
-            int baseVertexCount = RepeaterMeshUtility.ApplyVertices(
-                _vertices, _vertexColors, _uvs, _evaluatedRepeater,
-                _evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource ? this : null);
-            RepeaterMeshUtility.ApplyIndices(
-                _triangles, baseIndexCount, baseVertexCount, _evaluatedRepeater.Copies);
-
-            _mesh.Clear();
-            _mesh.SetVertices(_vertices);
-            _mesh.SetUVs(0, _uvs);
-            _mesh.SetColors(_vertexColors);
-            _mesh.SetTriangles(_triangles, 0, false);
-            _mesh.RecalculateNormals();
-            _mesh.RecalculateBounds();
-            _geometryBounds = _mesh.bounds;
-            RebuildWireMesh();
-            _geometryHash = CalculateGeometryHash();
-        }
-
-        private void RebuildWireMesh()
-        {
-            if (_wireMesh == null) return;
-
-            int baseIndexCount = _wireTriangles.Count;
-            int baseVertexCount = RepeaterMeshUtility.ApplyVertices(
-                _wireVertices, _wireVertexColors, _wireUvs, _evaluatedRepeater,
-                _evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource ? this : null);
-            RepeaterMeshUtility.ApplyIndices(
-                _wireTriangles, baseIndexCount, baseVertexCount, _evaluatedRepeater.Copies);
-
-            _wireMesh.Clear();
-            _wireMesh.SetVertices(_wireVertices);
-            _wireMesh.SetUVs(0, _wireUvs);
-            _wireMesh.SetColors(_wireVertexColors);
-            _wireMesh.SetTriangles(_wireTriangles, 0, false);
-            _wireMesh.RecalculateNormals();
-            _wireMesh.RecalculateBounds();
-            _wireGeometryBounds = _wireMesh.bounds;
-        }
-
-        private void BuildCube()
-        {
-            Vector3[] corners =
-            {
-                new(-0.5f, -0.5f, -0.5f), new(0.5f, -0.5f, -0.5f),
-                new(0.5f, 0.5f, -0.5f), new(-0.5f, 0.5f, -0.5f),
-                new(-0.5f, -0.5f, 0.5f), new(0.5f, -0.5f, 0.5f),
-                new(0.5f, 0.5f, 0.5f), new(-0.5f, 0.5f, 0.5f),
-            };
-
-            AddQuad(corners[0], corners[3], corners[2], corners[1]);
-            AddQuad(corners[4], corners[5], corners[6], corners[7]);
-            AddQuad(corners[0], corners[4], corners[7], corners[3]);
-            AddQuad(corners[1], corners[2], corners[6], corners[5]);
-            AddQuad(corners[0], corners[1], corners[5], corners[4]);
-            AddQuad(corners[3], corners[7], corners[6], corners[2]);
-        }
-
-        private void BuildWireframe()
-        {
-            float radius = Mathf.Max(0.0001f, _evaluatedWireWidth * 0.5f);
-            switch (_params.Primitive)
-            {
-                case Primitive3DType.Cube:
-                    BuildCubeWireframe(radius);
-                    break;
-                case Primitive3DType.Sphere:
-                    BuildSphereWireframe(radius);
-                    break;
-                case Primitive3DType.Tetrahedron:
-                    BuildTetrahedronWireframe(radius);
-                    break;
-                case Primitive3DType.Cylinder:
-                    BuildCylinderWireframe(radius);
-                    break;
-            }
-        }
-
-        private void BuildCubeWireframe(float radius)
-        {
-            Vector3[] p =
-            {
-                new(-0.5f, -0.5f, -0.5f), new(0.5f, -0.5f, -0.5f),
-                new(0.5f, 0.5f, -0.5f), new(-0.5f, 0.5f, -0.5f),
-                new(-0.5f, -0.5f, 0.5f), new(0.5f, -0.5f, 0.5f),
-                new(0.5f, 0.5f, 0.5f), new(-0.5f, 0.5f, 0.5f),
-            };
-            int[,] edges =
-            {
-                { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 0 },
-                { 4, 5 }, { 5, 6 }, { 6, 7 }, { 7, 4 },
-                { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 },
-            };
-            for (int i = 0; i < edges.GetLength(0); i++) AddWireEdge(p[edges[i, 0]], p[edges[i, 1]], radius);
-        }
-
-        private void BuildTetrahedronWireframe(float radius)
-        {
-            float s = 0.5f;
-            Vector3[] p = { new(s, s, s), new(-s, -s, s), new(-s, s, -s), new(s, -s, -s) };
-            AddWireEdge(p[0], p[1], radius); AddWireEdge(p[0], p[2], radius);
-            AddWireEdge(p[0], p[3], radius); AddWireEdge(p[1], p[2], radius);
-            AddWireEdge(p[1], p[3], radius); AddWireEdge(p[2], p[3], radius);
-        }
-
-        private void BuildCylinderWireframe(float radius)
-        {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            for (int i = 0; i < radial; i++)
-            {
-                float a0 = Mathf.PI * 2f * i / radial;
-                float a1 = Mathf.PI * 2f * ((i + 1) % radial) / radial;
-                Vector3 bottom0 = new(Mathf.Cos(a0) * 0.5f, -0.5f, Mathf.Sin(a0) * 0.5f);
-                Vector3 bottom1 = new(Mathf.Cos(a1) * 0.5f, -0.5f, Mathf.Sin(a1) * 0.5f);
-                Vector3 top0 = new(bottom0.x, 0.5f, bottom0.z);
-                Vector3 top1 = new(bottom1.x, 0.5f, bottom1.z);
-                AddWireEdge(bottom0, bottom1, radius);
-                AddWireEdge(top0, top1, radius);
-                AddWireEdge(bottom0, top0, radius);
-            }
-        }
-
-        private void BuildSphereWireframe(float radius)
-        {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            int latitude = Mathf.Max(2, _params.LatitudeSegments);
-
-            // 緯線。極では半径が0になるので除外する。
-            for (int y = 1; y < latitude; y++)
-            {
-                float theta = Mathf.PI * y / latitude;
-                float ringRadius = Mathf.Sin(theta) * 0.5f;
-                float py = Mathf.Cos(theta) * 0.5f;
-                for (int x = 0; x < radial; x++)
-                {
-                    float a0 = Mathf.PI * 2f * x / radial;
-                    float a1 = Mathf.PI * 2f * (x + 1) / radial;
-                    AddWireEdge(
-                        new Vector3(Mathf.Cos(a0) * ringRadius, py, Mathf.Sin(a0) * ringRadius),
-                        new Vector3(Mathf.Cos(a1) * ringRadius, py, Mathf.Sin(a1) * ringRadius), radius);
-                }
-            }
-
-            // 経線。三角形分割の対角線は含めない。
-            for (int x = 0; x < radial; x++)
-            {
-                float phi = Mathf.PI * 2f * x / radial;
-                for (int y = 0; y < latitude; y++)
-                {
-                    float t0 = Mathf.PI * y / latitude;
-                    float t1 = Mathf.PI * (y + 1) / latitude;
-                    AddWireEdge(SpherePoint(phi, t0), SpherePoint(phi, t1), radius);
-                }
-            }
-        }
-
-        private static Vector3 SpherePoint(float phi, float theta) => new(
-            Mathf.Cos(phi) * Mathf.Sin(theta) * 0.5f,
-            Mathf.Cos(theta) * 0.5f,
-            Mathf.Sin(phi) * Mathf.Sin(theta) * 0.5f);
-
-        private void AddWireEdge(Vector3 a, Vector3 b, float radius)
-        {
-            Vector3 direction = b - a;
-            if (direction.sqrMagnitude < 0.0000001f) return;
-            direction.Normalize();
-            Vector3 reference = Mathf.Abs(Vector3.Dot(direction, Vector3.up)) < 0.9f
-                ? Vector3.up
-                : Vector3.right;
-            Vector3 side = Vector3.Cross(direction, reference).normalized * radius;
-            Vector3 up = Vector3.Cross(direction, side).normalized * radius;
-            Vector3[] ring = { side + up, -side + up, -side - up, side - up };
-
-            int start = _wireVertices.Count;
-            for (int i = 0; i < 4; i++)
-            {
-                _wireVertices.Add(a + ring[i]);
-                _wireVertices.Add(b + ring[i]);
-                _wireUvs.Add(Vector2.zero);
-                _wireUvs.Add(Vector2.one);
-            }
-            for (int i = 0; i < 4; i++)
-            {
-                int next = (i + 1) & 3;
-                int a0 = start + i * 2;
-                int b0 = a0 + 1;
-                int a1 = start + next * 2;
-                int b1 = a1 + 1;
-                _wireTriangles.Add(a0); _wireTriangles.Add(b0); _wireTriangles.Add(a1);
-                _wireTriangles.Add(a1); _wireTriangles.Add(b0); _wireTriangles.Add(b1);
-            }
-        }
-
-        private void BuildTetrahedron()
-        {
-            float s = 0.5f;
-            Vector3 a = new(s, s, s);
-            Vector3 b = new(-s, -s, s);
-            Vector3 c = new(-s, s, -s);
-            Vector3 d = new(s, -s, -s);
-            AddTriangleOutward(a, b, c);
-            AddTriangleOutward(a, d, b);
-            AddTriangleOutward(a, c, d);
-            AddTriangleOutward(b, d, c);
-        }
-
-        private void BuildSphere()
-        {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            int latitude = Mathf.Max(2, _params.LatitudeSegments);
-            EnsureCapacity(_vertices, (radial + 1) * (latitude + 1));
-            EnsureCapacity(_triangles, radial * latitude * 6);
-
-            for (int y = 0; y <= latitude; y++)
-            {
-                float theta = Mathf.PI * y / latitude;
-                float ringRadius = Mathf.Sin(theta) * 0.5f;
-                float py = Mathf.Cos(theta) * 0.5f;
-                for (int x = 0; x <= radial; x++)
-                {
-                    float phi = Mathf.PI * 2f * x / radial;
-                    _vertices.Add(new Vector3(
-                        Mathf.Cos(phi) * ringRadius,
-                        py,
-                        Mathf.Sin(phi) * ringRadius));
-                    _uvs.Add(new Vector2(x / (float)radial, 1f - y / (float)latitude));
-                }
-            }
-
-            int stride = radial + 1;
-            for (int y = 0; y < latitude; y++)
-            {
-                for (int x = 0; x < radial; x++)
-                {
-                    int a = y * stride + x;
-                    int b = a + stride;
-                    AddIndexedTriangleOutward(a, a + 1, b);
-                    AddIndexedTriangleOutward(a + 1, b + 1, b);
-                }
-            }
-        }
-
-        private void BuildCylinder()
-        {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            EnsureCapacity(_vertices, radial * 2 + 2);
-            EnsureCapacity(_triangles, radial * 12);
-
-            for (int i = 0; i < radial; i++)
-            {
-                float angle = Mathf.PI * 2f * i / radial;
-                float x = Mathf.Cos(angle) * 0.5f;
-                float z = Mathf.Sin(angle) * 0.5f;
-                _vertices.Add(new Vector3(x, -0.5f, z));
-                _vertices.Add(new Vector3(x, 0.5f, z));
-                float u = i / (float)radial;
-                _uvs.Add(new Vector2(u, 0f));
-                _uvs.Add(new Vector2(u, 1f));
-            }
-
-            int bottomCenter = _vertices.Count;
-            _vertices.Add(new Vector3(0f, -0.5f, 0f));
-            _uvs.Add(new Vector2(0.5f, 0.5f));
-            int topCenter = _vertices.Count;
-            _vertices.Add(new Vector3(0f, 0.5f, 0f));
-            _uvs.Add(new Vector2(0.5f, 0.5f));
-
-            for (int i = 0; i < radial; i++)
-            {
-                int next = (i + 1) % radial;
-                int bottom = i * 2;
-                int top = bottom + 1;
-                int nextBottom = next * 2;
-                int nextTop = nextBottom + 1;
-
-                AddIndexedTriangleOutward(bottom, top, nextBottom);
-                AddIndexedTriangleOutward(nextBottom, top, nextTop);
-                AddIndexedTriangleOutward(bottomCenter, bottom, nextBottom);
-                AddIndexedTriangleOutward(topCenter, nextTop, top);
-            }
-        }
-
-        private void AddQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d)
-        {
-            AddTriangleOutward(a, b, c, Vector2.zero, Vector2.up, Vector2.one);
-            AddTriangleOutward(a, c, d, Vector2.zero, Vector2.one, Vector2.right);
-        }
-
-        private void AddTriangleOutward(Vector3 a, Vector3 b, Vector3 c)
-        {
-            AddTriangleOutward(a, b, c, Vector2.zero, Vector2.right, new Vector2(0.5f, 1f));
-        }
-
-        private void AddTriangleOutward(
-            Vector3 a,
-            Vector3 b,
-            Vector3 c,
-            Vector2 uvA,
-            Vector2 uvB,
-            Vector2 uvC)
-        {
-            int start = _vertices.Count;
-            _vertices.Add(a);
-            _vertices.Add(b);
-            _vertices.Add(c);
-            _uvs.Add(uvA);
-            _uvs.Add(uvB);
-            _uvs.Add(uvC);
-
-            Vector3 normal = Vector3.Cross(b - a, c - a);
-            Vector3 center = (a + b + c) / 3f;
-            if (Vector3.Dot(normal, center) >= 0f)
-            {
-                _triangles.Add(start);
-                _triangles.Add(start + 1);
-                _triangles.Add(start + 2);
-            }
-            else
-            {
-                _triangles.Add(start);
-                _triangles.Add(start + 2);
-                _triangles.Add(start + 1);
-            }
-        }
-
-        private void AddIndexedTriangleOutward(int a, int b, int c)
-        {
-            Vector3 normal = Vector3.Cross(_vertices[b] - _vertices[a], _vertices[c] - _vertices[a]);
-            Vector3 center = (_vertices[a] + _vertices[b] + _vertices[c]) / 3f;
-            if (Vector3.Dot(normal, center) >= 0f)
-            {
-                _triangles.Add(a);
-                _triangles.Add(b);
-                _triangles.Add(c);
-            }
-            else
-            {
-                _triangles.Add(a);
-                _triangles.Add(c);
-                _triangles.Add(b);
-            }
-        }
-
         private void EvaluateParameters(bool runtime)
         {
             var context = new ModulationContext(
@@ -715,6 +299,8 @@ namespace Aetherin
             _evaluatedSize.x = Mathf.Max(0f, _evaluatedSize.x);
             _evaluatedSize.y = Mathf.Max(0f, _evaluatedSize.y);
             _evaluatedSize.z = Mathf.Max(0f, _evaluatedSize.z);
+            float maxCornerRadius = Mathf.Min(_evaluatedSize.x, Mathf.Min(_evaluatedSize.y, _evaluatedSize.z)) * 0.5f;
+            _evaluatedCornerRadius = Mathf.Clamp(_params.CornerRadius?.Evaluate(context) ?? 0f, 0f, maxCornerRadius);
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
             _evaluatedColorIntensity = Mathf.Max(0f, _params.ColorIntensity?.Evaluate(context) ?? 1f);
             _evaluatedAlpha = Mathf.Clamp01(_params.Alpha?.Evaluate(context) ?? 1f);
@@ -725,6 +311,15 @@ namespace Aetherin
             if (_evaluatedLightDirection.sqrMagnitude < 0.000001f) _evaluatedLightDirection = Vector3.up;
             _evaluatedLightDirection.Normalize();
             _evaluatedToonThreshold = Mathf.Clamp01(_params.ToonThreshold?.Evaluate(context) ?? 0.5f);
+            _evaluatedGlassRefraction = Mathf.Max(0f, _params.GlassRefraction?.Evaluate(context) ?? 0.025f);
+            _evaluatedGlassTint = Mathf.Clamp01(_params.GlassTint?.Evaluate(context) ?? 0.2f);
+            _evaluatedGlassFresnelPower = Mathf.Max(0.01f, _params.GlassFresnelPower?.Evaluate(context) ?? 3f);
+            _evaluatedGlassFresnelIntensity = Mathf.Max(0f, _params.GlassFresnelIntensity?.Evaluate(context) ?? 0.8f);
+            _evaluatedGlassChromaticAberration = Mathf.Max(0f,
+                _params.GlassChromaticAberration?.Evaluate(context) ?? 0.002f);
+            _evaluatedGlassDistortion = Mathf.Max(0f, _params.GlassDistortion?.Evaluate(context) ?? 0.003f);
+            _evaluatedGlassDistortionScale = Mathf.Max(0.01f,
+                _params.GlassDistortionScale?.Evaluate(context) ?? 12f);
             _evaluatedRepeater = EvaluatedRepeater.Evaluate(_params.Repeater, context, MaxRepeaterCopies);
 
             ColorPalette palette = Application.isPlaying && _deckStateProvider != null
@@ -761,6 +356,17 @@ namespace Aetherin
             _material.SetVector(UvParamsId, new Vector4(_evaluatedUvScale, _evaluatedUvOffset, 0f, 0f));
             _material.SetVector(LightDirectionId, _evaluatedLightDirection);
             _material.SetFloat(ToonThresholdId, _evaluatedToonThreshold);
+            bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
+            _material.SetFloat(MaterialModeId, glass ? 1f : 0f);
+            LayerMaterialUtility.ApplyBlendMode(_material,
+                glass ? LayerBlendMode.Transparent : _params.BlendMode);
+            _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
+            _material.SetFloat(GlassTintId, _evaluatedGlassTint);
+            _material.SetFloat(GlassFresnelPowerId, _evaluatedGlassFresnelPower);
+            _material.SetFloat(GlassFresnelIntensityId, _evaluatedGlassFresnelIntensity);
+            _material.SetFloat(GlassChromaticAberrationId, _evaluatedGlassChromaticAberration);
+            _material.SetFloat(GlassDistortionId, _evaluatedGlassDistortion);
+            _material.SetFloat(GlassDistortionScaleId, _evaluatedGlassDistortionScale);
             ApplyRandomPalette();
 
             Vector3 rotation = new(
@@ -772,7 +378,7 @@ namespace Aetherin
                                    Quaternion.Euler(rotation),
                                    _evaluatedScale) *
                                Matrix4x4.Translate(-_evaluatedAnchor) *
-                               Matrix4x4.Scale(_evaluatedSize);
+                               Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
 
             _material.SetMatrix(ShapeMatrixId, matrix);
             _material.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
@@ -787,6 +393,11 @@ namespace Aetherin
             _wireMaterial.SetColor(BaseColorId, _evaluatedWireColor);
             _wireMaterial.SetColor(ColorBId, _evaluatedWireColor);
             _wireMaterial.SetFloat(ColorModeId, (float)Primitive3DColorMode.Solid);
+            _wireMaterial.SetFloat(MaterialModeId, 0f);
+            LayerMaterialUtility.ApplyBlendMode(_wireMaterial,
+                _params.MaterialMode == Primitive3DMaterialMode.Glass
+                    ? LayerBlendMode.Transparent
+                    : _params.BlendMode);
             _wireMaterial.SetFloat(UsePaletteRandomId, 0f);
             _wireMaterial.SetMatrix(ShapeMatrixId, matrix);
             _wireMaterial.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
@@ -876,6 +487,12 @@ namespace Aetherin
                     hash = hash * 31 + _params.RadialSegments;
                 if (_params.Primitive == Primitive3DType.Sphere)
                     hash = hash * 31 + _params.LatitudeSegments;
+                if (_params.Primitive == Primitive3DType.RoundedBox)
+                {
+                    hash = hash * 31 + _params.CornerSegments;
+                    hash = hash * 31 + _evaluatedCornerRadius.GetHashCode();
+                    hash = hash * 31 + _evaluatedSize.GetHashCode();
+                }
                 hash = hash * 31 + _evaluatedRepeater.GetHashCode();
                 hash = hash * 31 + _evaluatedWireWidth.GetHashCode();
                 if (_evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource)
@@ -901,15 +518,18 @@ namespace Aetherin
             Vector3 anchor = _params.Anchor?.Evaluate(context) ?? Vector3.zero;
             Matrix4x4 copyMatrix = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale) *
                                    Matrix4x4.Translate(-anchor) *
-                                   Matrix4x4.Scale(_evaluatedSize);
+                                   Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
             Matrix4x4 baseMatrix = Matrix4x4.TRS(
                                        _evaluatedPosition,
                                        Quaternion.Euler(_evaluatedRotation),
                                        _evaluatedScale) *
                                    Matrix4x4.Translate(-_evaluatedAnchor) *
-                                   Matrix4x4.Scale(_evaluatedSize);
+                                   Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
             return baseMatrix.inverse * copyMatrix;
         }
+
+        private Vector3 GetGeometryScale(Vector3 size) =>
+            _params.Primitive == Primitive3DType.RoundedBox ? Vector3.one : size;
 
         public float GetRepeaterCopyOpacity(int copyIndex, float phaseOffset)
         {

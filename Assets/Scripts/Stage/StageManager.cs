@@ -18,6 +18,12 @@ namespace Aetherin
         [Tooltip("Nextに出すステージを選ぶボタン (登録ステージと同じ並び)")]
         public List<MidiBinding> StageSelectButtons = new();
 
+        [Tooltip("選択中のNext CameraStageにあるレイヤーを、リストのインデックス順でON/OFFするPad")]
+        public List<MidiBinding> LayerToggleButtons = new();
+
+        [Tooltip("表示中レイヤーに対応するPadのLED色")]
+        public Color LayerToggleColor = new(0.3f, 1f, 0.35f);
+
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -27,6 +33,9 @@ namespace Aetherin
         [Tooltip("フェーダーがこの値まで振り切ったらCurrent / Nextを入れ替える")]
         [Range(0.9f, 1f)]
         public float SwapThreshold = 0.99f;
+
+        [Tooltip("Nextへ即時適用するポストエフェクト。メインCrossFaderからは独立しています")]
+        public PostEffectManagerParams PostEffects = new();
     }
 
     /// <summary>
@@ -71,6 +80,7 @@ namespace Aetherin
         [SerializeField] private Renderer _nextPreviewRenderer;
         [Space]
         [SerializeField] private Shader _crossFadeShader;
+        [SerializeField] private Shader _postEffectShader;
         [Space]
         [SerializeField] private List<StageBase> _stages;
         [SerializeField] private StageManagerParams _params = new();
@@ -90,19 +100,35 @@ namespace Aetherin
 
         /// <summary> デッキを作り直すたびに増える。UIが参照先の作り直しを検知するために使う </summary>
         private int _deckRevision;
+        private int _layerInspectorRevision;
+        private StageLayer _inspectedLayer;
+        private CameraStage _inspectedLayerStage;
+        private WindowElement _layerInspectorWindow;
 
         private readonly DeckState _currentState = new();
 
         private IContainer _container;
         private IApplicationManager _applicationManager;
+        private IAudioFeatureProvider _audioFeatureProvider;
+        private IBeatManager _beatManager;
         private Material _crossFadeMaterial;
+        private RenderTexture _crossFadeTexture;
+        private PostEffectManager _postEffectManager;
+        private Texture _currentPostTexture;
+        private Texture _nextPostTexture;
         private CameraStageSaveData _pendingCameraStageData;
 
         [Inject]
-        public void Construct(IContainer container, IApplicationManager applicationManager)
+        public void Construct(
+            IContainer container,
+            IApplicationManager applicationManager,
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager)
         {
             _container = container;
             _applicationManager = applicationManager;
+            _audioFeatureProvider = audioFeatureProvider;
+            _beatManager = beatManager;
         }
 
         public DeckState GetState(StageDeck deck) => deck == StageDeck.Current ? _currentState : NextState;
@@ -111,7 +137,11 @@ namespace Aetherin
         {
             OutputTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0,
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            _crossFadeTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0,
+                RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
+            _postEffectManager = new PostEffectManager(
+                _postEffectShader != null ? _postEffectShader : Shader.Find("Hidden/Aetherin/PostEffectStack"));
 
             BuildDecks();
             ApplyPendingCameraStageData();
@@ -165,19 +195,28 @@ namespace Aetherin
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
 
             UpdateStageSelect();
+            UpdateLayerToggleButtons();
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
             var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
             var nextTexture = GetStageTexture(_nextStages, _params.NextStageIndex);
 
-            _crossFadeMaterial.SetTexture(TexAId, currentTexture);
-            _crossFadeMaterial.SetTexture(TexBId, nextTexture);
-            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
-            Graphics.Blit(null, OutputTexture, _crossFadeMaterial);
+            var modulationContext = new ModulationContext(
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+            _params.PostEffects ??= new PostEffectManagerParams();
+            _currentPostTexture = currentTexture;
+            _nextPostTexture = _postEffectManager.ProcessNext(
+                nextTexture, _params.PostEffects.Next, modulationContext);
 
-            if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, currentTexture);
-            if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, nextTexture);
+            _crossFadeMaterial.SetTexture(TexAId, _currentPostTexture);
+            _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
+            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
+            Graphics.Blit(null, _crossFadeTexture, _crossFadeMaterial);
+            Graphics.Blit(_crossFadeTexture, OutputTexture);
+
+            if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, _currentPostTexture);
+            if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, _nextPostTexture);
         }
 
         /// <summary>
@@ -197,6 +236,38 @@ namespace Aetherin
                 if (i == _params.NextStageIndex) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
                 else if (i == _params.CurrentStageIndex) ledColor = StageLedColor;
                 button.SetLed(ledColor);
+            }
+        }
+
+        /// <summary>
+        /// Binding自体をレイヤーへ持たせず、選択中Nextステージのレイヤーリスト位置へ対応させる。
+        /// レイヤーを並び替えた場合、Padの対象も新しいインデックスへ追従する。
+        /// </summary>
+        private void UpdateLayerToggleButtons()
+        {
+            _params.LayerToggleButtons ??= new List<MidiBinding>();
+
+            IReadOnlyList<StageLayer> layers = null;
+            if (_nextStages != null && _nextStages.Count > 0)
+            {
+                int stageIndex = Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1);
+                if (_nextStages[stageIndex] is CameraStage cameraStage) layers = cameraStage.Layers;
+            }
+
+            for (int index = 0; index < _params.LayerToggleButtons.Count; index++)
+            {
+                MidiBinding button = _params.LayerToggleButtons[index];
+                if (button == null) continue;
+
+                StageLayer layer = layers != null && index < layers.Count ? layers[index] : null;
+                if (layer == null)
+                {
+                    button.ClearLed();
+                    continue;
+                }
+
+                if (button.WasNoteOn) layer.Visible = !layer.Visible;
+                button.SetLed(layer.Visible ? _params.LayerToggleColor : _params.LayerToggleColor * 0.08f);
             }
         }
 
@@ -240,7 +311,12 @@ namespace Aetherin
             // (いま出ている絵から続きを操作できるようにする)
             foreach (var stage in retiredStages)
             {
-                if (stage != null) Destroy(stage.gameObject);
+                if (stage == null) continue;
+
+                // Destroyはフレーム末まで遅延するため、先に無効化して
+                // 同じ位置へ作る新Nextと一時的に二重描画されるのを防ぐ。
+                stage.gameObject.SetActive(false);
+                Destroy(stage.gameObject);
             }
 
             _nextStages = new List<StageBase>(_currentStages.Count);
@@ -308,7 +384,9 @@ namespace Aetherin
         private void OnDestroy()
         {
             if (OutputTexture != null) OutputTexture.Release();
+            if (_crossFadeTexture != null) _crossFadeTexture.Release();
             if (_crossFadeMaterial != null) Destroy(_crossFadeMaterial);
+            _postEffectManager?.Dispose();
         }
 
         /// <summary>
@@ -359,36 +437,83 @@ namespace Aetherin
             if (stage is not CameraStage cameraStage) return UI.Label("このステージはレイヤー編集に未対応です");
 
             var layers = stage.Layers;
+            var layerList = layers.ToList();
+            var listOption = new ListViewOption(
+                reorderable: true,
+                fixedSize: true,
+                header: false,
+                suppressAutoIndent: true)
+            {
+                createItemElementFunc = (binder, _) =>
+                {
+                    var layer = binder.GetObject() as StageLayer;
+                    return layer == null ? UI.Label("Missing Layer") : CreateLayerElement(cameraStage, layer);
+                },
+            };
 
             return UI.Column(
                 UI.Row(
                     UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
-                    UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer())),
+                    UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer()),
+                    UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer()),
+                    UI.Button("Add Text", () => cameraStage.AddTextLayer()),
+                    UI.Button("Add Runtime Shader", () => cameraStage.AddRuntimeShaderLayer())),
                 layers.Count == 0
                     ? UI.Label("レイヤーがありません")
-                    : UI.Column(layers.Select(layer => CreateLayerElement(cameraStage, layer))));
+                    : UI.List("Layers", () => layerList,
+                        reordered => cameraStage.SetLayerOrder(reordered), listOption));
         }
 
-        private static Element CreateLayerElement(CameraStage stage, StageLayer layer)
+        private Element CreateLayerElement(CameraStage stage, StageLayer layer)
         {
-            return UI.Fold(
-                UI.Row(
-                    UI.Label(() => layer.Visible ? "●" : "○"),
-                    UI.Field(null,
-                            () => layer.gameObject.name,
-                            value => layer.gameObject.name = value)
-                        .SetWidth(180f)),
+            return UI.Row(
+                UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
+                UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
+                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer))
+                    .SetMinWidth(150f)
+                    .SetFlexGrow(1f),
+                UI.Button("Delete", () => RemoveLayer(stage, layer)));
+        }
+
+        private void InspectLayer(CameraStage stage, StageLayer layer)
+        {
+            if (_inspectedLayerStage == stage && _inspectedLayer == layer)
+            {
+                if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
+                return;
+            }
+
+            _inspectedLayerStage = stage;
+            _inspectedLayer = layer;
+            _layerInspectorRevision++;
+            if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
+        }
+
+        private void RemoveLayer(CameraStage stage, StageLayer layer)
+        {
+            if (_inspectedLayer == layer)
+            {
+                _inspectedLayer = null;
+                _inspectedLayerStage = null;
+                _layerInspectorRevision++;
+            }
+            stage.RemoveLayer(layer);
+        }
+
+        private Element CreateLayerInspectorElement()
+        {
+            if (_inspectedLayer == null || _inspectedLayerStage == null)
+                return UI.Label("Layersウィンドウで編集するレイヤーを選択してください");
+
+            StageLayer layer = _inspectedLayer;
+            return UI.Column(
                 UI.Row(
                     UI.Toggle("Visible", () => layer.Visible, value => layer.Visible = value),
-                    UI.Button("↑", () => stage.MoveLayer(layer, -1)),
-                    UI.Button("↓", () => stage.MoveLayer(layer, 1)),
-                    UI.Button("Delete", () => stage.RemoveLayer(layer))),
-                new[]
-                {
-                    UI.Field("Order", () => layer.Order, value => layer.Order = value),
-                    UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType()))
-                }
-            );
+                    UI.Field("Name",
+                        () => layer.gameObject.name,
+                        value => layer.gameObject.name = value).SetFlexGrow(1f)),
+                UI.Field("Order", () => layer.Order, value => layer.Order = value),
+                UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType())));
         }
 
         public Element AdditiveUi()
@@ -398,6 +523,12 @@ namespace Aetherin
                 .ToList();
 
             if (stageNames.Count == 0) return UI.Label("ステージが登録されていません");
+
+            _layerInspectorWindow = UI.Window("Layer Inspector",
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => _deckRevision * 100000 + _layerInspectorRevision,
+                    build: _ => CreateLayerInspectorElement()))
+                .SetWidth(460f);
 
             return UI.Column(
                 UI.Row(
@@ -416,8 +547,9 @@ namespace Aetherin
                         )
                     )),
                     CreatePreviewWindowLauncher("Output Preview", () => OutputTexture),
-                    CreatePreviewWindowLauncher("Current Preview", () => GetStageTexture(_currentStages, _params.CurrentStageIndex)),
-                    CreatePreviewWindowLauncher("Next Preview", () => GetStageTexture(_nextStages, _params.NextStageIndex))
+                    CreatePreviewWindowLauncher("Current Preview", () => _currentPostTexture),
+                    CreatePreviewWindowLauncher("Next Preview", () => _nextPostTexture),
+                    UI.WindowLauncher("Layer Inspector", _layerInspectorWindow)
                 ),
                 UI.Dropdown("Current",
                     () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
