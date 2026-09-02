@@ -31,6 +31,8 @@ namespace Aetherin
         WrapBounds,
         ColorOverLife,
         SizeOverLife,
+        ApplyLorenzAttractor,
+        ApplyVortex,
     }
 
     public enum ParticleModulationTarget
@@ -41,12 +43,47 @@ namespace Aetherin
     }
 
     [Serializable]
+    public sealed class ParticleRandomRangeParameter
+    {
+        [Tooltip("X=Min, Y=Max, Z=乱数分布のPower。Powerが大きいほどMin寄りになります")]
+        public Vector3 MinMaxPower = new(1f, 1f, 1f);
+
+        [Tooltip("Min/Maxへ一律に掛けるModulation")]
+        public FloatParameter Modulation = new(1f);
+
+        public ParticleRandomRangeParameter()
+        {
+        }
+
+        public ParticleRandomRangeParameter(float value)
+        {
+            MinMaxPower = new Vector3(value, value, 1f);
+        }
+
+        public void EnsureInitialized(float fallback)
+        {
+            if (MinMaxPower == Vector3.zero) MinMaxPower = new Vector3(fallback, fallback, 1f);
+            Modulation ??= new FloatParameter(1f);
+        }
+
+        public Vector3 Evaluate(in ModulationContext context)
+        {
+            Vector3 range = MinMaxPower;
+            float modulation = Modulation?.Evaluate(context) ?? 1f;
+            float min = range.x * modulation;
+            float max = range.y * modulation;
+            return new Vector3(Mathf.Min(min, max), Mathf.Max(min, max), Mathf.Max(0.0001f, range.z));
+        }
+    }
+
+    [Serializable]
     public sealed class ParticleSimulationModule
     {
         public bool Enabled = true;
         public ParticleSimulationModuleType Type;
         public FloatParameter Strength = new(1f);
         public Vector3Parameter Vector = new(new Vector3(0f, -1f, 0f));
+        public Vector3Parameter Axis = new(Vector3.up);
         public FloatParameter Scale = new(1f);
         public FloatParameter Speed = new(1f);
         public FloatParameter Secondary = new(1f);
@@ -65,11 +102,16 @@ namespace Aetherin
 
         [Range(1, 262144)] public int Capacity = 16384;
         public int Seed = 1;
+        public Vector3Parameter EmitterOffset = new();
         public Vector3Parameter EmitterSize = new(new Vector3(8f, 5f, 2f));
-        public FloatParameter Lifetime = new(6f);
-        public FloatParameter InitialSpeed = new(0.4f);
+        public ParticleRandomRangeParameter Lifetime = new(6f);
+        public ParticleRandomRangeParameter InitialSpeed = new(0.4f);
         public FloatParameter SimulationSpeed = new(1f);
-        public FloatParameter ParticleSize = new(0.035f);
+        public ParticleRandomRangeParameter ParticleSize = new(0.035f);
+        public Vector3Parameter InitialRotation = new();
+        public Vector3Parameter RotationRandom = new(new Vector3(360f, 360f, 360f));
+        public Vector3Parameter AngularVelocity = new();
+        public Vector3Parameter AngularVelocityRandom = new();
         public ParticleRenderShape Shape = ParticleRenderShape.Circle;
         public PaletteColorParameter Color = new();
 
@@ -100,11 +142,19 @@ namespace Aetherin
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
             Scale ??= new Vector3Parameter(Vector3.one);
+            EmitterOffset ??= new Vector3Parameter();
             EmitterSize ??= new Vector3Parameter(new Vector3(8f, 5f, 2f));
-            Lifetime ??= new FloatParameter(6f);
-            InitialSpeed ??= new FloatParameter(0.4f);
+            Lifetime ??= new ParticleRandomRangeParameter(6f);
+            Lifetime.EnsureInitialized(6f);
+            InitialSpeed ??= new ParticleRandomRangeParameter(0.4f);
+            InitialSpeed.EnsureInitialized(0.4f);
             SimulationSpeed ??= new FloatParameter(1f);
-            ParticleSize ??= new FloatParameter(0.035f);
+            ParticleSize ??= new ParticleRandomRangeParameter(0.035f);
+            ParticleSize.EnsureInitialized(0.035f);
+            InitialRotation ??= new Vector3Parameter();
+            RotationRandom ??= new Vector3Parameter(new Vector3(360f, 360f, 360f));
+            AngularVelocity ??= new Vector3Parameter();
+            AngularVelocityRandom ??= new Vector3Parameter();
             Color ??= new PaletteColorParameter();
             Color.EnsureInitialized();
             Modules ??= new List<ParticleSimulationModule>();

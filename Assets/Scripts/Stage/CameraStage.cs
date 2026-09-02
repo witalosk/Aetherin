@@ -18,6 +18,7 @@ namespace Aetherin
         public int LayerRevision { get; private set; }
 
         [SerializeField] private Camera _camera;
+        [SerializeField] private ModelLayerLibrary _modelLibrary;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
@@ -86,6 +87,35 @@ namespace Aetherin
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
             var layer = layerObject.AddComponent<Primitive3DLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
+        public GameObject ResolveModel(string key)
+        {
+            EnsureModelLibrary();
+            return _modelLibrary?.Resolve(key);
+        }
+
+        public IReadOnlyList<string> GetModelKeys()
+        {
+            EnsureModelLibrary();
+            return _modelLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private void EnsureModelLibrary()
+        {
+            if (_modelLibrary == null)
+                _modelLibrary = FindFirstObjectByType<ModelLayerLibrary>(FindObjectsInactive.Include);
+        }
+
+        public ModelLayer AddModelLayer()
+        {
+            var layerObject = new GameObject("Model Layer");
+            layerObject.transform.SetParent(transform, false);
+            var layer = layerObject.AddComponent<ModelLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
             RefreshLayers();
@@ -162,13 +192,14 @@ namespace Aetherin
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers
-                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer or TextLayer or RuntimeShaderLayer)
+                .Where(layer => layer is ShapeLayer or Primitive3DLayer or ModelLayer or GpuParticleLayer or TextLayer or RuntimeShaderLayer)
                 .Select(layer => new CameraStageLayerSaveData
                 {
                     Type = layer switch
                     {
                         ShapeLayer => "shape",
                         Primitive3DLayer => "primitive3d",
+                        ModelLayer => "model",
                         GpuParticleLayer => "gpu-particle",
                         TextLayer => "text",
                         RuntimeShaderLayer => "runtime-shader",
@@ -195,6 +226,7 @@ namespace Aetherin
                 {
                     "shape" => AddShapeLayer(),
                     "primitive3d" => AddPrimitive3DLayer(),
+                    "model" => AddModelLayer(),
                     "gpu-particle" => AddGpuParticleLayer(),
                     "text" => AddTextLayer(),
                     "runtime-shader" => AddRuntimeShaderLayer(),
@@ -211,6 +243,7 @@ namespace Aetherin
                 {
                     ShapeLayer => "Shape Layer",
                     Primitive3DLayer => "Primitive 3D Layer",
+                    ModelLayer => "Model Layer",
                     GpuParticleLayer => "GPU Particle Layer",
                     TextLayer => "Text Layer",
                     RuntimeShaderLayer => "Runtime Shader Layer",

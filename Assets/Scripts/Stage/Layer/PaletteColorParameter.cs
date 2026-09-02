@@ -18,6 +18,8 @@ namespace Aetherin
         Single,
         Gradient,
         PaletteRandom,
+        AccentRandom,
+        SubAccentRandom,
     }
 
     /// <summary>
@@ -105,6 +107,7 @@ namespace Aetherin
         public float Offset;
         public float Scale;
         public bool IsPaletteRandom;
+        public PaletteColorMode RandomMode;
         public int RandomSeed;
         public Color[] PaletteColors;
 
@@ -128,13 +131,15 @@ namespace Aetherin
 
             if (parameter.Mode != PaletteColorMode.Gradient)
             {
-                if (parameter.Mode == PaletteColorMode.PaletteRandom)
+                if (parameter.Mode is PaletteColorMode.PaletteRandom or
+                    PaletteColorMode.AccentRandom or PaletteColorMode.SubAccentRandom)
                 {
                     return new EvaluatedPaletteColor
                     {
                         ColorA = colorA,
                         ColorB = colorA,
                         IsPaletteRandom = true,
+                        RandomMode = parameter.Mode,
                         RandomSeed = parameter.RandomSeed,
                         PaletteColors = BuildOutputPalette(parameter, palette, intensity, alpha),
                     };

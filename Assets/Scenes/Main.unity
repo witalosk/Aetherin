@@ -1032,6 +1032,7 @@ MonoBehaviour:
   _stageName: CameraStage
   _tex: {fileID: 0}
   _camera: {fileID: 174343825}
+  _modelLibrary: {fileID: 1994971893}
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1754,6 +1755,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2138134442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1994971892
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1994971894}
+  - component: {fileID: 1994971893}
+  m_Layer: 0
+  m_Name: Model Layer Library
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1994971893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994971892}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed635ce99e97ec6409afadf3fcc43890, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.ModelLayerLibrary
+  _models:
+  - Key: sprout
+    Model: {fileID: 5644543253045608109, guid: 515c75cacd191e34eb9e76bfe352b5f7, type: 3}
+  - Key: flower
+    Model: {fileID: 995708580597655528, guid: 3e6de304ac4adae42a80e29e60aad09c, type: 3}
+  - Key: grand-piano
+    Model: {fileID: 8135322930247272611, guid: 2c82d0b418410284e8205b75542f5cd3, type: 3}
+  - Key: walking-person
+    Model: {fileID: 2869347680299580818, guid: e8abb4a9a02c22c46bab317756cac17e, type: 3}
+--- !u!4 &1994971894
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1994971892}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2015451730
 GameObject:
   m_ObjectHideFlags: 0
@@ -2050,3 +2104,4 @@ SceneRoots:
   - {fileID: 76371272}
   - {fileID: 934651080}
   - {fileID: 754430060}
+  - {fileID: 1994971894}

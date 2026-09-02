@@ -435,6 +435,7 @@ namespace Aetherin
                 UI.Row(
                     UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
                     UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer()),
+                    UI.Button("Add Model", () => cameraStage.AddModelLayer()),
                     UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer()),
                     UI.Button("Add Text", () => cameraStage.AddTextLayer()),
                     UI.Button("Add Runtime Shader", () => cameraStage.AddRuntimeShaderLayer())),
