@@ -31,6 +31,9 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<PostEffectModule>(CreatePostEffectModuleElement);
             UICustom.RegisterElementCreationFunc<GpuParticleLayerParams>(CreateGpuParticleLayerParamsElement);
             UICustom.RegisterElementCreationFunc<ParticleSimulationModule>(CreateParticleSimulationModuleElement);
+            UICustom.RegisterElementCreationFunc<TextLayerParams>(CreateTextLayerParamsElement);
+            UICustom.RegisterElementCreationFunc<TextAnimatorParams>(CreateTextAnimatorElement);
+            UICustom.RegisterElementCreationFunc<TextRangeSelectorParams>(CreateTextRangeSelectorElement);
         }
 
         private static string LabelText(LabelElement label) => label?.Value ?? "Parameter";

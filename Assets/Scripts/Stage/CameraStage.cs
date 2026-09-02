@@ -103,6 +103,19 @@ namespace Aetherin
             return layer;
         }
 
+        public TextLayer AddTextLayer()
+        {
+            var layerObject = new GameObject("Text Layer");
+            layerObject.transform.SetParent(transform, false);
+            layerObject.AddComponent<MeshRenderer>();
+            layerObject.AddComponent<TMPro.TextMeshPro>();
+            var layer = layerObject.AddComponent<TextLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = _layers.Length == 0 ? 0 : _layers.Max(existing => existing.Order) + 1;
+            RefreshLayers();
+            return layer;
+        }
+
         public void RemoveLayer(StageLayer layer)
         {
             if (layer == null || !Array.Exists(_layers, item => item == layer)) return;
@@ -127,7 +140,7 @@ namespace Aetherin
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
             return _layers
-                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer)
+                .Where(layer => layer is ShapeLayer or Primitive3DLayer or GpuParticleLayer or TextLayer)
                 .Select(layer => new CameraStageLayerSaveData
                 {
                     Type = layer switch
@@ -135,6 +148,7 @@ namespace Aetherin
                         ShapeLayer => "shape",
                         Primitive3DLayer => "primitive3d",
                         GpuParticleLayer => "gpu-particle",
+                        TextLayer => "text",
                         _ => string.Empty,
                     },
                     Name = layer.gameObject.name,
@@ -159,6 +173,7 @@ namespace Aetherin
                     "shape" => AddShapeLayer(),
                     "primitive3d" => AddPrimitive3DLayer(),
                     "gpu-particle" => AddGpuParticleLayer(),
+                    "text" => AddTextLayer(),
                     _ => null,
                 };
 
@@ -173,6 +188,7 @@ namespace Aetherin
                     ShapeLayer => "Shape Layer",
                     Primitive3DLayer => "Primitive 3D Layer",
                     GpuParticleLayer => "GPU Particle Layer",
+                    TextLayer => "Text Layer",
                     _ => "Layer",
                 };
                 layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;

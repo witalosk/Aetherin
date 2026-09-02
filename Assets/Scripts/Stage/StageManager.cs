@@ -436,7 +436,8 @@ namespace Aetherin
                 UI.Row(
                     UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
                     UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer()),
-                    UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer())),
+                    UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer()),
+                    UI.Button("Add Text", () => cameraStage.AddTextLayer())),
                 layers.Count == 0
                     ? UI.Label("レイヤーがありません")
                     : UI.Column(layers.Select(layer => CreateLayerElement(cameraStage, layer))));
