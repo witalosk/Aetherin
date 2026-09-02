@@ -31,6 +31,7 @@ namespace Aetherin
         private static readonly int ColorAId = Shader.PropertyToID("_ColorA");
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int ParticleSizeId = Shader.PropertyToID("_ParticleSize");
+        private static readonly int ParticleShapeId = Shader.PropertyToID("_ParticleShape");
         private static readonly int LayerMatrixId = Shader.PropertyToID("_LayerMatrix");
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
 
@@ -225,6 +226,7 @@ namespace Aetherin
             _material.SetColor(ColorAId, color.ColorA);
             _material.SetColor(ColorBId, color.ColorB);
             _material.SetFloat(ParticleSizeId, particleSize);
+            _material.SetInt(ParticleShapeId, (int)_params.Shape);
             _material.SetFloat(OpacityId, opacity);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
 
@@ -285,6 +287,7 @@ namespace Aetherin
             if (_visualEffect.HasVector4("ColorA")) _visualEffect.SetVector4("ColorA", color.ColorA);
             if (_visualEffect.HasVector4("ColorB")) _visualEffect.SetVector4("ColorB", color.ColorB);
             if (_visualEffect.HasFloat("ParticleSize")) _visualEffect.SetFloat("ParticleSize", particleSize);
+            if (_visualEffect.HasInt("ParticleShape")) _visualEffect.SetInt("ParticleShape", (int)_params.Shape);
             if (_visualEffect.HasFloat("Opacity")) _visualEffect.SetFloat("Opacity", opacity);
         }
 

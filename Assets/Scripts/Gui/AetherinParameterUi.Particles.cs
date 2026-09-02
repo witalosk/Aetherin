@@ -38,6 +38,7 @@ namespace Aetherin
                 Param("Initial Speed", p.InitialSpeed),
                 Param("Simulation Speed", p.SimulationSpeed),
                 Param("Particle Size", p.ParticleSize),
+                UI.Field("Particle Shape", () => p.Shape, value => p.Shape = value),
                 Param("Color", p.Color),
                 UI.List("Simulation Modules", () => p.Modules, value => p.Modules = value, listOption));
         }

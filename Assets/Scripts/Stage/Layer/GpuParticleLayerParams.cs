@@ -10,6 +10,16 @@ namespace Aetherin
         VfxGraph,
     }
 
+    public enum ParticleRenderShape
+    {
+        Circle = 0,
+        Triangle = 3,
+        Square = 4,
+        Pentagon = 5,
+        Hexagon = 6,
+        Octagon = 8,
+    }
+
     public enum ParticleSimulationModuleType
     {
         Integrate,
@@ -60,6 +70,7 @@ namespace Aetherin
         public FloatParameter InitialSpeed = new(0.4f);
         public FloatParameter SimulationSpeed = new(1f);
         public FloatParameter ParticleSize = new(0.035f);
+        public ParticleRenderShape Shape = ParticleRenderShape.Circle;
         public PaletteColorParameter Color = new();
 
         public List<ParticleSimulationModule> Modules = new()

@@ -60,6 +60,7 @@ Shader "Aetherin/GPU Particle"
                 half4 _ColorB;
                 float4x4 _LayerMatrix;
                 float _ParticleSize;
+                int _ParticleShape;
                 float _Opacity;
             CBUFFER_END
 
@@ -88,8 +89,22 @@ Shader "Aetherin/GPU Particle"
             half4 Frag(Varyings input) : SV_Target
             {
                 float2 p = input.uv * 2.0 - 1.0;
-                float alpha = saturate(1.0 - dot(p, p));
-                alpha = alpha * alpha;
+                float alpha;
+                if (_ParticleShape == 0)
+                {
+                    alpha = saturate(1.0 - dot(p, p));
+                    alpha *= alpha;
+                }
+                else
+                {
+                    float sides = max(3.0, (float)_ParticleShape);
+                    float sector = TWO_PI / sides;
+                    float angle = atan2(p.y, p.x) + HALF_PI;
+                    float polygonDistance = cos(floor(0.5 + angle / sector) * sector - angle) * length(p);
+                    float radius = cos(PI / sides);
+                    float edge = max(fwidth(polygonDistance), 0.001);
+                    alpha = 1.0 - smoothstep(radius - edge, radius + edge, polygonDistance);
+                }
                 half4 color = input.color;
                 color.a *= alpha;
                 return color;
