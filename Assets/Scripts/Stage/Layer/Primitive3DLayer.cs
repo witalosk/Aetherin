@@ -66,6 +66,7 @@ namespace Aetherin
         private Vector3 _evaluatedScale = Vector3.one;
         private Vector3 _evaluatedAnchor;
         private Vector3 _evaluatedSize = Vector3.one;
+        private float _evaluatedCornerRadius = 0.15f;
         private float _evaluatedOpacity = 1f;
         private float _evaluatedColorIntensity = 1f;
         private float _evaluatedAlpha = 1f;
@@ -157,6 +158,7 @@ namespace Aetherin
             EnsureParameterObjects();
             _params.RadialSegments = Mathf.Max(3, _params.RadialSegments);
             _params.LatitudeSegments = Mathf.Max(2, _params.LatitudeSegments);
+            _params.CornerSegments = Mathf.Max(1, _params.CornerSegments);
             _params.Size.BaseValue.x = Mathf.Max(0f, _params.Size.BaseValue.x);
             _params.Size.BaseValue.y = Mathf.Max(0f, _params.Size.BaseValue.y);
             _params.Size.BaseValue.z = Mathf.Max(0f, _params.Size.BaseValue.z);
@@ -180,6 +182,7 @@ namespace Aetherin
             _params.Scale ??= new Vector3Parameter(Vector3.one);
             _params.Anchor ??= new Vector3Parameter();
             _params.Size ??= new Vector3Parameter(Vector3.one);
+            _params.CornerRadius ??= new FloatParameter(0.15f);
             _params.ColorIntensity ??= new FloatParameter(1f);
             _params.Alpha ??= new FloatParameter(1f);
             _params.WireWidth ??= new FloatParameter(0.015f);
@@ -296,6 +299,8 @@ namespace Aetherin
             _evaluatedSize.x = Mathf.Max(0f, _evaluatedSize.x);
             _evaluatedSize.y = Mathf.Max(0f, _evaluatedSize.y);
             _evaluatedSize.z = Mathf.Max(0f, _evaluatedSize.z);
+            float maxCornerRadius = Mathf.Min(_evaluatedSize.x, Mathf.Min(_evaluatedSize.y, _evaluatedSize.z)) * 0.5f;
+            _evaluatedCornerRadius = Mathf.Clamp(_params.CornerRadius?.Evaluate(context) ?? 0f, 0f, maxCornerRadius);
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
             _evaluatedColorIntensity = Mathf.Max(0f, _params.ColorIntensity?.Evaluate(context) ?? 1f);
             _evaluatedAlpha = Mathf.Clamp01(_params.Alpha?.Evaluate(context) ?? 1f);
@@ -373,7 +378,7 @@ namespace Aetherin
                                    Quaternion.Euler(rotation),
                                    _evaluatedScale) *
                                Matrix4x4.Translate(-_evaluatedAnchor) *
-                               Matrix4x4.Scale(_evaluatedSize);
+                               Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
 
             _material.SetMatrix(ShapeMatrixId, matrix);
             _material.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
@@ -482,6 +487,12 @@ namespace Aetherin
                     hash = hash * 31 + _params.RadialSegments;
                 if (_params.Primitive == Primitive3DType.Sphere)
                     hash = hash * 31 + _params.LatitudeSegments;
+                if (_params.Primitive == Primitive3DType.RoundedBox)
+                {
+                    hash = hash * 31 + _params.CornerSegments;
+                    hash = hash * 31 + _evaluatedCornerRadius.GetHashCode();
+                    hash = hash * 31 + _evaluatedSize.GetHashCode();
+                }
                 hash = hash * 31 + _evaluatedRepeater.GetHashCode();
                 hash = hash * 31 + _evaluatedWireWidth.GetHashCode();
                 if (_evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource)
@@ -507,15 +518,18 @@ namespace Aetherin
             Vector3 anchor = _params.Anchor?.Evaluate(context) ?? Vector3.zero;
             Matrix4x4 copyMatrix = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale) *
                                    Matrix4x4.Translate(-anchor) *
-                                   Matrix4x4.Scale(_evaluatedSize);
+                                   Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
             Matrix4x4 baseMatrix = Matrix4x4.TRS(
                                        _evaluatedPosition,
                                        Quaternion.Euler(_evaluatedRotation),
                                        _evaluatedScale) *
                                    Matrix4x4.Translate(-_evaluatedAnchor) *
-                                   Matrix4x4.Scale(_evaluatedSize);
+                                   Matrix4x4.Scale(GetGeometryScale(_evaluatedSize));
             return baseMatrix.inverse * copyMatrix;
         }
+
+        private Vector3 GetGeometryScale(Vector3 size) =>
+            _params.Primitive == Primitive3DType.RoundedBox ? Vector3.one : size;
 
         public float GetRepeaterCopyOpacity(int copyIndex, float phaseOffset)
         {

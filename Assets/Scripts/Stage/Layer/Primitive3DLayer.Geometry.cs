@@ -22,6 +22,9 @@ namespace Aetherin
                 case Primitive3DType.Cube:
                     BuildCube();
                     break;
+                case Primitive3DType.RoundedBox:
+                    BuildRoundedBox();
+                    break;
                 case Primitive3DType.Sphere:
                     BuildSphere();
                     break;
@@ -70,6 +73,79 @@ namespace Aetherin
             AddQuad(corners[1], corners[2], corners[6], corners[5]);
             AddQuad(corners[0], corners[1], corners[5], corners[4]);
             AddQuad(corners[3], corners[7], corners[6], corners[2]);
+        }
+
+        private void BuildRoundedBox()
+        {
+            int segments = Mathf.Max(1, _params.CornerSegments);
+            int stride = segments + 1;
+            var indices = new System.Collections.Generic.Dictionary<int, int>(stride * stride * 6);
+
+            int GetVertex(int x, int y, int z)
+            {
+                int key = (x * stride + y) * stride + z;
+                if (indices.TryGetValue(key, out int index)) return index;
+
+                Vector3 normalized = new(x / (float)segments - 0.5f,
+                    y / (float)segments - 0.5f, z / (float)segments - 0.5f);
+                Vector3 point = RoundedBoxPoint(normalized);
+                index = _vertices.Count;
+                indices.Add(key, index);
+                _vertices.Add(point);
+                _uvs.Add(new Vector2(x / (float)segments, y / (float)segments));
+                return index;
+            }
+
+            void AddFace(int axis, int side)
+            {
+                for (int v = 0; v < segments; v++)
+                for (int u = 0; u < segments; u++)
+                {
+                    int fixedCoordinate = side == 0 ? 0 : segments;
+                    int a, b, c, d;
+                    if (axis == 0)
+                    {
+                        a = GetVertex(fixedCoordinate, u, v); b = GetVertex(fixedCoordinate, u + 1, v);
+                        c = GetVertex(fixedCoordinate, u + 1, v + 1); d = GetVertex(fixedCoordinate, u, v + 1);
+                    }
+                    else if (axis == 1)
+                    {
+                        a = GetVertex(u, fixedCoordinate, v); b = GetVertex(u + 1, fixedCoordinate, v);
+                        c = GetVertex(u + 1, fixedCoordinate, v + 1); d = GetVertex(u, fixedCoordinate, v + 1);
+                    }
+                    else
+                    {
+                        a = GetVertex(u, v, fixedCoordinate); b = GetVertex(u + 1, v, fixedCoordinate);
+                        c = GetVertex(u + 1, v + 1, fixedCoordinate); d = GetVertex(u, v + 1, fixedCoordinate);
+                    }
+                    AddIndexedTriangleOutward(a, b, c);
+                    AddIndexedTriangleOutward(a, c, d);
+                }
+            }
+
+            for (int axis = 0; axis < 3; axis++)
+            {
+                AddFace(axis, 0);
+                AddFace(axis, 1);
+            }
+        }
+
+        private Vector3 RoundedBoxPoint(Vector3 normalized)
+        {
+            Vector3 half = _evaluatedSize * 0.5f;
+            Vector3 point = Vector3.Scale(normalized * 2f, half);
+            Vector3 inner = new(
+                Mathf.Max(0f, half.x - _evaluatedCornerRadius),
+                Mathf.Max(0f, half.y - _evaluatedCornerRadius),
+                Mathf.Max(0f, half.z - _evaluatedCornerRadius));
+            Vector3 nearest = new(
+                Mathf.Clamp(point.x, -inner.x, inner.x),
+                Mathf.Clamp(point.y, -inner.y, inner.y),
+                Mathf.Clamp(point.z, -inner.z, inner.z));
+            Vector3 offset = point - nearest;
+            return offset.sqrMagnitude > 0.000001f
+                ? nearest + offset.normalized * _evaluatedCornerRadius
+                : point;
         }
 
         private void BuildTetrahedron()

@@ -214,6 +214,12 @@ namespace Aetherin
                     () => p.Primitive == Primitive3DType.Sphere,
                     () => UI.Field("Latitude Segments", () => p.LatitudeSegments, value => p.LatitudeSegments = value)),
                 Param("Size", p.Size),
+                UI.DynamicElementIf(
+                    () => p.Primitive == Primitive3DType.RoundedBox,
+                    () => UI.Column(
+                        Param("Corner Radius", p.CornerRadius),
+                        UI.Field("Corner Segments", () => p.CornerSegments,
+                            value => p.CornerSegments = value))),
                 Param("Position", p.Position),
                 Param("Rotation", p.Rotation),
                 Param("Scale", p.Scale),

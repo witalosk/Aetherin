@@ -6,6 +6,7 @@ namespace Aetherin
     public enum Primitive3DType
     {
         Cube,
+        RoundedBox,
         Sphere,
         Tetrahedron,
         Cylinder,
@@ -44,6 +45,12 @@ namespace Aetherin
         public Vector3Parameter Scale = new(Vector3.one);
         public Vector3Parameter Anchor = new();
         public Vector3Parameter Size = new(Vector3.one);
+
+        [Tooltip("Rounded Boxの角丸半径。Sizeの最短辺の半分までです")]
+        public FloatParameter CornerRadius = new(0.15f);
+
+        [Min(1)]
+        public int CornerSegments = 6;
 
         [Min(3)]
         public int RadialSegments = 32;

@@ -33,6 +33,9 @@ namespace Aetherin
                 case Primitive3DType.Cube:
                     BuildCubeWireframe(radius);
                     break;
+                case Primitive3DType.RoundedBox:
+                    BuildRoundedBoxWireframe(radius);
+                    break;
                 case Primitive3DType.Sphere:
                     BuildSphereWireframe(radius);
                     break;
@@ -61,6 +64,48 @@ namespace Aetherin
                 { 0, 4 }, { 1, 5 }, { 2, 6 }, { 3, 7 },
             };
             for (int i = 0; i < edges.GetLength(0); i++) AddWireEdge(p[edges[i, 0]], p[edges[i, 1]], radius);
+        }
+
+        private void BuildRoundedBoxWireframe(float radius)
+        {
+            int segments = Mathf.Max(1, _params.CornerSegments);
+            for (int axis = 0; axis < 3; axis++)
+            for (int side = 0; side < 2; side++)
+            for (int v = 0; v <= segments; v++)
+            for (int u = 0; u < segments; u++)
+            {
+                float fixedCoordinate = side - 0.5f;
+                float a = u / (float)segments - 0.5f;
+                float b = (u + 1f) / segments - 0.5f;
+                float row = v / (float)segments - 0.5f;
+                Vector3 p0 = axis switch
+                {
+                    0 => new Vector3(fixedCoordinate, a, row),
+                    1 => new Vector3(a, fixedCoordinate, row),
+                    _ => new Vector3(a, row, fixedCoordinate),
+                };
+                Vector3 p1 = axis switch
+                {
+                    0 => new Vector3(fixedCoordinate, b, row),
+                    1 => new Vector3(b, fixedCoordinate, row),
+                    _ => new Vector3(b, row, fixedCoordinate),
+                };
+                AddWireEdge(RoundedBoxPoint(p0), RoundedBoxPoint(p1), radius);
+
+                p0 = axis switch
+                {
+                    0 => new Vector3(fixedCoordinate, row, a),
+                    1 => new Vector3(row, fixedCoordinate, a),
+                    _ => new Vector3(row, a, fixedCoordinate),
+                };
+                p1 = axis switch
+                {
+                    0 => new Vector3(fixedCoordinate, row, b),
+                    1 => new Vector3(row, fixedCoordinate, b),
+                    _ => new Vector3(row, b, fixedCoordinate),
+                };
+                AddWireEdge(RoundedBoxPoint(p0), RoundedBoxPoint(p1), radius);
+            }
         }
 
         private void BuildTetrahedronWireframe(float radius)
