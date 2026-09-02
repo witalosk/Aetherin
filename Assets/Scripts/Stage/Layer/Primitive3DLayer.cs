@@ -244,14 +244,47 @@ namespace Aetherin
         {
             if (_wireObject == null)
             {
-                _wireObject = new GameObject("Wireframe")
+                // Stageのswapではレイヤーの子も複製される。実行時フィールドの参照は
+                // 引き継がれないため、既存のWireframeを先に拾わないとswapごとに増殖する。
+                for (int i = transform.childCount - 1; i >= 0; i--)
                 {
-                    hideFlags = HideFlags.DontSave,
-                    layer = gameObject.layer,
-                };
-                _wireObject.transform.SetParent(transform, false);
-                _wireMeshFilter = _wireObject.AddComponent<MeshFilter>();
-                _wireRenderer = _wireObject.AddComponent<MeshRenderer>();
+                    var child = transform.GetChild(i).gameObject;
+                    if (child.name != "Wireframe") continue;
+
+                    if (_wireObject == null)
+                    {
+                        _wireObject = child;
+                    }
+                    else
+                    {
+                        child.SetActive(false);
+                        if (Application.isPlaying) Destroy(child);
+                        else DestroyImmediate(child);
+                    }
+                }
+
+                if (_wireObject == null)
+                {
+                    _wireObject = new GameObject("Wireframe");
+                    _wireObject.transform.SetParent(transform, false);
+                }
+
+                _wireObject.hideFlags = HideFlags.DontSave;
+                _wireObject.layer = gameObject.layer;
+            }
+
+            // UnityEngine.Objectは破棄済みでもC#参照自体はnullではないため、
+            // ?? / ??= ではMissing Componentを検出できない。
+            if (_wireMeshFilter == null)
+            {
+                _wireMeshFilter = _wireObject.GetComponent<MeshFilter>();
+                if (_wireMeshFilter == null) _wireMeshFilter = _wireObject.AddComponent<MeshFilter>();
+            }
+
+            if (_wireRenderer == null)
+            {
+                _wireRenderer = _wireObject.GetComponent<MeshRenderer>();
+                if (_wireRenderer == null) _wireRenderer = _wireObject.AddComponent<MeshRenderer>();
             }
 
             if (_wireMesh == null)

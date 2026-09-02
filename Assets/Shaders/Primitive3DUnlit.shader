@@ -93,9 +93,29 @@ Shader "Aetherin/Primitive 3D Unlit"
                 return output;
             }
 
+            int PaletteIndexForCopy(float copyValue, float seedValue)
+            {
+                int copyIndex = max(0, (int)round(copyValue));
+                int seed = abs((int)round(seedValue));
+                int start = (seed * 5 + 3) % 6;
+                int step = ((seed / 6) % 2) == 0 ? 1 : 5;
+                return (start + copyIndex * step) % 6;
+            }
+
+            half4 PaletteColorForCopy(float copyValue)
+            {
+                int paletteIndex = PaletteIndexForCopy(copyValue, _PaletteRandomSeed);
+                return paletteIndex == 0 ? _PaletteColor0 :
+                       paletteIndex == 1 ? _PaletteColor1 :
+                       paletteIndex == 2 ? _PaletteColor2 :
+                       paletteIndex == 3 ? _PaletteColor3 :
+                       paletteIndex == 4 ? _PaletteColor4 : _PaletteColor5;
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 half4 color = _BaseColor;
+                if (_UsePaletteRandom > 0.5) color = PaletteColorForCopy(input.color.r);
 
                 if (_MaterialMode > 0.5)
                 {
@@ -115,28 +135,18 @@ Shader "Aetherin/Primitive 3D Unlit"
                     float3 viewDirection = normalize(GetWorldSpaceViewDir(input.positionWS));
                     float fresnel = pow(1.0 - saturate(dot(normalWS, viewDirection)),
                                         _GlassFresnelPower) * _GlassFresnelIntensity;
-                    float3 tinted = lerp(refracted, refracted * _BaseColor.rgb, _GlassTint);
+                    float3 tinted = lerp(refracted, refracted * color.rgb, _GlassTint);
                     color.rgb = tinted + _ColorB.rgb * fresnel;
-                    color.a = _BaseColor.a * input.color.a;
+                    color.a *= input.color.a;
                     return color;
                 }
 
-                if (_UsePaletteRandom > 0.5)
-                {
-                    float randomValue = frac(sin((input.color.r + _PaletteRandomSeed) * 12.9898 + 78.233) * 43758.5453);
-                    int paletteIndex = min(5, (int)floor(randomValue * 6.0));
-                    color = paletteIndex == 0 ? _PaletteColor0 :
-                            paletteIndex == 1 ? _PaletteColor1 :
-                            paletteIndex == 2 ? _PaletteColor2 :
-                            paletteIndex == 3 ? _PaletteColor3 :
-                            paletteIndex == 4 ? _PaletteColor4 : _PaletteColor5;
-                }
-                else if (_ColorMode > 0.5 && _ColorMode < 1.5)
+                if (_UsePaletteRandom <= 0.5 && _ColorMode > 0.5 && _ColorMode < 1.5)
                 {
                     float t = saturate(input.uv.x * _UvParams.x + _UvParams.y);
                     color = lerp(_BaseColor, _ColorB, t);
                 }
-                else if (_ColorMode > 1.5)
+                else if (_UsePaletteRandom <= 0.5 && _ColorMode > 1.5)
                 {
                     float lighting = saturate(dot(normalize(input.normalWS), normalize(_LightDirection.xyz)));
                     float t = _ColorMode > 2.5 ? step(_ToonThreshold, lighting) : lighting;

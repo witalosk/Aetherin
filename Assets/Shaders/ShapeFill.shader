@@ -75,14 +75,23 @@ Shader "Aetherin/Shape Fill"
                 return output;
             }
 
+            int PaletteIndexForCopy(float copyValue, float seedValue)
+            {
+                int copyIndex = max(0, (int)round(copyValue));
+                int seed = abs((int)round(seedValue));
+                int start = (seed * 5 + 3) % 6;
+                int step = ((seed / 6) % 2) == 0 ? 1 : 5;
+                return (start + copyIndex * step) % 6;
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 half4 color = _BaseColor;
 
                 if (_UsePaletteRandom > 0.5)
                 {
-                    float randomValue = frac(sin((input.color.r + _PaletteRandomSeed) * 12.9898 + 78.233) * 43758.5453);
-                    int paletteIndex = min(5, (int)floor(randomValue * 6.0));
+                    // 6コピーまでは重複させず、Seedで開始位置と巡回方向を変える。
+                    int paletteIndex = PaletteIndexForCopy(input.color.r, _PaletteRandomSeed);
                     color = paletteIndex == 0 ? _PaletteColor0 :
                             paletteIndex == 1 ? _PaletteColor1 :
                             paletteIndex == 2 ? _PaletteColor2 :

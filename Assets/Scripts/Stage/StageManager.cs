@@ -100,9 +100,9 @@ namespace Aetherin
 
         /// <summary> デッキを作り直すたびに増える。UIが参照先の作り直しを検知するために使う </summary>
         private int _deckRevision;
-        private int _layerInspectorRevision;
         private StageLayer _inspectedLayer;
         private CameraStage _inspectedLayerStage;
+        private DynamicElement _layerInspectorElement;
         private WindowElement _layerInspectorWindow;
 
         private readonly DeckState _currentState = new();
@@ -181,7 +181,7 @@ namespace Aetherin
             clone.transform.position = source.transform.position + positionDelta;
             clone.SetActive(true);
 
-            var stage = clone.GetComponent<StageBase>();
+            var stage = clone.GetComponent<StageBase>(); 
             stage.Deck = deck;
             return stage;
         }
@@ -414,16 +414,19 @@ namespace Aetherin
         /// </summary>
         private Element CreateStageListElement(IReadOnlyList<string> stageNames)
         {
-            return UI.Fold("Stages",
+            return UI.Column(
                 Enumerable.Range(0, stageNames.Count).Select(index => UI.Row(
                     UI.Label(stageNames[index]).SetWidth(120f),
                     UI.WindowLauncher("Layers",
                         UI.Window($"{stageNames[index]} Layers",
                             UI.DynamicElementOnStatusChanged(
-                                readStatus: () => _deckRevision * 100000 +
-                                    ((_nextStages != null && index < _nextStages.Count && _nextStages[index] is CameraStage cameraStage)
-                                        ? cameraStage.LayerRevision
-                                        : 0),
+                                readStatus: () =>
+                                {
+                                    var cameraStage = _nextStages != null && index < _nextStages.Count
+                                        ? _nextStages[index] as CameraStage
+                                        : null;
+                                    return (_deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0);
+                                },
                                 build: _ => CreateLayerListElement(index))
                         ).SetWidth(400f))
                 )));
@@ -436,20 +439,11 @@ namespace Aetherin
 
             if (stage is not CameraStage cameraStage) return UI.Label("このステージはレイヤー編集に未対応です");
 
-            var layers = stage.Layers;
-            var layerList = layers.ToList();
-            var listOption = new ListViewOption(
-                reorderable: true,
-                fixedSize: true,
-                header: false,
-                suppressAutoIndent: true)
-            {
-                createItemElementFunc = (binder, _) =>
-                {
-                    var layer = binder.GetObject() as StageLayer;
-                    return layer == null ? UI.Label("Missing Layer") : CreateLayerElement(cameraStage, layer);
-                },
-            };
+            var layers = cameraStage.Layers;
+            var layerElements = layers
+                .Where(layer => layer != null)
+                .Select(layer => CreateLayerElement(cameraStage, layer))
+                .ToArray();
 
             return UI.Column(
                 UI.Row(
@@ -460,8 +454,7 @@ namespace Aetherin
                     UI.Button("Add Runtime Shader", () => cameraStage.AddRuntimeShaderLayer())),
                 layers.Count == 0
                     ? UI.Label("レイヤーがありません")
-                    : UI.List("Layers", () => layerList,
-                        reordered => cameraStage.SetLayerOrder(reordered), listOption));
+                    : UI.Column(layerElements));
         }
 
         private Element CreateLayerElement(CameraStage stage, StageLayer layer)
@@ -472,6 +465,8 @@ namespace Aetherin
                 UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer))
                     .SetMinWidth(150f)
                     .SetFlexGrow(1f),
+                UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
+                UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(32f),
                 UI.Button("Delete", () => RemoveLayer(stage, layer)));
         }
 
@@ -485,7 +480,7 @@ namespace Aetherin
 
             _inspectedLayerStage = stage;
             _inspectedLayer = layer;
-            _layerInspectorRevision++;
+            _layerInspectorElement?.CheckAndRebuild();
             if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
         }
 
@@ -495,7 +490,7 @@ namespace Aetherin
             {
                 _inspectedLayer = null;
                 _inspectedLayerStage = null;
-                _layerInspectorRevision++;
+                _layerInspectorElement?.CheckAndRebuild();
             }
             stage.RemoveLayer(layer);
         }
@@ -524,10 +519,11 @@ namespace Aetherin
 
             if (stageNames.Count == 0) return UI.Label("ステージが登録されていません");
 
-            _layerInspectorWindow = UI.Window("Layer Inspector",
-                UI.DynamicElementOnStatusChanged(
-                    readStatus: () => _deckRevision * 100000 + _layerInspectorRevision,
-                    build: _ => CreateLayerInspectorElement()))
+            _layerInspectorElement = UI.DynamicElementOnStatusChanged(
+                readStatus: () => (_deckRevision, _inspectedLayerStage, _inspectedLayer),
+                build: _ => CreateLayerInspectorElement());
+
+            _layerInspectorWindow = UI.Window("Layer Inspector", _layerInspectorElement)
                 .SetWidth(460f);
 
             return UI.Column(
