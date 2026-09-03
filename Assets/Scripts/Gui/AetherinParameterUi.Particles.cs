@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using RosettaUI;
+using UnityEngine;
 
 namespace Aetherin
 {
@@ -31,36 +32,37 @@ namespace Aetherin
 
             return UI.Column(
                 UI.Toggle("Visible", () => p.Visible, value => p.Visible = value),
-                UI.Fold("Rendering", UI.Column(
-                    UI.Field("Renderer", () => p.RenderBackend, value => p.RenderBackend = value),
-                    UI.DynamicElementIf(
-                        () => p.RenderBackend == ParticleRenderBackend.VfxGraph,
-                        () => vfxGraphSelector),
-                    UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
-                    Param("Opacity", p.Opacity),
-                    UI.Field("Order", () => p.Order, value => p.Order = value))),
-                UI.Fold("Transform", UI.Column(
-                    Param("Position", p.Position),
-                    Param("Rotation", p.Rotation),
-                    Param("Scale", p.Scale))),
-                UI.Fold("Emission", UI.Column(
-                    UI.Field("Capacity", () => p.Capacity, value => p.Capacity = value),
-                    UI.Field("Seed", () => p.Seed, value => p.Seed = value),
-                    Param("Emitter Offset", p.EmitterOffset),
-                    Param("Emitter Size", p.EmitterSize),
-                    CreateParticleRandomRangeElement("Lifetime", p.Lifetime),
-                    CreateParticleRandomRangeElement("Initial Speed", p.InitialSpeed))),
-                UI.Fold("Appearance", UI.Column(
-                    UI.Field("Particle Shape", () => p.Shape, value => p.Shape = value),
-                    Param("Color", p.Color),
-                    CreateParticleRandomRangeElement("Particle Size", p.ParticleSize),
-                    Param("Initial Rotation", p.InitialRotation),
-                    Param("Rotation Random", p.RotationRandom),
-                    Param("Angular Velocity", p.AngularVelocity),
-                    Param("Angular Velocity Random", p.AngularVelocityRandom))),
-                UI.Fold("Simulation", UI.Column(
-                    Param("Simulation Speed", p.SimulationSpeed),
-                    UI.List("Modules", () => p.Modules, value => p.Modules = value, listOption))));
+                UI.Tabs(
+                    ("Rendering", UI.Column(
+                        UI.Field("Renderer", () => p.RenderBackend, value => p.RenderBackend = value),
+                        UI.DynamicElementIf(
+                            () => p.RenderBackend == ParticleRenderBackend.VfxGraph,
+                            () => vfxGraphSelector),
+                        UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
+                        Param("Opacity", p.Opacity),
+                        UI.Field("Order", () => p.Order, value => p.Order = value))),
+                    ("Transform", UI.Column(
+                        Param("Position", p.Position),
+                        Param("Rotation", p.Rotation),
+                        Param("Scale", p.Scale))),
+                    ("Emission", UI.Column(
+                        UI.Field("Capacity", () => p.Capacity, value => p.Capacity = value),
+                        UI.Field("Seed", () => p.Seed, value => p.Seed = value),
+                        Param("Emitter Offset", p.EmitterOffset),
+                        Param("Emitter Size", p.EmitterSize),
+                        CreateParticleRandomRangeElement("Lifetime", p.Lifetime),
+                        CreateParticleRandomRangeElement("Initial Speed", p.InitialSpeed))),
+                    ("Appearance", UI.Column(
+                        UI.Field("Particle Shape", () => p.Shape, value => p.Shape = value),
+                        Param("Color", p.Color),
+                        CreateParticleRandomRangeElement("Particle Size", p.ParticleSize),
+                        Param("Initial Rotation", p.InitialRotation),
+                        Param("Rotation Random", p.RotationRandom),
+                        Param("Angular Velocity", p.AngularVelocity),
+                        Param("Angular Velocity Random", p.AngularVelocityRandom))),
+                    ("Simulation", UI.Column(
+                        Param("Simulation Speed", p.SimulationSpeed),
+                        UI.List("Modules", () => p.Modules, value => p.Modules = value, listOption)))));
         }
 
         private static Element CreateParticleRandomRangeElement(string label, ParticleRandomRangeParameter parameter) =>
@@ -108,6 +110,10 @@ namespace Aetherin
                     module.Scale.BaseValue = 0.25f;
                     module.Speed.BaseValue = 0f;
                     break;
+                case ParticleSimulationModuleType.ColorOverLife:
+                case ParticleSimulationModuleType.SizeOverLife:
+                    module.OverLifeCurve = ParticleSimulationModule.CreateDefaultOverLifeCurve(type);
+                    break;
             }
         }
 
@@ -146,11 +152,12 @@ namespace Aetherin
                     yield return Param("Size", module.Vector);
                     break;
                 case ParticleSimulationModuleType.ColorOverLife:
-                    yield return Param("Fade Power", module.Strength);
+                    yield return UI.Field("Opacity Curve", () => module.OverLifeCurve,
+                        value => module.OverLifeCurve = value);
                     break;
                 case ParticleSimulationModuleType.SizeOverLife:
-                    yield return Param("Size", module.Strength);
-                    yield return Param("Curve Power", module.Secondary);
+                    yield return UI.Field("Size Curve", () => module.OverLifeCurve,
+                        value => module.OverLifeCurve = value);
                     break;
                 case ParticleSimulationModuleType.ApplyLorenzAttractor:
                     yield return Param("Center", module.Vector);

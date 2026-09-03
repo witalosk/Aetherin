@@ -7,6 +7,7 @@ Shader "Aetherin/GPU Particle"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _AlphaClip ("Alpha Clip", Float) = 0
     }
     SubShader
     {
@@ -66,6 +67,7 @@ Shader "Aetherin/GPU Particle"
                 float _Opacity;
                 int _PaletteRandomMode;
                 int _PaletteRandomSeed;
+                float _AlphaClip;
                 half4 _PaletteColor0;
                 half4 _PaletteColor1;
                 half4 _PaletteColor2;
@@ -150,6 +152,7 @@ Shader "Aetherin/GPU Particle"
                 }
                 half4 color = input.color;
                 color.a *= alpha;
+                if (_AlphaClip > 0.5) clip(color.a - 0.1);
                 return color;
             }
             ENDHLSL

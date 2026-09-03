@@ -29,6 +29,7 @@ float3 _Axis;
 float _ScaleValue;
 float _Speed;
 float _Secondary;
+float _OverLifeCurve[64];
 float3 _EmitterOffset;
 float3 _EmitterSize;
 float3 _LifetimeRange;
@@ -71,6 +72,14 @@ float SampleRange(float3 minMaxPower, inout uint state)
 float3 RandomSigned3(inout uint state)
 {
     return float3(Random01(state), Random01(state), Random01(state)) * 2.0 - 1.0;
+}
+
+float EvaluateOverLifeCurve(float t)
+{
+    float position = saturate(t) * 63.0;
+    uint index = min((uint)floor(position), 63u);
+    uint nextIndex = min(index + 1u, 63u);
+    return lerp(_OverLifeCurve[index], _OverLifeCurve[nextIndex], frac(position));
 }
 
 void Respawn(inout ParticleData particle, uint id, float ageOffset)
@@ -162,13 +171,12 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     {
         float t = saturate(particle.age / max(0.01, particle.lifetime));
         particle.color.r = t;
-        particle.color.a = pow(saturate(1.0 - t), max(0.01, _Strength));
+        particle.color.a = saturate(EvaluateOverLifeCurve(t));
     }
     else if (_ModuleType == 8) // Size over life
     {
         float t = saturate(particle.age / max(0.01, particle.lifetime));
-        particle.size = max(0.0, particle.initialSize *
-            pow(max(0.0, sin(t * 3.14159265)), max(0.01, _Secondary)) * _Strength);
+        particle.size = max(0.0, particle.initialSize * EvaluateOverLifeCurve(t));
     }
     else if (_ModuleType == 9) // Lorenz attractor vector field
     {

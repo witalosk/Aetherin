@@ -13,6 +13,7 @@ namespace Aetherin
     {
         private const int ThreadGroupSize = 256;
         private const int ParticleStride = 88;
+        private const int OverLifeCurveSampleCount = 64;
         private static readonly int ParticlesId = Shader.PropertyToID("_Particles");
         private static readonly int CapacityId = Shader.PropertyToID("_ParticleCapacity");
         private static readonly int DeltaTimeId = Shader.PropertyToID("_DeltaTime");
@@ -24,6 +25,7 @@ namespace Aetherin
         private static readonly int ScaleValueId = Shader.PropertyToID("_ScaleValue");
         private static readonly int SpeedId = Shader.PropertyToID("_Speed");
         private static readonly int SecondaryId = Shader.PropertyToID("_Secondary");
+        private static readonly int OverLifeCurveId = Shader.PropertyToID("_OverLifeCurve");
         private static readonly int TargetId = Shader.PropertyToID("_Target");
         private static readonly int EmitterSizeId = Shader.PropertyToID("_EmitterSize");
         private static readonly int EmitterOffsetId = Shader.PropertyToID("_EmitterOffset");
@@ -41,6 +43,7 @@ namespace Aetherin
         private static readonly int ParticleShapeId = Shader.PropertyToID("_ParticleShape");
         private static readonly int LayerMatrixId = Shader.PropertyToID("_LayerMatrix");
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
+        private static readonly int AlphaClipId = Shader.PropertyToID("_AlphaClip");
         private static readonly int PaletteRandomModeId = Shader.PropertyToID("_PaletteRandomMode");
         private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
         private static readonly int[] PaletteColorIds = CreatePropertyIds("_PaletteColor", 6);
@@ -60,6 +63,7 @@ namespace Aetherin
         private int _allocatedCapacity;
         private bool _renderEnabled = true;
         private double _lastEditorTime;
+        private readonly float[] _overLifeCurveSamples = new float[OverLifeCurveSampleCount];
 
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
@@ -199,9 +203,24 @@ namespace Aetherin
                 _compute.SetFloat(ScaleValueId, module.Scale?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 1f);
+                if (module.Type is ParticleSimulationModuleType.ColorOverLife
+                    or ParticleSimulationModuleType.SizeOverLife)
+                    SetOverLifeCurve(module.OverLifeCurve);
                 _compute.SetInt(TargetId, (int)module.Target);
                 _compute.Dispatch(_moduleKernel, Groups, 1, 1);
             }
+        }
+
+        private void SetOverLifeCurve(AnimationCurve curve)
+        {
+            curve ??= ParticleSimulationModule.CreateDefaultOverLifeCurve(ParticleSimulationModuleType.ColorOverLife);
+            for (int i = 0; i < OverLifeCurveSampleCount; i++)
+            {
+                float time = i / (float)(OverLifeCurveSampleCount - 1);
+                _overLifeCurveSamples[i] = curve.Evaluate(time);
+            }
+
+            _compute.SetFloats(OverLifeCurveId, _overLifeCurveSamples);
         }
 
         private void SetSpawnParameters(in ModulationContext context)
@@ -253,6 +272,7 @@ namespace Aetherin
             _material.SetFloat(ParticleSizeId, particleSize);
             _material.SetInt(ParticleShapeId, (int)_params.Shape);
             _material.SetFloat(OpacityId, opacity);
+            _material.SetFloat(AlphaClipId, _params.BlendMode == LayerBlendMode.Opaque ? 1f : 0f);
             ApplyPaletteRandom(_material, color);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
 

@@ -87,7 +87,27 @@ namespace Aetherin
         public FloatParameter Scale = new(1f);
         public FloatParameter Speed = new(1f);
         public FloatParameter Secondary = new(1f);
+        [Tooltip("OverLifeモジュールが寿命比率(0..1)から値をサンプリングするカーブ")]
+        public AnimationCurve OverLifeCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
         public ParticleModulationTarget Target;
+
+        public void EnsureInitialized()
+        {
+            Strength ??= new FloatParameter(1f);
+            Vector ??= new Vector3Parameter(new Vector3(0f, -1f, 0f));
+            Axis ??= new Vector3Parameter(Vector3.up);
+            Scale ??= new FloatParameter(1f);
+            Speed ??= new FloatParameter(1f);
+            Secondary ??= new FloatParameter(1f);
+            OverLifeCurve ??= CreateDefaultOverLifeCurve(Type);
+        }
+
+        public static AnimationCurve CreateDefaultOverLifeCurve(ParticleSimulationModuleType type)
+        {
+            return type == ParticleSimulationModuleType.SizeOverLife
+                ? new AnimationCurve(new Keyframe(0f, 0f), new Keyframe(0.5f, 1f), new Keyframe(1f, 0f))
+                : AnimationCurve.Linear(0f, 1f, 1f, 0f);
+        }
     }
 
     [Serializable]
@@ -160,6 +180,7 @@ namespace Aetherin
             Color ??= new PaletteColorParameter();
             Color.EnsureInitialized();
             Modules ??= new List<ParticleSimulationModule>();
+            foreach (var module in Modules) module?.EnsureInitialized();
             Capacity = Mathf.Clamp(Capacity, 1, 262144);
         }
     }
