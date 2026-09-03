@@ -635,49 +635,53 @@ namespace Aetherin
             _selectedStageUiIndex = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
 
             Element stageColumn = UI.Column(
-                UI.Label("Stages"),
                 UI.Column(Enumerable.Range(0, stageNames.Count).Select(index =>
-                    UI.Button(
+                    UI.DynamicElementOnStatusChanged(() => _selectedStageUiIndex, _ =>
+                        UI.Button(
                             UI.Label(() => $"{(_selectedStageUiIndex == index ? "▶ " : "  ")}{stageNames[index]}"),
-                            () => _selectedStageUiIndex = index)
-                        .SetMinWidth(150f)
-                        .SetFlexGrow(1f))));
+                            () => _selectedStageUiIndex = index).SetMinWidth(150f).SetHeight(26f).SetFlexGrow(1f).SetBackgroundColor(_selectedStageUiIndex == index ? Color.yellowNice * 0.5f : null)
+                        )
+                    )
+                ));
 
-            Element layerColumn = UI.DynamicElementOnStatusChanged(
-                readStatus: () =>
-                {
-                    int index = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
-                    var cameraStage = _nextStages != null && index < _nextStages.Count
-                        ? _nextStages[index] as CameraStage
-                        : null;
-                    return (index, _deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0);
-                },
-                build: status => CreateSelectedStageColumn(stageNames, status.index));
+            Element layerColumn = UI.Box(
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => (_selectedStageUiIndex, _deckRevision),
+                    build: _ => CreateSelectedStageHeader(stageNames)),
+                UI.Tabs(
+                    ("Layers", UI.DynamicElementOnStatusChanged(
+                        readStatus: () => ReadSelectedStageUiStatus(stageNames.Count),
+                        build: status => CreateLayerListElement(status.index))),
+                    ("Cameras", UI.DynamicElementOnStatusChanged(
+                        readStatus: () => ReadSelectedStageUiStatus(stageNames.Count),
+                        build: status => CreateCameraWorkListElement(status.index))))
+            );
+            return UI.Row(stageColumn.SetWidth(180f).SetFlexShrink(0f), layerColumn.SetMinWidth(420f).SetFlexGrow(1f));
+            
+            Element CreateSelectedStageHeader(IReadOnlyList<string> stageNames)
+            {
+                int stageIndex = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
 
-            return UI.Row(
-                stageColumn.SetWidth(180f).SetFlexShrink(0f),
-                layerColumn.SetMinWidth(420f).SetFlexGrow(1f));
+                return UI.Row(
+                    UI.Field(null, () => GetStageDisplayName(_stages[stageIndex], stageIndex), value => RenameCameraStage(stageNames[stageIndex], value)).SetFlexGrow(1f),
+                    UI.Button("Duplicate", () => DuplicateCameraStage(_stages[stageIndex].StageId)),
+                    UI.Button("Delete", () => RemoveCameraStage(_stages[stageIndex].StageId))
+                ).SetBackgroundColor(Color.black * 0.5f);
+            }
         }
 
-        private Element CreateSelectedStageColumn(IReadOnlyList<string> stageNames, int stageIndex)
+
+        private (int index, int deckRevision, CameraStage cameraStage, int layerRevision, int cameraWorkRevision) ReadSelectedStageUiStatus(int stageCount)
         {
-            stageIndex = Mathf.Clamp(stageIndex, 0, stageNames.Count - 1);
-            return UI.Column(
-                UI.Row(
-                    UI.Label($"{stageNames[stageIndex]} Layers").SetFlexGrow(1f),
-                    UI.WindowLauncher("Camera Works",
-                        UI.Window($"{stageNames[stageIndex]} Camera Works",
-                            UI.DynamicElementOnStatusChanged(
-                                readStatus: () =>
-                                {
-                                    var cameraStage = _nextStages != null && stageIndex < _nextStages.Count
-                                        ? _nextStages[stageIndex] as CameraStage
-                                        : null;
-                                    return (_deckRevision, cameraStage, cameraStage?.CameraWorkRevision ?? 0);
-                                },
-                                build: _ => CreateCameraWorkListElement(stageIndex))
-                        ).SetWidth(520f))),
-                CreateLayerListElement(stageIndex));
+            if (stageCount <= 0)
+                return (0, _deckRevision, null, 0, 0);
+
+            int index = Mathf.Clamp(_selectedStageUiIndex, 0, stageCount - 1);
+            var cameraStage = _nextStages != null && index < _nextStages.Count
+                ? _nextStages[index] as CameraStage
+                : null;
+            return (index, _deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0,
+                cameraStage?.CameraWorkRevision ?? 0);
         }
 
         private Element CreateStageManagementElement()
@@ -687,28 +691,23 @@ namespace Aetherin
                 .ToList();
 
             return UI.Column(
-                UI.Button("Add Camera Stage", () => AddCameraStage()),
-                stageNames.Count == 0 ? UI.Label("ステージが登録されていません") : UI.Column(
-                    UI.Dropdown("Current",
-                        () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
-                        value => _params.CurrentStageIndex = value,
-                        stageNames),
-                    UI.Dropdown("Next",
-                        () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
-                        value => _params.NextStageIndex = value,
-                        stageNames),
-                    CreateStageListElement(stageNames),
-                    UI.Column(Enumerable.Range(0, _stages.Count)
-                        .Where(index => _stages[index] is CameraStage)
-                        .Select(index =>
-                        {
-                            string stageId = _stages[index].StageId;
-                            return UI.Row(
-                                UI.Field("Name", () => GetStageDisplayName(_stages[index], index),
-                                    value => RenameCameraStage(stageId, value)).SetFlexGrow(1f),
-                                UI.Button("Duplicate", () => DuplicateCameraStage(stageId)),
-                                UI.Button("Delete", () => RemoveCameraStage(stageId)));
-                        }))));
+                UI.Row(
+                    UI.Button("Add New Stage", () => AddCameraStage()),
+                    stageNames.Count == 0
+                        ? UI.Label("No Stage")
+                        : UI.Column(
+                            UI.Dropdown("Current",
+                                () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
+                                value => _params.CurrentStageIndex = value,
+                                stageNames),
+                            UI.Dropdown("Next",
+                                () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
+                                value => _params.NextStageIndex = value,
+                                stageNames)
+                        )
+                ),
+                CreateStageListElement(stageNames)
+            );
         }
 
         private static string GetStageDisplayName(StageBase stage, int index) =>
@@ -788,16 +787,16 @@ namespace Aetherin
 
             return UI.Column(
                 UI.Row(
-                    UI.Button("Add 2D Shape", () => cameraStage.AddShapeLayer()),
-                    UI.Button("Add 3D Primitive", () => cameraStage.AddPrimitive3DLayer()),
-                    UI.Button("Add Model", () => cameraStage.AddModelLayer()),
-                    UI.Button("Add Group", () => cameraStage.AddGroupLayer()),
-                    UI.Button("Add GPU Particles", () => cameraStage.AddGpuParticleLayer()),
-                    UI.Button("Add Text", () => cameraStage.AddTextLayer()),
-                    UI.Button("Add Runtime Shader", () => cameraStage.AddRuntimeShaderLayer())),
-                layers.Count == 0
-                    ? UI.Label("レイヤーがありません")
-                    : UI.Column(layerElements));
+                    UI.Button("+ Shape", () => cameraStage.AddShapeLayer()),
+                    UI.Button("+ 3D", () => cameraStage.AddPrimitive3DLayer()),
+                    UI.Button("+ Model", () => cameraStage.AddModelLayer()),
+                    UI.Button("+ Group", () => cameraStage.AddGroupLayer()),
+                    UI.Button("+ Particles", () => cameraStage.AddGpuParticleLayer()),
+                    UI.Button("+ Text", () => cameraStage.AddTextLayer()),
+                    UI.Button("+ Shader", () => cameraStage.AddRuntimeShaderLayer())
+                ),
+                layers.Count == 0 ? UI.Label("No Layers") : UI.Column(layerElements)
+            );
         }
 
         private Element CreateLayerElement(CameraStage stage, StageLayer layer)
@@ -884,42 +883,16 @@ namespace Aetherin
         public Element AdditiveUi()
         {
             _stages ??= new List<StageBase>();
-            _layerInspectorElement = UI.DynamicElementOnStatusChanged(
-                readStatus: () => (_deckRevision, _inspectedLayerStage, _inspectedLayer),
-                build: _ => CreateLayerInspectorElement());
-
-            _layerInspectorWindow = UI.Window("Layer Inspector", _layerInspectorElement)
-                .SetWidth(460f);
-
+            _layerInspectorElement = UI.DynamicElementOnStatusChanged(() => (_deckRevision, _inspectedLayerStage, _inspectedLayer), _ => CreateLayerInspectorElement());
+            _layerInspectorWindow = UI.Window("Layer Inspector", _layerInspectorElement).SetWidth(460f);
             return UI.Column(
                 UI.Row(
-                    UI.WindowLauncher("Previews", UI.Window(
-                        UI.Column(
-                            UI.Label("Next"),
-                            UI.Image(() => GetStageTexture(_nextStages, _params.NextStageIndex))
-                                .SetMinWidth(160f).SetMinHeight(90f)
-                                .SetFlexGrow(1f).SetFlexShrink(1f)
-                                .SetMaxWidth(600f).SetMaxHeight(310f),
-                            UI.Label("Output"),
-                            UI.Image(() => OutputTexture)
-                                .SetMinWidth(160f).SetMinHeight(90f)
-                                .SetFlexGrow(1f).SetFlexShrink(1f)
-                                .SetMaxWidth(600f).SetMaxHeight(310f)
-                        )
-                    )),
-                    CreatePreviewWindowLauncher("Output Preview", () => OutputTexture),
-                    CreatePreviewWindowLauncher("Current Preview", () => _currentPostTexture),
-                    CreatePreviewWindowLauncher("Next Preview", () => _nextPostTexture),
+                    UI.Slider("Main Fader", () => CrossFade, 0f, 1f),
+                    UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
                     UI.WindowLauncher("Layer Inspector", _layerInspectorWindow)
                 ),
-                UI.DynamicElementOnStatusChanged(
-                    readStatus: () => _deckRevision,
-                    build: _ => CreateStageManagementElement()),
-                UI.SliderReadOnly("CrossFade (Current ← → Next)", () => CrossFade, 0f, 1f),
-                UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
-                UI.Label(() => IsImmediateMode
-                    ? "即時モード中: Nextが直接出力されています (フェーダー無効)"
-                    : _isFaderFlipped ? "フェーダー: 下に倒すとNextが出ます" : "フェーダー: 上に倒すとNextが出ます")
+                UI.DynamicElementOnStatusChanged(() => _deckRevision, _ => CreateStageManagementElement()),
+                UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE MODE</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
             );
         }
     }
