@@ -121,6 +121,7 @@ namespace Aetherin
         private Texture _currentPostTexture;
         private Texture _nextPostTexture;
         private CameraStageSaveData _pendingCameraStageData;
+        private readonly HashSet<string> _runtimeStageIds = new();
 
         [Inject]
         public void Construct(
@@ -154,6 +155,7 @@ namespace Aetherin
         /// </summary>
         private void BuildDecks()
         {
+            _stages ??= new List<StageBase>();
             _currentSlotOffset = Vector3.zero;
             _nextSlotOffset = _params.NextStageOffset;
 
@@ -163,6 +165,13 @@ namespace Aetherin
             for (int i = 0; i < _stages.Count; i++)
             {
                 StageBase template = _stages[i];
+                if (template == null)
+                {
+                    _currentStages.Add(null);
+                    _nextStages.Add(null);
+                    continue;
+                }
+                template.EnsureStageId();
                 StageBase current = CloneStage(template, StageDeck.Current, _currentSlotOffset, template.name);
                 StageBase next = CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name);
                 if (current is CameraStage currentCamera) currentCamera.ConfigureCinemachineChannel(i * 2);
@@ -173,6 +182,133 @@ namespace Aetherin
             }
 
             _deckRevision++;
+        }
+
+        public CameraStage AddCameraStage(string stageName = "Camera Stage", string stageId = null)
+        {
+            _stages ??= new List<StageBase>();
+            string resolvedName = string.IsNullOrWhiteSpace(stageName) ? "Camera Stage" : stageName.Trim();
+            var templateObject = new GameObject(resolvedName);
+            templateObject.transform.SetParent(transform, false);
+            var template = templateObject.AddComponent<CameraStage>();
+            template.SetIdentity(stageId, resolvedName);
+
+            var cameraObject = new GameObject("Camera");
+            cameraObject.transform.SetParent(templateObject.transform, false);
+            cameraObject.transform.localPosition = new Vector3(0f, 0f, -10f);
+            cameraObject.AddComponent<Camera>();
+
+            _stages.Add(template);
+            _runtimeStageIds.Add(template.StageId);
+            templateObject.SetActive(false);
+            if (_currentStages == null || _nextStages == null) return template;
+
+            int index = _stages.Count - 1;
+            var current = CloneStage(template, StageDeck.Current, _currentSlotOffset, resolvedName) as CameraStage;
+            var next = CloneStage(template, StageDeck.Next, _nextSlotOffset, resolvedName) as CameraStage;
+            _currentStages.Add(current);
+            _nextStages.Add(next);
+            ConfigureStageChannels();
+            _params.CurrentStageIndex = Mathf.Clamp(_params.CurrentStageIndex, 0, _stages.Count - 1);
+            _params.NextStageIndex = index;
+            _deckRevision++;
+            return next;
+        }
+
+        public CameraStage DuplicateCameraStage(string stageId)
+        {
+            int index = FindStageIndex(stageId);
+            if (index < 0 || _nextStages == null || _nextStages[index] is not CameraStage source) return null;
+
+            string sourceName = GetStageDisplayName(_stages[index], index);
+            string duplicateName = $"{sourceName} Copy";
+            List<CameraStageLayerSaveData> layers = source.CaptureLayers();
+            List<CameraWorkDeck> cameraWorkDecks = source.CaptureCameraWorkDecks();
+            CameraStage next = AddCameraStage(duplicateName);
+            int newIndex = _stages.Count - 1;
+            next?.RestoreLayers(layers);
+            next?.RestoreCameraWorkDecks(cameraWorkDecks);
+            if (_currentStages[newIndex] is CameraStage current)
+            {
+                current.RestoreLayers(layers);
+                current.RestoreCameraWorkDecks(cameraWorkDecks);
+            }
+            return next;
+        }
+
+        public bool RemoveCameraStage(string stageId)
+        {
+            int index = FindStageIndex(stageId);
+            if (index < 0 || _stages[index] is not CameraStage) return false;
+
+            DestroyStageAt(_currentStages, index);
+            DestroyStageAt(_nextStages, index);
+            StageBase template = _stages[index];
+            _stages.RemoveAt(index);
+            if (template != null)
+            {
+                _runtimeStageIds.Remove(template.StageId);
+                Destroy(template.gameObject);
+            }
+            ConfigureStageChannels();
+            int maxIndex = Mathf.Max(0, _stages.Count - 1);
+            _params.CurrentStageIndex = Mathf.Clamp(_params.CurrentStageIndex, 0, maxIndex);
+            _params.NextStageIndex = Mathf.Clamp(_params.NextStageIndex, 0, maxIndex);
+            _deckRevision++;
+            return true;
+        }
+
+        public bool RenameCameraStage(string stageId, string stageName)
+        {
+            int index = FindStageIndex(stageId);
+            if (index < 0 || _stages[index] is not CameraStage || string.IsNullOrWhiteSpace(stageName)) return false;
+            string resolvedName = stageName.Trim();
+            SetStageName(_stages[index], resolvedName, null);
+            SetStageName(_currentStages, index, resolvedName, StageDeck.Current);
+            SetStageName(_nextStages, index, resolvedName, StageDeck.Next);
+            _deckRevision++;
+            return true;
+        }
+
+        private int FindStageIndex(string stageId) =>
+            string.IsNullOrEmpty(stageId) || _stages == null
+                ? -1
+                : _stages.FindIndex(stage => stage != null && stage.StageId == stageId);
+
+        private static void DestroyStageAt(List<StageBase> stages, int index)
+        {
+            if (stages == null || index < 0 || index >= stages.Count) return;
+            StageBase stage = stages[index];
+            stages.RemoveAt(index);
+            if (stage == null) return;
+            stage.gameObject.SetActive(false);
+            Destroy(stage.gameObject);
+        }
+
+        private static void SetStageName(List<StageBase> stages, int index, string stageName, StageDeck deck)
+        {
+            if (stages == null || index < 0 || index >= stages.Count) return;
+            SetStageName(stages[index], stageName, deck);
+        }
+
+        private static void SetStageName(StageBase stage, string stageName, StageDeck? deck)
+        {
+            if (stage == null) return;
+            stage.SetIdentity(stage.StageId, stageName);
+            stage.gameObject.name = deck.HasValue ? $"{stageName} ({deck.Value})" : stageName;
+        }
+
+        private void ConfigureStageChannels()
+        {
+            for (int i = 0; i < _stages.Count; i++)
+            {
+                if (_currentStages != null && i < _currentStages.Count &&
+                    _currentStages[i] is CameraStage currentCamera)
+                    currentCamera.ConfigureCinemachineChannel(i * 2);
+                if (_nextStages != null && i < _nextStages.Count &&
+                    _nextStages[i] is CameraStage nextCamera)
+                    nextCamera.ConfigureCinemachineChannel(i * 2 + 1);
+            }
         }
 
         /// <summary>
@@ -399,6 +535,9 @@ namespace Aetherin
                 if (_nextStages[i] is not CameraStage stage) continue;
                 data.Stages.Add(new CameraStageLayersSaveData
                 {
+                    StageId = stage.StageId,
+                    StageName = GetStageDisplayName(_stages[i], i),
+                    RuntimeCreated = _runtimeStageIds.Contains(stage.StageId),
                     StageIndex = i,
                     Layers = stage.CaptureLayers(),
                     CameraWorkDecks = stage.CaptureCameraWorkDecks(),
@@ -417,24 +556,46 @@ namespace Aetherin
         private void ApplyPendingCameraStageData()
         {
             if (_pendingCameraStageData?.Stages == null) return;
+            int currentStageIndex = _params.CurrentStageIndex;
+            int nextStageIndex = _params.NextStageIndex;
 
             foreach (var savedStage in _pendingCameraStageData.Stages)
             {
                 if (savedStage == null) continue;
-                if (savedStage.StageIndex < 0 || savedStage.StageIndex >= _nextStages.Count) continue;
+                int stageIndex = FindStageIndex(savedStage.StageId);
+                if (stageIndex < 0 && savedStage.RuntimeCreated && !string.IsNullOrEmpty(savedStage.StageId))
+                {
+                    AddCameraStage(savedStage.StageName, savedStage.StageId);
+                    stageIndex = FindStageIndex(savedStage.StageId);
+                }
+                if (stageIndex < 0) stageIndex = savedStage.StageIndex;
+                if (stageIndex < 0 || stageIndex >= _nextStages.Count) continue;
 
-                if (_nextStages[savedStage.StageIndex] is CameraStage nextStage)
+                if (!string.IsNullOrEmpty(savedStage.StageId))
+                {
+                    string stageName = string.IsNullOrEmpty(savedStage.StageName)
+                        ? GetStageDisplayName(_stages[stageIndex], stageIndex)
+                        : savedStage.StageName;
+                    _stages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
+                    _currentStages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
+                    _nextStages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
+                }
+
+                if (_nextStages[stageIndex] is CameraStage nextStage)
                 {
                     nextStage.RestoreLayers(savedStage.Layers);
                     nextStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
                 }
-                if (_currentStages[savedStage.StageIndex] is CameraStage currentStage)
+                if (_currentStages[stageIndex] is CameraStage currentStage)
                 {
                     currentStage.RestoreLayers(savedStage.Layers);
                     currentStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
                 }
             }
 
+            int maxIndex = Mathf.Max(0, _stages.Count - 1);
+            _params.CurrentStageIndex = Mathf.Clamp(currentStageIndex, 0, maxIndex);
+            _params.NextStageIndex = Mathf.Clamp(nextStageIndex, 0, maxIndex);
             _deckRevision++;
             _pendingCameraStageData = null;
         }
@@ -500,6 +661,41 @@ namespace Aetherin
                         ).SetWidth(520f))
                 )));
         }
+
+        private Element CreateStageManagementElement()
+        {
+            var stageNames = _stages
+                .Select(GetStageDisplayName)
+                .ToList();
+
+            return UI.Column(
+                UI.Button("Add Camera Stage", () => AddCameraStage()),
+                stageNames.Count == 0 ? UI.Label("ステージが登録されていません") : UI.Column(
+                    UI.Dropdown("Current",
+                        () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
+                        value => _params.CurrentStageIndex = value,
+                        stageNames),
+                    UI.Dropdown("Next",
+                        () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
+                        value => _params.NextStageIndex = value,
+                        stageNames),
+                    CreateStageListElement(stageNames),
+                    UI.Column(Enumerable.Range(0, _stages.Count)
+                        .Where(index => _stages[index] is CameraStage)
+                        .Select(index =>
+                        {
+                            string stageId = _stages[index].StageId;
+                            return UI.Row(
+                                UI.Field("Name", () => GetStageDisplayName(_stages[index], index),
+                                    value => RenameCameraStage(stageId, value)).SetFlexGrow(1f),
+                                UI.Button("Duplicate", () => DuplicateCameraStage(stageId)),
+                                UI.Button("Delete", () => RemoveCameraStage(stageId)));
+                        }))));
+        }
+
+        private static string GetStageDisplayName(StageBase stage, int index) =>
+            stage == null ? $"Stage {index}" :
+            string.IsNullOrEmpty(stage.StageName) ? stage.name : stage.StageName;
 
         private Element CreateCameraWorkListElement(int stageIndex)
         {
@@ -669,12 +865,7 @@ namespace Aetherin
 
         public Element AdditiveUi()
         {
-            var stageNames = _stages
-                .Select((s, i) => s == null ? $"Stage {i}" : (string.IsNullOrEmpty(s.StageName) ? s.name : s.StageName))
-                .ToList();
-
-            if (stageNames.Count == 0) return UI.Label("ステージが登録されていません");
-
+            _stages ??= new List<StageBase>();
             _layerInspectorElement = UI.DynamicElementOnStatusChanged(
                 readStatus: () => (_deckRevision, _inspectedLayerStage, _inspectedLayer),
                 build: _ => CreateLayerInspectorElement());
@@ -703,15 +894,9 @@ namespace Aetherin
                     CreatePreviewWindowLauncher("Next Preview", () => _nextPostTexture),
                     UI.WindowLauncher("Layer Inspector", _layerInspectorWindow)
                 ),
-                UI.Dropdown("Current",
-                    () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
-                    value => _params.CurrentStageIndex = value,
-                    stageNames),
-                UI.Dropdown("Next",
-                    () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
-                    value => _params.NextStageIndex = value,
-                    stageNames),
-                CreateStageListElement(stageNames),
+                UI.DynamicElementOnStatusChanged(
+                    readStatus: () => _deckRevision,
+                    build: _ => CreateStageManagementElement()),
                 UI.SliderReadOnly("CrossFade (Current ← → Next)", () => CrossFade, 0f, 1f),
                 UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
                 UI.Label(() => IsImmediateMode
@@ -724,13 +909,16 @@ namespace Aetherin
     [Serializable]
     public sealed class CameraStageSaveData
     {
-        public int Version = 1;
+        public int Version = 2;
         public List<CameraStageLayersSaveData> Stages = new();
     }
 
     [Serializable]
     public sealed class CameraStageLayersSaveData
     {
+        public string StageId;
+        public string StageName;
+        public bool RuntimeCreated;
         public int StageIndex;
         public List<CameraStageLayerSaveData> Layers = new();
         public List<CameraWorkDeck> CameraWorkDecks = new();
