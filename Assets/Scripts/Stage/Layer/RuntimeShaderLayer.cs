@@ -41,9 +41,6 @@ namespace Aetherin
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
 
-        // UnityRuntimeShaderの現行ネイティブプラグインはUnity 6/D3D11でEditorを停止させる。
-        private static bool RuntimeCompilerSupported => !Application.unityVersion.StartsWith("6000.");
-
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
         protected override Renderer LayerRenderer => RendererComponent;
@@ -69,8 +66,6 @@ namespace Aetherin
 
         private void Start()
         {
-            if (!Application.isPlaying || !RuntimeCompilerSupported || _runtimeRenderer == null) return;
-            // ShaderRenderer.Awakeがネイティブインスタンス生成と初回コンパイルを行う。
             _hasCompiled = true;
             _params.LastCompileSucceeded = true;
             _params.CompileMessage = "Compiled on renderer initialization";
@@ -139,7 +134,7 @@ namespace Aetherin
 
         private void EnsureResources()
         {
-            if (!RuntimeCompilerSupported && !Application.isPlaying)
+            if (!Application.isPlaying)
             {
                 var unsupportedRenderer = GetComponent<ShaderRenderer>();
                 if (unsupportedRenderer != null) DestroyImmediate(unsupportedRenderer);
@@ -170,7 +165,7 @@ namespace Aetherin
                 }
             }
 
-            if (RuntimeCompilerSupported && _runtimeRenderer == null)
+            if (_runtimeRenderer == null)
             {
                 _runtimeRenderer = GetComponent<ShaderRenderer>() ?? gameObject.AddComponent<ShaderRenderer>();
                 _runtimeRenderer.RenderEveryFrame = false;
@@ -180,8 +175,6 @@ namespace Aetherin
             if (!Application.isPlaying && _runtimeRenderer != null) _runtimeRenderer.ShaderCode = _params.ShaderCode;
 
             if (_runtimeRenderer != null) EnsureRuntimeTexture(GetResolution());
-            else if (!RuntimeCompilerSupported)
-                _params.CompileMessage = "Runtime compiler is disabled on Unity 6 (native plugin incompatibility)";
         }
 
         private void EnsureRuntimeTexture(Vector2Int resolution)
@@ -207,15 +200,6 @@ namespace Aetherin
 
         private void RequestCompile()
         {
-            if (!RuntimeCompilerSupported)
-            {
-                _compilePending = false;
-                _hasCompiled = false;
-                _params.LastCompileSucceeded = false;
-                _params.CompileMessage = "Runtime compiler is disabled on Unity 6 (native plugin incompatibility)";
-                return;
-            }
-
             if (!Application.isPlaying)
             {
                 _compilePending = false;
