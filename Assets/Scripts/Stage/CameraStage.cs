@@ -16,6 +16,14 @@ namespace Aetherin
     {
         public override IReadOnlyList<StageLayer> Layers => _layers;
         public int LayerRevision { get; private set; }
+        public Camera StageCamera
+        {
+            get
+            {
+                if (_camera == null) _camera = GetComponentInChildren<Camera>(true);
+                return _camera;
+            }
+        }
 
         [SerializeField] private Camera _camera;
         [SerializeField] private ModelLayerLibrary _modelLibrary;

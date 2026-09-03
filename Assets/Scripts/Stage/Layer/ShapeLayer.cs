@@ -55,6 +55,7 @@ namespace Aetherin
         private IBeatManager _beatManager;
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
+        private CameraStage _cameraStage;
         private Bounds _geometryBounds;
 
         // Geometry更新時に使い回す。要素数が増えた場合だけList内部の容量が拡張される。
@@ -98,11 +99,13 @@ namespace Aetherin
             _beatManager = beatManager;
             _deckStateProvider = deckStateProvider;
             _stage = GetComponentInParent<StageBase>();
+            _cameraStage = GetComponentInParent<CameraStage>();
         }
 
         private void Awake()
         {
             _stage = GetComponentInParent<StageBase>();
+            _cameraStage = GetComponentInParent<CameraStage>();
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -113,6 +116,7 @@ namespace Aetherin
         private void OnEnable()
         {
             _stage = GetComponentInParent<StageBase>();
+            _cameraStage = GetComponentInParent<CameraStage>();
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -130,6 +134,12 @@ namespace Aetherin
 
             ApplyAppearance();
             ApplyShapeTransform();
+        }
+
+        protected override void LateUpdate()
+        {
+            base.LateUpdate();
+            if (_params.ScreenSpace) ApplyShapeTransform();
         }
 
         protected override void OnValidate()
@@ -223,6 +233,26 @@ namespace Aetherin
                                             Quaternion.Euler(rotation),
                                             _evaluatedScale) *
                                         Matrix4x4.Translate(-_evaluatedAnchor);
+
+            if (_params.ScreenSpace)
+            {
+                _cameraStage ??= GetComponentInParent<CameraStage>();
+                Camera camera = _cameraStage?.StageCamera;
+                if (camera != null)
+                {
+                    float depth = camera.orthographic
+                        ? Mathf.Max(camera.nearClipPlane + 0.01f, 1f)
+                        : Mathf.Max(camera.nearClipPlane + 0.01f, 10f);
+                    float halfHeight = camera.orthographic
+                        ? camera.orthographicSize
+                        : depth * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                    Matrix4x4 cameraSpaceMatrix = Matrix4x4.Translate(new Vector3(0f, 0f, depth)) *
+                                                       Matrix4x4.Scale(Vector3.one * halfHeight) *
+                                                       shapeMatrix;
+                    shapeMatrix = transform.worldToLocalMatrix * camera.transform.localToWorldMatrix *
+                                  cameraSpaceMatrix;
+                }
+            }
 
             _fillMaterial.SetMatrix(ShapeMatrixId, shapeMatrix);
             _strokeMaterial.SetMatrix(ShapeMatrixId, shapeMatrix);

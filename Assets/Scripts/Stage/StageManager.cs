@@ -110,6 +110,7 @@ namespace Aetherin
         private CameraStage _inspectedLayerStage;
         private DynamicElement _layerInspectorElement;
         private WindowElement _layerInspectorWindow;
+        private int _selectedStageUiIndex;
 
         private readonly DeckState _currentState = new();
 
@@ -465,40 +466,57 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// 各ステージのレイヤーを編集するウィンドウを開くランチャーの一覧
-        /// 操作対象はMIDIコンと同じNextデッキのインスタンス
-        /// (デッキはスワップで作り直されるため、_deckRevisionの変化で中身を作り直す)
+        /// 左でステージを選択し、右に選択中Nextステージのレイヤー一覧を表示する。
+        /// デッキはスワップで作り直されるため、_deckRevisionの変化でも右カラムを再構築する。
         /// </summary>
         private Element CreateStageListElement(IReadOnlyList<string> stageNames)
         {
+            _selectedStageUiIndex = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
+
+            Element stageColumn = UI.Column(
+                UI.Label("Stages"),
+                UI.Column(Enumerable.Range(0, stageNames.Count).Select(index =>
+                    UI.Button(
+                            UI.Label(() => $"{(_selectedStageUiIndex == index ? "▶ " : "  ")}{stageNames[index]}"),
+                            () => _selectedStageUiIndex = index)
+                        .SetMinWidth(150f)
+                        .SetFlexGrow(1f))));
+
+            Element layerColumn = UI.DynamicElementOnStatusChanged(
+                readStatus: () =>
+                {
+                    int index = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
+                    var cameraStage = _nextStages != null && index < _nextStages.Count
+                        ? _nextStages[index] as CameraStage
+                        : null;
+                    return (index, _deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0);
+                },
+                build: status => CreateSelectedStageColumn(stageNames, status.index));
+
+            return UI.Row(
+                stageColumn.SetWidth(180f).SetFlexShrink(0f),
+                layerColumn.SetMinWidth(420f).SetFlexGrow(1f));
+        }
+
+        private Element CreateSelectedStageColumn(IReadOnlyList<string> stageNames, int stageIndex)
+        {
+            stageIndex = Mathf.Clamp(stageIndex, 0, stageNames.Count - 1);
             return UI.Column(
-                Enumerable.Range(0, stageNames.Count).Select(index => UI.Row(
-                    UI.Label(stageNames[index]).SetWidth(120f),
-                    UI.WindowLauncher("Layers",
-                        UI.Window($"{stageNames[index]} Layers",
-                            UI.DynamicElementOnStatusChanged(
-                                readStatus: () =>
-                                {
-                                    var cameraStage = _nextStages != null && index < _nextStages.Count
-                                        ? _nextStages[index] as CameraStage
-                                        : null;
-                                    return (_deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0);
-                                },
-                                build: _ => CreateLayerListElement(index))
-                        ).SetWidth(400f)),
+                UI.Row(
+                    UI.Label($"{stageNames[stageIndex]} Layers").SetFlexGrow(1f),
                     UI.WindowLauncher("Camera Works",
-                        UI.Window($"{stageNames[index]} Camera Works",
+                        UI.Window($"{stageNames[stageIndex]} Camera Works",
                             UI.DynamicElementOnStatusChanged(
                                 readStatus: () =>
                                 {
-                                    var cameraStage = _nextStages != null && index < _nextStages.Count
-                                        ? _nextStages[index] as CameraStage
+                                    var cameraStage = _nextStages != null && stageIndex < _nextStages.Count
+                                        ? _nextStages[stageIndex] as CameraStage
                                         : null;
                                     return (_deckRevision, cameraStage, cameraStage?.CameraWorkRevision ?? 0);
                                 },
-                                build: _ => CreateCameraWorkListElement(index))
-                        ).SetWidth(520f))
-                )));
+                                build: _ => CreateCameraWorkListElement(stageIndex))
+                        ).SetWidth(520f))),
+                CreateLayerListElement(stageIndex));
         }
 
         private Element CreateCameraWorkListElement(int stageIndex)
@@ -654,7 +672,7 @@ namespace Aetherin
         private Element CreateLayerInspectorElement()
         {
             if (_inspectedLayer == null || _inspectedLayerStage == null)
-                return UI.Label("Layersウィンドウで編集するレイヤーを選択してください");
+                return UI.Label("Stage一覧のレイヤーを選択してください");
 
             StageLayer layer = _inspectedLayer;
             return UI.Column(

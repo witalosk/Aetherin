@@ -32,6 +32,7 @@ namespace Aetherin
     {
         Standard,
         Glass,
+        Lit,
     }
 
     [Serializable]
@@ -64,6 +65,12 @@ namespace Aetherin
         public int PaletteRandomSeed;
         public FloatParameter ColorIntensity = new(1f);
         public FloatParameter Alpha = new(1f);
+
+        [Range(0f, 1f)]
+        public FloatParameter Metallic = new(0f);
+
+        [Range(0f, 1f)]
+        public FloatParameter Smoothness = new(0.5f);
 
         [Tooltip("背景をずらして見せる疑似屈折の強さ")]
         public FloatParameter GlassRefraction = new(0.025f);

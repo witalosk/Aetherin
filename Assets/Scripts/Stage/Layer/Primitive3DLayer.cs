@@ -22,6 +22,8 @@ namespace Aetherin
         private static readonly int UvParamsId = Shader.PropertyToID("_UvParams");
         private static readonly int LightDirectionId = Shader.PropertyToID("_LightDirection");
         private static readonly int ToonThresholdId = Shader.PropertyToID("_ToonThreshold");
+        private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
+        private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
         private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
         private static readonly int GlassRefractionId = Shader.PropertyToID("_GlassRefraction");
         private static readonly int GlassTintId = Shader.PropertyToID("_GlassTint");
@@ -74,6 +76,8 @@ namespace Aetherin
         private float _evaluatedUvOffset;
         private Vector3 _evaluatedLightDirection = Vector3.up;
         private float _evaluatedToonThreshold = 0.5f;
+        private float _evaluatedMetallic;
+        private float _evaluatedSmoothness = 0.5f;
         private float _evaluatedGlassRefraction = 0.025f;
         private float _evaluatedGlassTint = 0.2f;
         private float _evaluatedGlassFresnelPower = 3f;
@@ -192,6 +196,8 @@ namespace Aetherin
             _params.UvOffset ??= new FloatParameter(0f);
             _params.LightDirection ??= new Vector3Parameter(new Vector3(0.3f, 0.8f, -0.5f));
             _params.ToonThreshold ??= new FloatParameter(0.5f);
+            _params.Metallic ??= new FloatParameter(0f);
+            _params.Smoothness ??= new FloatParameter(0.5f);
             _params.GlassRefraction ??= new FloatParameter(0.025f);
             _params.GlassTint ??= new FloatParameter(0.2f);
             _params.GlassFresnelPower ??= new FloatParameter(3f);
@@ -238,6 +244,7 @@ namespace Aetherin
             _meshRenderer.sharedMaterial = _material;
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
             _meshRenderer.receiveShadows = false;
+            _meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
         }
 
         private void EnsureWireResources()
@@ -344,6 +351,8 @@ namespace Aetherin
             if (_evaluatedLightDirection.sqrMagnitude < 0.000001f) _evaluatedLightDirection = Vector3.up;
             _evaluatedLightDirection.Normalize();
             _evaluatedToonThreshold = Mathf.Clamp01(_params.ToonThreshold?.Evaluate(context) ?? 0.5f);
+            _evaluatedMetallic = Mathf.Clamp01(_params.Metallic?.Evaluate(context) ?? 0f);
+            _evaluatedSmoothness = Mathf.Clamp01(_params.Smoothness?.Evaluate(context) ?? 0.5f);
             _evaluatedGlassRefraction = Mathf.Max(0f, _params.GlassRefraction?.Evaluate(context) ?? 0.025f);
             _evaluatedGlassTint = Mathf.Clamp01(_params.GlassTint?.Evaluate(context) ?? 0.2f);
             _evaluatedGlassFresnelPower = Mathf.Max(0.01f, _params.GlassFresnelPower?.Evaluate(context) ?? 3f);
@@ -389,10 +398,14 @@ namespace Aetherin
             _material.SetVector(UvParamsId, new Vector4(_evaluatedUvScale, _evaluatedUvOffset, 0f, 0f));
             _material.SetVector(LightDirectionId, _evaluatedLightDirection);
             _material.SetFloat(ToonThresholdId, _evaluatedToonThreshold);
+            _material.SetFloat(MetallicId, _evaluatedMetallic);
+            _material.SetFloat(SmoothnessId, _evaluatedSmoothness);
             bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
-            _material.SetFloat(MaterialModeId, glass ? 1f : 0f);
+            bool lit = _params.MaterialMode == Primitive3DMaterialMode.Lit;
+            _material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
             LayerMaterialUtility.ApplyBlendMode(_material,
                 glass ? LayerBlendMode.Transparent : _params.BlendMode);
+            _meshRenderer.receiveShadows = lit;
             _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
             _material.SetFloat(GlassTintId, _evaluatedGlassTint);
             _material.SetFloat(GlassFresnelPowerId, _evaluatedGlassFresnelPower);

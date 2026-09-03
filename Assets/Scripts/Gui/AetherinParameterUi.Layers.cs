@@ -59,6 +59,7 @@ namespace Aetherin
 
             return UI.Column(
                 Param("Opacity", p.Opacity),
+                UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
                 UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                 UI.Field("Shape", () => p.Shape, value => p.Shape = value),
                 UI.DynamicElementOnStatusChanged(
@@ -231,7 +232,9 @@ namespace Aetherin
                     readStatus: () => p.MaterialMode,
                     build: mode => mode == Primitive3DMaterialMode.Glass
                         ? CreateGlassMaterialElement(p)
-                        : CreateStandardMaterialElement(p)),
+                        : mode == Primitive3DMaterialMode.Lit
+                            ? CreateLitMaterialElement(p)
+                            : CreateStandardMaterialElement(p)),
                 UI.DynamicElementIf(
                     () => p.RenderMode != Primitive3DRenderMode.Surface,
                     () => UI.Column(
@@ -277,6 +280,11 @@ namespace Aetherin
             Param("Chromatic Aberration", p.GlassChromaticAberration),
             Param("Distortion", p.GlassDistortion),
             Param("Distortion Scale", p.GlassDistortionScale));
+
+        private static Element CreateLitMaterialElement(Primitive3DLayerParams p) => UI.Column(
+            CreateStandardMaterialElement(p),
+            Param("Metallic", p.Metallic),
+            Param("Smoothness", p.Smoothness));
 
         #endregion
     }

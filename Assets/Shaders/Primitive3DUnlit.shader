@@ -31,8 +31,14 @@ Shader "Aetherin/Primitive 3D Unlit"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
+            #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
 
             struct Attributes
@@ -60,6 +66,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4 _LightDirection;
                 float _ColorMode;
                 float _ToonThreshold;
+                float _Metallic;
+                float _Smoothness;
                 float4x4 _ShapeMatrix;
                 float4x4 _ShapeNormalMatrix;
                 float _UsePaletteRandom;
@@ -117,7 +125,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 half4 color = _BaseColor;
                 if (_UsePaletteRandom > 0.5) color = PaletteColorForCopy(input.color.r);
 
-                if (_MaterialMode > 0.5)
+                if (_MaterialMode > 0.5 && _MaterialMode < 1.5)
                 {
                     float2 screenUv = GetNormalizedScreenSpaceUV(input.positionCS);
                     float3 normalWS = normalize(input.normalWS);
@@ -151,6 +159,34 @@ Shader "Aetherin/Primitive 3D Unlit"
                     float lighting = saturate(dot(normalize(input.normalWS), normalize(_LightDirection.xyz)));
                     float t = _ColorMode > 2.5 ? step(_ToonThreshold, lighting) : lighting;
                     color = lerp(_BaseColor, _ColorB, t);
+                }
+
+                if (_MaterialMode > 1.5)
+                {
+                    InputData inputData = (InputData)0;
+                    inputData.positionWS = input.positionWS;
+                    inputData.positionCS = input.positionCS;
+                    inputData.normalWS = NormalizeNormalPerPixel(input.normalWS);
+                    inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                    inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+                    inputData.fogCoord = 0;
+                    inputData.vertexLighting = VertexLighting(input.positionWS, inputData.normalWS);
+                    inputData.bakedGI = SampleSH(inputData.normalWS);
+                    inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                    inputData.shadowMask = half4(1, 1, 1, 1);
+
+                    SurfaceData surfaceData = (SurfaceData)0;
+                    surfaceData.albedo = color.rgb;
+                    surfaceData.specular = half3(0, 0, 0);
+                    surfaceData.metallic = saturate(_Metallic);
+                    surfaceData.smoothness = saturate(_Smoothness);
+                    surfaceData.normalTS = half3(0, 0, 1);
+                    surfaceData.emission = half3(0, 0, 0);
+                    surfaceData.occlusion = 1;
+                    surfaceData.alpha = color.a * input.color.a;
+                    surfaceData.clearCoatMask = 0;
+                    surfaceData.clearCoatSmoothness = 0;
+                    return UniversalFragmentPBR(inputData, surfaceData);
                 }
 
                 color.a *= input.color.a;
