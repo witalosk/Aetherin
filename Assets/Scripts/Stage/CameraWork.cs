@@ -96,6 +96,22 @@ namespace Aetherin
             _cameraWorkDecks ??= new List<CameraWorkDeck>();
             foreach (CameraWorkDeck deck in _cameraWorkDecks) deck?.EnsureInitialized();
 
+            // StageManagerはSwap時に実行中のステージを複製する。
+            // その際、既に生成済みのRuntime Cinemachine Cameraまで複製されると、
+            // 複製元と同じOutputChannelのVirtual CameraがNext側にも残り、
+            // Current側のBrainがNext側のカメラを選ぶことがある。
+            // 生成物は各CameraStageの初期化時に必ず作り直す。
+            foreach (CinemachineCamera existingCamera in
+                     GetComponentsInChildren<CinemachineCamera>(true))
+            {
+                if (existingCamera == null || existingCamera.gameObject.name != "Runtime Cinemachine Camera")
+                    continue;
+
+                existingCamera.enabled = false;
+                if (Application.isPlaying) Destroy(existingCamera.gameObject);
+                else DestroyImmediate(existingCamera.gameObject);
+            }
+
             _cinemachineBrain = _camera.GetComponent<CinemachineBrain>();
             if (_cinemachineBrain == null) _cinemachineBrain = _camera.gameObject.AddComponent<CinemachineBrain>();
             _cinemachineBrain.DefaultBlend = new CinemachineBlendDefinition(
