@@ -136,6 +136,12 @@ namespace Aetherin
                     Param("Anchor", repeater.Anchor),
                     UI.Field("Transform Mode", () => repeater.TransformMode,
                         value => repeater.TransformMode = value),
+                    UI.Field("Value Mode", () => repeater.ValueMode,
+                        value => repeater.ValueMode = value),
+                    UI.DynamicElementIf(
+                        () => repeater.ValueMode == RepeaterValueMode.Random,
+                        () => UI.Field("Random Seed", () => repeater.RandomSeed,
+                            value => repeater.RandomSeed = value)),
                      UI.DynamicElementIf(
                          () => repeater.LayoutMode == RepeaterLayoutMode.Linear &&
                                repeater.TransformMode == RepeaterTransformMode.Cumulative,
