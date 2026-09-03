@@ -205,11 +205,14 @@ namespace Aetherin
         /// </summary>
         private void PublishEmulatedEvents()
         {
+            // エミュレーション側の押下状態も毎フレーム破棄し、1フレームだけOnにする。
+            Array.Clear(_emulatedNotes, 0, ValueCount);
             Array.Clear(_emulatedNoteOnThisFrame, 0, ValueCount);
             Array.Clear(_emulatedNoteOffThisFrame, 0, ValueCount);
 
             foreach (int noteNumber in _pendingEmulatedNoteOn)
             {
+                _emulatedNotes[noteNumber] = true;
                 _emulatedNoteOnThisFrame[noteNumber] = true;
                 OnNoteOn?.Invoke(noteNumber, 1f);
             }
@@ -235,18 +238,11 @@ namespace Aetherin
             _input.OnCcChanged -= HandleHardwareCcChanged;
         }
 
-        private void ToggleEmulatedNote(int noteNumber)
+        private void TriggerEmulatedNote(int noteNumber)
         {
-            if (_emulatedNotes[noteNumber])
-            {
-                _emulatedNotes[noteNumber] = false;
-                _pendingEmulatedNoteOff.Add(noteNumber);
-            }
-            else
-            {
-                _emulatedNotes[noteNumber] = true;
-                _pendingEmulatedNoteOn.Add(noteNumber);
-            }
+            // UIのクリックは実機の瞬間的なNoteOnと同じ扱いにする。
+            // 押下状態を保持しないため、同じボタンを連続して押せる。
+            _pendingEmulatedNoteOn.Add(noteNumber);
         }
 
         private void SetEmulatedCc(int number, float value)
@@ -346,7 +342,7 @@ namespace Aetherin
 
         private Element CreateCellElement(int noteNumber, bool emulating, Func<Color> readColor)
         {
-            Action onClick = emulating ? () => ToggleEmulatedNote(noteNumber) : null;
+            Action onClick = emulating ? () => TriggerEmulatedNote(noteNumber) : null;
             var button = UI.Button("", onClick);
 
             return button

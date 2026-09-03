@@ -15,6 +15,7 @@ namespace Aetherin
 
     public enum CameraWorkSwitchTiming
     {
+        Manual,
         Beat,
         Bar,
         Every2Bars,
@@ -220,6 +221,7 @@ namespace Aetherin
                 CameraWorkSwitchTiming.Bar => _beatManager.WasBar,
                 CameraWorkSwitchTiming.Every2Bars => _beatManager.WasBar && _beatManager.BarCount % 2 == 0,
                 CameraWorkSwitchTiming.Every4Bars => _beatManager.WasBar && _beatManager.BarCount % 4 == 0,
+                CameraWorkSwitchTiming.Manual => false,
                 _ => false,
             };
         }
@@ -241,6 +243,15 @@ namespace Aetherin
         public void ResetCameraWork()
         {
             _currentCameraWork = 0;
+            _followInitialized = false;
+        }
+
+        public void AdvanceCameraWork()
+        {
+            CameraWorkDeck deck = GetSelectedCameraWorkDeck();
+            if (deck?.Recipes == null || deck.Recipes.Count == 0) return;
+
+            _currentCameraWork = (_currentCameraWork + 1) % deck.Recipes.Count;
             _followInitialized = false;
         }
 

@@ -15,6 +15,9 @@ namespace Aetherin
         [Tooltip("サブ拍 = 小節頭以外の拍")]
         public Key SubTapKey = Key.X;
 
+        [Tooltip("BeatのPlay / Stopを切り替えるキー")]
+        public Key PlayStopKey = Key.Space;
+
         [Tooltip("主拍から次の主拍までのタップ数から拍子を求める")]
         public bool EstimateBeatsPerBar = true;
 
@@ -141,6 +144,12 @@ namespace Aetherin
             ResetEstimation();
         }
 
+        public void TogglePlayStop()
+        {
+            if (IsRunning) Stop();
+            else TapMain();
+        }
+
         public void SetBpm(float bpm) => _beat.SetBpm(bpm);
 
         public void DoubleBpm() => SetBpm(Bpm * 2f);
@@ -264,6 +273,7 @@ namespace Aetherin
 
             if (WasKeyPressed(keyboard, _params.MainTapKey)) TapMain();
             if (WasKeyPressed(keyboard, _params.SubTapKey)) TapSub();
+            if (WasKeyPressed(keyboard, _params.PlayStopKey)) TogglePlayStop();
         }
 
         private static bool WasKeyPressed(Keyboard keyboard, Key key)
@@ -308,10 +318,13 @@ namespace Aetherin
                     UI.Button("÷2", HalfBpm),
                     UI.Button("×2", DoubleBpm)),
                 UI.Slider("Beats / Bar", () => BeatsPerBar, SetBeatsPerBar, 1, 16),
+                UI.Field("Play / Stop Key", () => _params.PlayStopKey, value => _params.PlayStopKey = value),
                 UI.Row(
                     UI.Button(UI.Label(() => $"Tap Main [{_params.MainTapKey}]"), TapMain),
                     UI.Button(UI.Label(() => $"Tap Sub [{_params.SubTapKey}]"), TapSub),
-                    UI.Button("Stop", Stop)
+                    UI.Button(UI.Label(() => IsRunning
+                        ? $"Stop [{_params.PlayStopKey}]"
+                        : $"Play [{_params.PlayStopKey}]"), TogglePlayStop)
                 ),
                 UI.Label(() => _isKeyboardFound
                     ? $"Keyboard : OK / last key : {_lastPressedKey} (frame {_lastPressedFrame})"

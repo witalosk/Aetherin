@@ -24,8 +24,11 @@ namespace Aetherin
         [Tooltip("選択中のNext CameraStageにあるカメラワークデッキを選ぶPad")]
         public List<MidiBinding> CameraWorkDeckButtons = new();
 
-        [Tooltip("カメラワークの切り替え周期を Beat / Bar / 2 Bars / 4 Bars の順で選ぶPad")]
+        [Tooltip("カメラワークの切り替え周期を Beat / Bar / 2 Bars / 4 Bars / Manual の順で選ぶPad")]
         public List<MidiBinding> CameraWorkTimingButtons = new();
+
+        [Tooltip("Manual時に次のカメラワークへ進めるPad")]
+        public MidiBinding CameraWorkManualButton = new();
 
         public CameraWorkSwitchTiming CameraWorkTiming;
 
@@ -106,8 +109,10 @@ namespace Aetherin
         private StageLayer _inspectedLayer;
         private CameraStage _inspectedLayerStage;
         private int _inspectedLayerColorIndex;
-        private DynamicElement _layerInspectorElement;
-        private WindowElement _layerInspectorWindow;
+        private CameraWorkRecipe _inspectedCameraWork;
+        private CameraStage _inspectedCameraWorkStage;
+        private DynamicElement _inspectorElement;
+        private WindowElement _inspectorWindow;
         private int _selectedStageUiIndex;
 
         private readonly DeckState _currentState = new();
@@ -465,6 +470,18 @@ namespace Aetherin
                 }
                 button.SetLed(i == (int)_params.CameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
             }
+
+            _params.CameraWorkManualButton ??= new MidiBinding();
+            if (_params.CameraWorkTiming == CameraWorkSwitchTiming.Manual)
+            {
+                if (_params.CameraWorkManualButton.WasNoteOn && stage != null)
+                {
+                    stage.AdvanceCameraWork();
+                }
+                _params.CameraWorkManualButton.SetLed(
+                    _params.CameraWorkManualButton.WasNoteOn ? Color.yellow * 0.5f : Color.yellow * 0.25f);
+            }
+            else _params.CameraWorkManualButton.ClearLed();
         }
 
         /// <summary>
@@ -674,7 +691,7 @@ namespace Aetherin
         }
 
 
-        private (int index, int deckRevision, CameraStage cameraStage, int layerRevision, int cameraWorkRevision) ReadSelectedStageUiStatus(int stageCount)
+        private (int index, int deckRevision, CameraStage cameraStage, int layerRevision, int cameraWorkRevision) ReadSelectedStageUiStatus(int stageCount) 
         {
             if (stageCount <= 0)
                 return (0, _deckRevision, null, 0, 0);
@@ -719,60 +736,94 @@ namespace Aetherin
 
         private Element CreateCameraWorkListElement(int stageIndex)
         {
-            var stage = _nextStages != null && stageIndex < _nextStages.Count
-                ? _nextStages[stageIndex] as CameraStage : null;
+            var stage = _nextStages != null && stageIndex < _nextStages.Count ? _nextStages[stageIndex] as CameraStage : null;
             if (stage == null) return UI.Label("CameraStageではありません");
 
             var decks = stage.CameraWorkDecks.Select((deck, deckIndex) =>
-                UI.Fold(deck?.Name ?? $"Deck {deckIndex + 1}", UI.Column(
+               UI.Box(
                     UI.Row(
-                        UI.Field("Name", () => deck.Name, value => deck.Name = value).SetFlexGrow(1f),
+                        UI.Field(null, () => deck.Name, value => deck.Name = value).SetFlexGrow(1f),
                         UI.Button("Select", () => stage.SelectCameraWorkDeck(deckIndex)),
                         UI.Button("Add Work", () => stage.AddCameraWork(deckIndex)),
                         UI.Button("▲", () => stage.MoveCameraWorkDeck(deckIndex, -1)).SetWidth(32f),
                         UI.Button("▼", () => stage.MoveCameraWorkDeck(deckIndex, 1)).SetWidth(32f),
-                        UI.Button("Delete Deck", () => stage.RemoveCameraWorkDeck(deckIndex))),
+                        UI.Button("Delete Deck", () => stage.RemoveCameraWorkDeck(deckIndex))
+                    ),
                     deck.Recipes == null || deck.Recipes.Count == 0
-                        ? UI.Label("カメラワークがありません")
-                        : UI.Column(deck.Recipes.Select((recipe, recipeIndex) =>
-                            CreateCameraWorkElement(stage, deckIndex, recipeIndex, recipe)).ToArray())
-                ))).ToArray();
+                        ? UI.Label("No Recipe")
+                        : UI.Column(deck.Recipes.Select((recipe, recipeIndex) => CreateCameraWorkElement(stage, deckIndex, recipeIndex, recipe)).ToArray())
+                ).SetBackgroundColor(deckIndex % 2 == 0 ? Color.black * 0.4f : null)
+            ).ToArray();
+            
 
             return UI.Column(
                 UI.Row(
                     UI.Button("Add Deck", () => stage.AddCameraWorkDeck()),
                     UI.Button("Restart", stage.ResetCameraWork),
-                    UI.Label(() => $"Timing: {CurrentCameraWorkTiming} / Work: {stage.CurrentCameraWork + 1}")),
+                    UI.Label(() => $"Timing: {CurrentCameraWorkTiming}"),
+                    UI.Field("Manual Trigger", Binder.Create(_params.CameraWorkManualButton, typeof(MidiBinding))),
+                    UI.Label(() => GetCameraWorkProgressText(stage)).SetFlexGrow(1f),
+                    UI.SliderReadOnly(null, () => GetCameraWorkProgress(stage), 0f, 1f).SetWidth(120f)),
                 decks.Length == 0 ? UI.Label("カメラワークデッキがありません") : UI.Column(decks));
         }
 
-        private static Element CreateCameraWorkElement(CameraStage stage, int deckIndex, int recipeIndex,
-            CameraWorkRecipe recipe)
+        private static string GetCameraWorkProgressText(CameraStage stage)
+        {
+            if (stage == null || stage.CameraWorkDecks == null || stage.CameraWorkDecks.Count == 0)
+                return "Work: - / -";
+
+            int deckIndex = Mathf.Clamp(stage.SelectedCameraWorkDeck, 0, stage.CameraWorkDecks.Count - 1);
+            CameraWorkDeck deck = stage.CameraWorkDecks[deckIndex];
+            int recipeCount = deck?.Recipes?.Count ?? 0;
+            if (recipeCount == 0) return "Work: - / 0";
+
+            int recipeIndex = Mathf.Clamp(stage.CurrentCameraWork, 0, recipeCount - 1);
+            return $"Work: {recipeIndex + 1} / {recipeCount}";
+        }
+
+        private static float GetCameraWorkProgress(CameraStage stage)
+        {
+            if (stage == null || stage.CameraWorkDecks == null || stage.CameraWorkDecks.Count == 0)
+                return 0f;
+
+            int deckIndex = Mathf.Clamp(stage.SelectedCameraWorkDeck, 0, stage.CameraWorkDecks.Count - 1);
+            int recipeCount = stage.CameraWorkDecks[deckIndex]?.Recipes?.Count ?? 0;
+            if (recipeCount <= 1) return recipeCount == 1 ? 1f : 0f;
+
+            return Mathf.Clamp01((float)stage.CurrentCameraWork / (recipeCount - 1));
+        }
+
+        private Element CreateCameraWorkElement(CameraStage stage, int deckIndex, int recipeIndex, CameraWorkRecipe recipe)
         {
             recipe.EnsureInitialized();
-            return UI.Fold(recipe.Name, UI.Column(
-                UI.Row(
-                    UI.Field("Name", () => recipe.Name, value => recipe.Name = value).SetFlexGrow(1f),
-                    UI.Button("▲", () => stage.MoveCameraWork(deckIndex, recipeIndex, -1)).SetWidth(32f),
-                    UI.Button("▼", () => stage.MoveCameraWork(deckIndex, recipeIndex, 1)).SetWidth(32f),
-                    UI.Button("Delete", () => stage.RemoveCameraWork(deckIndex, recipeIndex))),
-                UI.Field("Type", () => recipe.Type, value => recipe.Type = value),
-                UI.Field("Position", Binder.Create(recipe.Position, typeof(Vector3Parameter))),
-                UI.Field("Look At", Binder.Create(recipe.LookAt, typeof(Vector3Parameter))),
-                UI.DynamicElementIf(
-                    () => recipe.Type == CameraWorkType.Orbit,
-                    () => UI.Field("Orbit Rotation", Binder.Create(recipe.OrbitRotation, typeof(Vector3Parameter)))),
-                UI.Field("Field Of View", Binder.Create(recipe.FieldOfView, typeof(FloatParameter))),
-                UI.DynamicElementIf(
-                    () => recipe.Type is CameraWorkType.Follow or CameraWorkType.Handheld,
-                    () => UI.Field("Speed", Binder.Create(recipe.Speed, typeof(FloatParameter)))),
-                UI.DynamicElementIf(
-                    () => recipe.Type == CameraWorkType.Orbit,
-                    () => UI.Field("Radius", Binder.Create(recipe.Radius, typeof(FloatParameter)))),
-                UI.DynamicElementIf(
-                    () => recipe.Type == CameraWorkType.Handheld,
-                    () => UI.Field("Noise Amount", Binder.Create(recipe.NoiseAmount, typeof(FloatParameter))))
-            ));
+            return UI.Row(
+                UI.Button(UI.Label(() => $"{(_inspectedCameraWork == recipe ? "▶ " : "  ")}{recipe.Name}"),
+                    () => InspectCameraWork(stage, recipe))
+                    .SetFlexGrow(1f)
+                    .RegisterUpdateCallback(element =>
+                    {
+                        bool isCurrent = deckIndex == stage.SelectedCameraWorkDeck &&
+                            recipeIndex == stage.CurrentCameraWork;
+                        element.SetBackgroundColor(isCurrent ? StageLedColor * 0.5f : null);
+                    }),
+                UI.Button("▲", () => stage.MoveCameraWork(deckIndex, recipeIndex, -1)).SetWidth(32f),
+                UI.Button("▼", () => stage.MoveCameraWork(deckIndex, recipeIndex, 1)).SetWidth(32f),
+                UI.Button("Delete", () => RemoveCameraWork(stage, deckIndex, recipeIndex, recipe)));
+        }
+
+        private static IEnumerable<Element> CreateCameraWorkParameterFields(CameraWorkRecipe recipe)
+        {
+            yield return UI.Field("Position", Binder.Create(recipe.Position, typeof(Vector3Parameter)));
+            yield return UI.Field("Look At", Binder.Create(recipe.LookAt, typeof(Vector3Parameter)));
+            if (recipe.Type == CameraWorkType.Orbit)
+                yield return UI.Field("Orbit Rotation", Binder.Create(recipe.OrbitRotation, typeof(Vector3Parameter)));
+            yield return UI.Field("Field Of View", Binder.Create(recipe.FieldOfView, typeof(FloatParameter)));
+            if (recipe.Type is CameraWorkType.Follow or CameraWorkType.Handheld)
+                yield return UI.Field("Speed", Binder.Create(recipe.Speed, typeof(FloatParameter)));
+            if (recipe.Type == CameraWorkType.Orbit)
+                yield return UI.Field("Radius", Binder.Create(recipe.Radius, typeof(FloatParameter)));
+            if (recipe.Type == CameraWorkType.Handheld)
+                yield return UI.Field("Noise Amount", Binder.Create(recipe.NoiseAmount, typeof(FloatParameter)));
         }
 
         private Element CreateLayerListElement(int stageIndex)
@@ -854,19 +905,43 @@ namespace Aetherin
 
         private void InspectLayer(CameraStage stage, StageLayer layer, int layerColorIndex)
         {
+            _inspectedCameraWork = null;
+            _inspectedCameraWorkStage = null;
             if (_inspectedLayerStage == stage && _inspectedLayer == layer)
             {
                 _inspectedLayerColorIndex = layerColorIndex;
-                _layerInspectorElement?.CheckAndRebuild();
-                if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
+                _inspectorElement?.CheckAndRebuild();
+                if (_inspectorWindow != null) _inspectorWindow.IsOpen = true;
                 return;
             }
 
             _inspectedLayerStage = stage;
             _inspectedLayer = layer;
             _inspectedLayerColorIndex = layerColorIndex;
-            _layerInspectorElement?.CheckAndRebuild();
-            if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
+            _inspectorElement?.CheckAndRebuild();
+            if (_inspectorWindow != null) _inspectorWindow.IsOpen = true;
+        }
+
+        private void InspectCameraWork(CameraStage stage, CameraWorkRecipe recipe)
+        {
+            _inspectedLayer = null;
+            _inspectedLayerStage = null;
+            _inspectedCameraWorkStage = stage;
+            _inspectedCameraWork = recipe;
+            _inspectorElement?.CheckAndRebuild();
+            if (_inspectorWindow != null) _inspectorWindow.IsOpen = true;
+        }
+
+        private void RemoveCameraWork(CameraStage stage, int deckIndex, int recipeIndex, CameraWorkRecipe recipe)
+        {
+            if (_inspectedCameraWork == recipe)
+            {
+                _inspectedCameraWork = null;
+                _inspectedCameraWorkStage = null;
+                _inspectorElement?.CheckAndRebuild();
+            }
+
+            stage.RemoveCameraWork(deckIndex, recipeIndex);
         }
 
         private void RemoveLayer(CameraStage stage, StageLayer layer)
@@ -875,9 +950,18 @@ namespace Aetherin
             {
                 _inspectedLayer = null;
                 _inspectedLayerStage = null;
-                _layerInspectorElement?.CheckAndRebuild();
+                _inspectorElement?.CheckAndRebuild();
             }
             stage.RemoveLayer(layer);
+        }
+
+        private Element CreateInspectorElement()
+        {
+            if (_inspectedLayer != null && _inspectedLayerStage != null)
+                return CreateLayerInspectorElement();
+            if (_inspectedCameraWork != null && _inspectedCameraWorkStage != null)
+                return CreateCameraWorkInspectorElement();
+            return UI.Label("Select Layer or Camera Work");
         }
 
         private Element CreateLayerInspectorElement()
@@ -895,18 +979,32 @@ namespace Aetherin
             );
         }
 
+        private Element CreateCameraWorkInspectorElement()
+        {
+            CameraWorkRecipe recipe = _inspectedCameraWork;
+            recipe.EnsureInitialized();
+            return UI.Column(
+                UI.Field("Name", () => recipe.Name, value => recipe.Name = value),
+                UI.Field("Type", () => recipe.Type, value => recipe.Type = value),
+                UI.DynamicElementOnStatusChanged(
+                    () => recipe.Type,
+                    _ => UI.Column(CreateCameraWorkParameterFields(recipe)))
+            );
+        }
+
         public Element AdditiveUi()
         {
             _stages ??= new List<StageBase>();
-            _layerInspectorElement = UI.DynamicElementOnStatusChanged(
-                () => (_deckRevision, _inspectedLayerStage, _inspectedLayer, _inspectedLayerColorIndex),
-                _ => CreateLayerInspectorElement());
-            _layerInspectorWindow = UI.Window("Layer Inspector", _layerInspectorElement).SetWidth(460f);
+            _inspectorElement = UI.DynamicElementOnStatusChanged(
+                () => (_deckRevision, _inspectedLayerStage, _inspectedLayer, _inspectedLayerColorIndex,
+                    _inspectedCameraWorkStage, _inspectedCameraWork),
+                _ => CreateInspectorElement());
+            _inspectorWindow = UI.Window("Inspector", _inspectorElement).SetWidth(460f);
             return UI.Column(
                 UI.Row(
                     UI.Slider("Main Fader", () => CrossFade, 0f, 1f),
                     UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
-                    UI.WindowLauncher("Layer Inspector", _layerInspectorWindow)
+                    UI.WindowLauncher("Inspector", _inspectorWindow)
                 ),
                 UI.DynamicElementOnStatusChanged(() => _deckRevision, _ => CreateStageManagementElement()),
                 UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE MODE</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
