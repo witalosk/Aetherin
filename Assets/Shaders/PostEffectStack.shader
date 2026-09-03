@@ -25,6 +25,15 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+            float3 bloomSample(float2 uv)
+            {
+                float3 color = tex2D(_MainTex, uv).rgb;
+                float brightness = max(color.r, max(color.g, color.b));
+                float threshold = saturate(_Secondary);
+                float contribution = saturate((brightness - threshold) / max(0.0001, 1.0 - threshold));
+                return color * contribution;
+            }
+
             float noise21(float2 p)
             {
                 float2 i = floor(p), f = frac(p); f = f * f * (3.0 - 2.0 * f);
@@ -93,6 +102,20 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 else if (_EffectType == 8) // Invert
                 {
                     fx.rgb = 1.0 - src.rgb;
+                }
+                else if (_EffectType == 9) // Bloom
+                {
+                    float2 offset = _MainTex_TexelSize.xy * max(0.0, abs(_Scale));
+                    float3 bloom = bloomSample(uv) * 4.0;
+                    bloom += bloomSample(uv + float2( offset.x, 0.0)) * 2.0;
+                    bloom += bloomSample(uv + float2(-offset.x, 0.0)) * 2.0;
+                    bloom += bloomSample(uv + float2(0.0,  offset.y)) * 2.0;
+                    bloom += bloomSample(uv + float2(0.0, -offset.y)) * 2.0;
+                    bloom += bloomSample(uv + float2( offset.x,  offset.y));
+                    bloom += bloomSample(uv + float2(-offset.x,  offset.y));
+                    bloom += bloomSample(uv + float2( offset.x, -offset.y));
+                    bloom += bloomSample(uv + float2(-offset.x, -offset.y));
+                    fx.rgb = src.rgb + bloom * (max(0.0, _Amount) / 16.0);
                 }
 
                 return lerp(src, fx, saturate(_Strength));

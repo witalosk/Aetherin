@@ -31,5 +31,8 @@ namespace Aetherin
 
         /// <summary>Rチャンネルに0～1の線形周波数スペクトラムを格納した1行のTexture。</summary>
         Texture SpectrumTexture { get; }
+
+        /// <summary>0～1に正規化した周波数位置のスペクトラム値を返す。</summary>
+        float GetSpectrumValueNormalized(float normalizedFrequency);
     }
 }

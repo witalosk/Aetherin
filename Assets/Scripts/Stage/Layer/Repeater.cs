@@ -18,6 +18,13 @@ namespace Aetherin
         GridXYZ,
     }
 
+    public enum RepeaterValueMode
+    {
+        Sequential,
+        Random,
+        Spectrum,
+    }
+
     public interface IRepeaterCopyProvider
     {
         Matrix4x4 GetRepeaterCopyTransform(int copyIndex, float phaseOffset);
@@ -43,6 +50,8 @@ namespace Aetherin
         public Vector3Parameter Scale = new(Vector3.one);
         public Vector3Parameter Anchor = new();
         public RepeaterTransformMode TransformMode;
+        public RepeaterValueMode ValueMode;
+        public int RandomSeed;
 
         [Tooltip("Linear時、有効ならAE RepeaterのようにPositionも回転しながら累積します")]
         public bool RotationAffectsPosition = true;
@@ -85,6 +94,8 @@ namespace Aetherin
         public readonly bool RotationAffectsPosition;
         public readonly float AnimationPhaseOffset;
         public readonly RepeaterTransformMode TransformMode;
+        public readonly RepeaterValueMode ValueMode;
+        public readonly int RandomSeed;
 
         private readonly RepeaterParams _parameters;
         private readonly ModulationContext _context;
@@ -118,6 +129,8 @@ namespace Aetherin
             RotationAffectsPosition = rotationAffectsPosition;
             AnimationPhaseOffset = animationPhaseOffset;
             TransformMode = parameters?.TransformMode ?? RepeaterTransformMode.Cumulative;
+            ValueMode = parameters?.ValueMode ?? RepeaterValueMode.Sequential;
+            RandomSeed = parameters?.RandomSeed ?? 0;
             _parameters = parameters;
             _context = context;
         }
@@ -160,31 +173,73 @@ namespace Aetherin
             }
 
             if (Copies <= 1) return Mathf.Clamp01(startOpacity);
-            float t = index / (float)(Copies - 1);
+            float t = GetCopyValue(index, 4);
+            if (ValueMode == RepeaterValueMode.Random) t = t * 0.5f + 0.5f;
             return Mathf.Clamp01(Mathf.LerpUnclamped(startOpacity, endOpacity, t));
         }
 
         public void GetTransform(int index, out Vector3 position, out Vector3 rotation,
             out Vector3 scale, out Vector3 anchor)
         {
-            if (_parameters == null || index <= 0 || AnimationPhaseOffset == 0f)
+            if (_parameters == null || index <= 0)
             {
                 position = Position;
                 rotation = Rotation;
                 scale = Scale;
                 anchor = Anchor;
-                return;
+            }
+            else if (AnimationPhaseOffset == 0f)
+            {
+                position = Position;
+                rotation = Rotation;
+                scale = Scale;
+                anchor = Anchor;
+            }
+            else
+            {
+                ModulationContext context = GetCopyContext(index);
+                position = _parameters.Position?.Evaluate(context) ?? Vector3.zero;
+                rotation = _parameters.Rotation?.Evaluate(context) ?? Vector3.zero;
+                scale = _parameters.Scale?.Evaluate(context) ?? Vector3.one;
+                anchor = _parameters.Anchor?.Evaluate(context) ?? Vector3.zero;
             }
 
-            ModulationContext context = GetCopyContext(index);
-            position = _parameters.Position?.Evaluate(context) ?? Vector3.zero;
-            rotation = _parameters.Rotation?.Evaluate(context) ?? Vector3.zero;
-            scale = _parameters.Scale?.Evaluate(context) ?? Vector3.one;
-            anchor = _parameters.Anchor?.Evaluate(context) ?? Vector3.zero;
+            if (ValueMode == RepeaterValueMode.Sequential) return;
+
+            position = Vector3.Scale(position, GetCopyVector(index, 0));
+            rotation = Vector3.Scale(rotation, GetCopyVector(index, 3));
+            scale = Vector3.one + Vector3.Scale(scale - Vector3.one, GetCopyVector(index, 6));
+            anchor = Vector3.Scale(anchor, GetCopyVector(index, 9));
         }
 
         private ModulationContext GetCopyContext(int index) =>
             _context.WithAnimationPhaseOffset(AnimationPhaseOffset * index);
+
+        private Vector3 GetCopyVector(int index, int channel) => new(
+            GetCopyValue(index, channel),
+            GetCopyValue(index, channel + 1),
+            GetCopyValue(index, channel + 2));
+
+        private float GetCopyValue(int index, int channel)
+        {
+            if (ValueMode == RepeaterValueMode.Sequential)
+                return Copies <= 1 ? 0f : index / (float)(Copies - 1);
+            if (ValueMode == RepeaterValueMode.Spectrum)
+            {
+                float frequency = Copies <= 1 ? 0f : index / (float)(Copies - 1);
+                return Mathf.Clamp01(_context.Audio?.GetSpectrumValueNormalized(frequency) ?? 0f);
+            }
+
+            uint value = unchecked((uint)RandomSeed);
+            value ^= unchecked((uint)index) * 0x9E3779B9u;
+            value ^= unchecked((uint)channel) * 0x85EBCA6Bu;
+            value ^= value >> 16;
+            value *= 0x7FEB352Du;
+            value ^= value >> 15;
+            value *= 0x846CA68Bu;
+            value ^= value >> 16;
+            return value / (float)uint.MaxValue * 2f - 1f;
+        }
 
         public override int GetHashCode()
         {
@@ -203,7 +258,10 @@ namespace Aetherin
                 hash = hash * 31 + RotationAffectsPosition.GetHashCode();
                 hash = hash * 31 + AnimationPhaseOffset.GetHashCode();
                 hash = hash * 31 + (int)TransformMode;
-                for (int i = 1; i < Copies && AnimationPhaseOffset != 0f; i++)
+                hash = hash * 31 + (int)ValueMode;
+                hash = hash * 31 + RandomSeed;
+                for (int i = 1; i < Copies &&
+                     (AnimationPhaseOffset != 0f || ValueMode != RepeaterValueMode.Sequential); i++)
                 {
                     GetTransform(i, out Vector3 position, out Vector3 rotation,
                         out Vector3 scale, out Vector3 anchor);

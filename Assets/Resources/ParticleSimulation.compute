@@ -9,7 +9,9 @@ struct ParticleData
     float lifetime;
     float4 color;
     float size;
-    float rotation;
+    float initialSize;
+    float3 rotation;
+    float3 angularVelocity;
     uint alive;
     uint seed;
 };
@@ -23,12 +25,19 @@ float _DeltaTime;
 float _TimeValue;
 float _Strength;
 float3 _Vector;
+float3 _Axis;
 float _ScaleValue;
 float _Speed;
 float _Secondary;
+float3 _EmitterOffset;
 float3 _EmitterSize;
-float _Lifetime;
-float _InitialSpeed;
+float3 _LifetimeRange;
+float3 _InitialSpeedRange;
+float3 _ParticleSizeRange;
+float3 _InitialRotation;
+float3 _RotationRandom;
+float3 _AngularVelocity;
+float3 _AngularVelocityRandom;
 
 uint Hash(uint value)
 {
@@ -53,16 +62,30 @@ float3 RandomDirection(inout uint state)
     return float3(cos(angle) * radius, sin(angle) * radius, z);
 }
 
+float SampleRange(float3 minMaxPower, inout uint state)
+{
+    float t = pow(Random01(state), max(0.0001, minMaxPower.z));
+    return lerp(minMaxPower.x, minMaxPower.y, t);
+}
+
+float3 RandomSigned3(inout uint state)
+{
+    return float3(Random01(state), Random01(state), Random01(state)) * 2.0 - 1.0;
+}
+
 void Respawn(inout ParticleData particle, uint id, float ageOffset)
 {
     uint state = Hash(id + (uint)_Seed * 747796405u + 2891336453u);
-    particle.position = (float3(Random01(state), Random01(state), Random01(state)) - 0.5) * _EmitterSize;
-    particle.velocity = RandomDirection(state) * _InitialSpeed;
-    particle.lifetime = max(0.01, _Lifetime * lerp(0.65, 1.35, Random01(state)));
+    particle.position = _EmitterOffset +
+        (float3(Random01(state), Random01(state), Random01(state)) - 0.5) * _EmitterSize;
+    particle.velocity = RandomDirection(state) * SampleRange(_InitialSpeedRange, state);
+    particle.lifetime = max(0.01, SampleRange(_LifetimeRange, state));
     particle.age = ageOffset;
     particle.color = float4(Random01(state), 1.0, 1.0, 1.0);
-    particle.size = 1.0;
-    particle.rotation = Random01(state) * 6.28318530718;
+    particle.initialSize = max(0.0, SampleRange(_ParticleSizeRange, state));
+    particle.size = particle.initialSize;
+    particle.rotation = _InitialRotation + RandomSigned3(state) * _RotationRandom;
+    particle.angularVelocity = _AngularVelocity + RandomSigned3(state) * _AngularVelocityRandom;
     particle.alive = 1u;
     particle.seed = state;
 }
@@ -73,7 +96,7 @@ void ResetParticles(uint id : SV_DispatchThreadID)
     if (id >= (uint)_ParticleCapacity) return;
     ParticleData particle = (ParticleData)0;
     uint state = Hash(id + (uint)_Seed);
-    Respawn(particle, id, Random01(state) * max(0.01, _Lifetime));
+    Respawn(particle, id, Random01(state) * max(0.01, _LifetimeRange.y));
     _Particles[id] = particle;
 }
 
@@ -97,6 +120,7 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     if (_ModuleType == 0) // Integrate
     {
         particle.position += particle.velocity * _DeltaTime * _Strength;
+        particle.rotation += particle.angularVelocity * _DeltaTime * _Strength;
         particle.age += _DeltaTime;
         if (particle.age >= particle.lifetime)
             Respawn(particle, id, fmod(particle.age, max(0.01, particle.lifetime)));
@@ -131,7 +155,8 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     else if (_ModuleType == 6) // Wrap bounds
     {
         float3 size = max(abs(_Vector), 0.0001);
-        particle.position = fmod(particle.position + size * 0.5 + size * 8.0, size) - size * 0.5;
+        particle.position = _EmitterOffset +
+            fmod(particle.position - _EmitterOffset + size * 0.5 + size * 8.0, size) - size * 0.5;
     }
     else if (_ModuleType == 7) // Color / opacity over life
     {
@@ -142,7 +167,35 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     else if (_ModuleType == 8) // Size over life
     {
         float t = saturate(particle.age / max(0.01, particle.lifetime));
-        particle.size = max(0.0, pow(max(0.0, sin(t * 3.14159265)), max(0.01, _Secondary)) * _Strength);
+        particle.size = max(0.0, particle.initialSize *
+            pow(max(0.0, sin(t * 3.14159265)), max(0.01, _Secondary)) * _Strength);
+    }
+    else if (_ModuleType == 9) // Lorenz attractor vector field
+    {
+        float3 p = particle.position - _Vector;
+        float sigma = max(0.0, _ScaleValue);
+        float rho = _Speed;
+        float beta = max(0.0, _Secondary);
+        float3 field = float3(
+            sigma * (p.y - p.x),
+            p.x * (rho - p.z) - p.y,
+            p.x * p.y - beta * p.z);
+        particle.position += field * (_Strength * _DeltaTime);
+    }
+    else if (_ModuleType == 10) // Vortex / orbit around a point and axis
+    {
+        float3 axis = length(_Axis) > 0.0001 ? normalize(_Axis) : float3(0.0, 1.0, 0.0);
+        float3 fromCenter = particle.position - _Vector;
+        float3 radial = fromCenter - axis * dot(fromCenter, axis);
+        float distance = length(radial);
+        if (distance > 0.0001)
+        {
+            float3 radialDirection = radial / distance;
+            float3 tangent = cross(axis, radialDirection);
+            float falloff = pow(distance, -max(0.0, _Speed));
+            float3 force = tangent * _Strength - radialDirection * _ScaleValue;
+            particle.velocity += force * (falloff * _DeltaTime);
+        }
     }
 
     _Particles[id] = particle;

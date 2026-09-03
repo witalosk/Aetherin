@@ -33,14 +33,26 @@ namespace Aetherin
                 Param("Scale", p.Scale),
                 UI.Field("Capacity", () => p.Capacity, value => p.Capacity = value),
                 UI.Field("Seed", () => p.Seed, value => p.Seed = value),
+                Param("Emitter Offset", p.EmitterOffset),
                 Param("Emitter Size", p.EmitterSize),
-                Param("Lifetime", p.Lifetime),
-                Param("Initial Speed", p.InitialSpeed),
+                CreateParticleRandomRangeElement("Lifetime", p.Lifetime),
+                CreateParticleRandomRangeElement("Initial Speed", p.InitialSpeed),
                 Param("Simulation Speed", p.SimulationSpeed),
-                Param("Particle Size", p.ParticleSize),
+                CreateParticleRandomRangeElement("Particle Size", p.ParticleSize),
+                Param("Initial Rotation", p.InitialRotation),
+                Param("Rotation Random", p.RotationRandom),
+                Param("Angular Velocity", p.AngularVelocity),
+                Param("Angular Velocity Random", p.AngularVelocityRandom),
+                UI.Field("Particle Shape", () => p.Shape, value => p.Shape = value),
                 Param("Color", p.Color),
                 UI.List("Simulation Modules", () => p.Modules, value => p.Modules = value, listOption));
         }
+
+        private static Element CreateParticleRandomRangeElement(string label, ParticleRandomRangeParameter parameter) =>
+            UI.Column(
+                UI.Field($"{label} Min / Max / Power", () => parameter.MinMaxPower,
+                    value => parameter.MinMaxPower = value),
+                Param($"{label} Modulation", parameter.Modulation));
 
         private static Element CreateParticleSimulationModuleElement(
             LabelElement label,
@@ -52,10 +64,36 @@ namespace Aetherin
             return UI.Column(
                 UI.Row(
                     UI.Toggle(null, () => module.Enabled, value => module.Enabled = value).SetWidth(20f),
-                    UI.Field(null, () => module.Type, value => module.Type = value).SetFlexGrow(1f)),
+                    UI.Field(null, () => module.Type, value => SetParticleModuleType(module, value)).SetFlexGrow(1f)),
                 UI.DynamicElementOnStatusChanged(
                     () => module.Type,
                     type => UI.Column(CreateParticleModuleFields(module, type))));
+        }
+
+        private static void SetParticleModuleType(
+            ParticleSimulationModule module,
+            ParticleSimulationModuleType type)
+        {
+            if (module.Type == type) return;
+            module.Type = type;
+
+            switch (type)
+            {
+                case ParticleSimulationModuleType.ApplyLorenzAttractor:
+                    module.Strength.BaseValue = 0.1f;
+                    module.Vector.BaseValue = UnityEngine.Vector3.zero;
+                    module.Scale.BaseValue = 10f;
+                    module.Speed.BaseValue = 28f;
+                    module.Secondary.BaseValue = 8f / 3f;
+                    break;
+                case ParticleSimulationModuleType.ApplyVortex:
+                    module.Strength.BaseValue = 1f;
+                    module.Vector.BaseValue = UnityEngine.Vector3.zero;
+                    module.Axis.BaseValue = UnityEngine.Vector3.up;
+                    module.Scale.BaseValue = 0.25f;
+                    module.Speed.BaseValue = 0f;
+                    break;
+            }
         }
 
         private static IEnumerable<Element> CreateParticleModuleFields(
@@ -98,6 +136,20 @@ namespace Aetherin
                 case ParticleSimulationModuleType.SizeOverLife:
                     yield return Param("Size", module.Strength);
                     yield return Param("Curve Power", module.Secondary);
+                    break;
+                case ParticleSimulationModuleType.ApplyLorenzAttractor:
+                    yield return Param("Center", module.Vector);
+                    yield return Param("Strength", module.Strength);
+                    yield return Param("Sigma", module.Scale);
+                    yield return Param("Rho", module.Speed);
+                    yield return Param("Beta", module.Secondary);
+                    break;
+                case ParticleSimulationModuleType.ApplyVortex:
+                    yield return Param("Center", module.Vector);
+                    yield return Param("Axis", module.Axis);
+                    yield return Param("Orbit Force", module.Strength);
+                    yield return Param("Radial Pull", module.Scale);
+                    yield return Param("Falloff", module.Speed);
                     break;
             }
         }

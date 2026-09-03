@@ -136,6 +136,12 @@ namespace Aetherin
                     Param("Anchor", repeater.Anchor),
                     UI.Field("Transform Mode", () => repeater.TransformMode,
                         value => repeater.TransformMode = value),
+                    UI.Field("Value Mode", () => repeater.ValueMode,
+                        value => repeater.ValueMode = value),
+                    UI.DynamicElementIf(
+                        () => repeater.ValueMode == RepeaterValueMode.Random,
+                        () => UI.Field("Random Seed", () => repeater.RandomSeed,
+                            value => repeater.RandomSeed = value)),
                      UI.DynamicElementIf(
                          () => repeater.LayoutMode == RepeaterLayoutMode.Linear &&
                                repeater.TransformMode == RepeaterTransformMode.Cumulative,
@@ -161,16 +167,12 @@ namespace Aetherin
             p.EnsureInitialized();
 
             return UI.Column(
-                UI.Field("Shader", () => p.Shader, value =>
-                {
-                    p.Shader = value;
-                    if (value != null) p.ShaderName = value.name;
-                }),
-                UI.Field("Shader Name", () => p.ShaderName, value =>
-                {
-                    p.ShaderName = value;
-                    p.Shader = null;
-                }),
+                UI.Label("Runtime HLSL"),
+                UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
+                    .SetMinHeight(320f),
+                UI.Row(
+                    UI.Button("Compile", () => p.CompileRequested?.Invoke()).SetWidth(100f),
+                    UI.Label(() => p.CompileMessage).SetFlexGrow(1f)),
                 Param("Opacity", p.Opacity),
                 UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                 Param("Size", p.Size),

@@ -58,6 +58,15 @@ namespace Aetherin
         private float _nextUiGraphUpdateTime;
         private bool _uiGraphsCleared = true;
 
+        public float GetSpectrumValueNormalized(float normalizedFrequency)
+        {
+            if (_spectrumData.Length == 0) return 0f;
+            float index = Mathf.Clamp01(normalizedFrequency) * (_spectrumData.Length - 1);
+            int from = Mathf.FloorToInt(index);
+            int to = Mathf.Min(from + 1, _spectrumData.Length - 1);
+            return Mathf.Lerp(_spectrumData[from], _spectrumData[to], index - from);
+        }
+
         private void Awake()
         {
             ResolveAudioInput();

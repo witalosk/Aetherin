@@ -12,7 +12,7 @@ namespace Aetherin
     public sealed class GpuParticleLayer : StageLayer
     {
         private const int ThreadGroupSize = 256;
-        private const int ParticleStride = 64;
+        private const int ParticleStride = 88;
         private static readonly int ParticlesId = Shader.PropertyToID("_Particles");
         private static readonly int CapacityId = Shader.PropertyToID("_ParticleCapacity");
         private static readonly int DeltaTimeId = Shader.PropertyToID("_DeltaTime");
@@ -20,19 +20,30 @@ namespace Aetherin
         private static readonly int ModuleTypeId = Shader.PropertyToID("_ModuleType");
         private static readonly int StrengthId = Shader.PropertyToID("_Strength");
         private static readonly int VectorId = Shader.PropertyToID("_Vector");
+        private static readonly int AxisId = Shader.PropertyToID("_Axis");
         private static readonly int ScaleValueId = Shader.PropertyToID("_ScaleValue");
         private static readonly int SpeedId = Shader.PropertyToID("_Speed");
         private static readonly int SecondaryId = Shader.PropertyToID("_Secondary");
         private static readonly int TargetId = Shader.PropertyToID("_Target");
         private static readonly int EmitterSizeId = Shader.PropertyToID("_EmitterSize");
-        private static readonly int LifetimeId = Shader.PropertyToID("_Lifetime");
-        private static readonly int InitialSpeedId = Shader.PropertyToID("_InitialSpeed");
+        private static readonly int EmitterOffsetId = Shader.PropertyToID("_EmitterOffset");
+        private static readonly int LifetimeRangeId = Shader.PropertyToID("_LifetimeRange");
+        private static readonly int InitialSpeedRangeId = Shader.PropertyToID("_InitialSpeedRange");
+        private static readonly int ParticleSizeRangeId = Shader.PropertyToID("_ParticleSizeRange");
+        private static readonly int InitialRotationId = Shader.PropertyToID("_InitialRotation");
+        private static readonly int RotationRandomId = Shader.PropertyToID("_RotationRandom");
+        private static readonly int AngularVelocityId = Shader.PropertyToID("_AngularVelocity");
+        private static readonly int AngularVelocityRandomId = Shader.PropertyToID("_AngularVelocityRandom");
         private static readonly int SeedId = Shader.PropertyToID("_Seed");
         private static readonly int ColorAId = Shader.PropertyToID("_ColorA");
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int ParticleSizeId = Shader.PropertyToID("_ParticleSize");
+        private static readonly int ParticleShapeId = Shader.PropertyToID("_ParticleShape");
         private static readonly int LayerMatrixId = Shader.PropertyToID("_LayerMatrix");
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
+        private static readonly int PaletteRandomModeId = Shader.PropertyToID("_PaletteRandomMode");
+        private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
+        private static readonly int[] PaletteColorIds = CreatePropertyIds("_PaletteColor", 6);
 
         [SerializeField] private GpuParticleLayerParams _params = new();
         [SerializeField] private ComputeShader _simulationShader;
@@ -161,9 +172,7 @@ namespace Aetherin
             var context = new ModulationContext(Time.unscaledTimeAsDouble, _audio, _beat, Application.isPlaying);
             _compute.SetBuffer(_resetKernel, ParticlesId, _particles);
             _compute.SetInt(CapacityId, _allocatedCapacity);
-            _compute.SetVector(EmitterSizeId, _params.EmitterSize?.Evaluate(context) ?? Vector3.one);
-            _compute.SetFloat(LifetimeId, Mathf.Max(0.01f, _params.Lifetime?.Evaluate(context) ?? 5f));
-            _compute.SetFloat(InitialSpeedId, _params.InitialSpeed?.Evaluate(context) ?? 0f);
+            SetSpawnParameters(context);
             _compute.SetInt(SeedId, _params.Seed);
             _compute.Dispatch(_resetKernel, Groups, 1, 1);
         }
@@ -175,9 +184,7 @@ namespace Aetherin
             _compute.SetInt(CapacityId, _allocatedCapacity);
             _compute.SetFloat(DeltaTimeId, deltaTime);
             _compute.SetFloat(TimeValueId, (float)now);
-            _compute.SetVector(EmitterSizeId, _params.EmitterSize?.Evaluate(context) ?? Vector3.one);
-            _compute.SetFloat(LifetimeId, Mathf.Max(0.01f, _params.Lifetime?.Evaluate(context) ?? 5f));
-            _compute.SetFloat(InitialSpeedId, _params.InitialSpeed?.Evaluate(context) ?? 0f);
+            SetSpawnParameters(context);
             _compute.SetInt(SeedId, _params.Seed);
 
             foreach (var module in _params.Modules)
@@ -186,12 +193,29 @@ namespace Aetherin
                 _compute.SetInt(ModuleTypeId, (int)module.Type);
                 _compute.SetFloat(StrengthId, module.Strength?.Evaluate(context) ?? 1f);
                 _compute.SetVector(VectorId, module.Vector?.Evaluate(context) ?? Vector3.zero);
+                _compute.SetVector(AxisId, module.Axis?.Evaluate(context) ?? Vector3.up);
                 _compute.SetFloat(ScaleValueId, module.Scale?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 1f);
                 _compute.SetInt(TargetId, (int)module.Target);
                 _compute.Dispatch(_moduleKernel, Groups, 1, 1);
             }
+        }
+
+        private void SetSpawnParameters(in ModulationContext context)
+        {
+            _compute.SetVector(EmitterOffsetId, _params.EmitterOffset?.Evaluate(context) ?? Vector3.zero);
+            _compute.SetVector(EmitterSizeId, _params.EmitterSize?.Evaluate(context) ?? Vector3.one);
+            _compute.SetVector(LifetimeRangeId, _params.Lifetime?.Evaluate(context) ?? new Vector3(5f, 5f, 1f));
+            _compute.SetVector(InitialSpeedRangeId,
+                _params.InitialSpeed?.Evaluate(context) ?? new Vector3(0f, 0f, 1f));
+            _compute.SetVector(ParticleSizeRangeId,
+                _params.ParticleSize?.Evaluate(context) ?? new Vector3(0.03f, 0.03f, 1f));
+            _compute.SetVector(InitialRotationId, _params.InitialRotation?.Evaluate(context) ?? Vector3.zero);
+            _compute.SetVector(RotationRandomId, _params.RotationRandom?.Evaluate(context) ?? Vector3.zero);
+            _compute.SetVector(AngularVelocityId, _params.AngularVelocity?.Evaluate(context) ?? Vector3.zero);
+            _compute.SetVector(AngularVelocityRandomId,
+                _params.AngularVelocityRandom?.Evaluate(context) ?? Vector3.zero);
         }
 
         private void ApplyRendering(in ModulationContext context)
@@ -210,7 +234,7 @@ namespace Aetherin
             Matrix4x4 local = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale);
             Matrix4x4 layerMatrix = transform.localToWorldMatrix * local;
 
-            float particleSize = Mathf.Max(0f, _params.ParticleSize?.Evaluate(context) ?? 0.03f);
+            float particleSize = 1f;
             float opacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
             if (useVfxGraph)
             {
@@ -225,16 +249,35 @@ namespace Aetherin
             _material.SetColor(ColorAId, color.ColorA);
             _material.SetColor(ColorBId, color.ColorB);
             _material.SetFloat(ParticleSizeId, particleSize);
+            _material.SetInt(ParticleShapeId, (int)_params.Shape);
             _material.SetFloat(OpacityId, opacity);
+            ApplyPaletteRandom(_material, color);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
 
             Vector3 extent = Vector3.Scale(_params.EmitterSize?.Evaluate(context) ?? Vector3.one,
                 new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z))) * 1.5f + Vector3.one * 4f;
-            var bounds = new Bounds(layerMatrix.MultiplyPoint3x4(Vector3.zero), extent * 2f);
+            Vector3 emitterOffset = _params.EmitterOffset?.Evaluate(context) ?? Vector3.zero;
+            var bounds = new Bounds(layerMatrix.MultiplyPoint3x4(emitterOffset), extent * 2f);
 #pragma warning disable 0618
             Graphics.DrawMeshInstancedIndirect(_quad, 0, _material, bounds, _args, 0, null,
                 ShadowCastingMode.Off, false, gameObject.layer);
 #pragma warning restore 0618
+        }
+
+        private static void ApplyPaletteRandom(Material material, in EvaluatedPaletteColor color)
+        {
+            int mode = color.RandomMode switch
+            {
+                PaletteColorMode.PaletteRandom => 1,
+                PaletteColorMode.AccentRandom => 2,
+                PaletteColorMode.SubAccentRandom => 3,
+                _ => 0,
+            };
+            material.SetInt(PaletteRandomModeId, mode);
+            material.SetInt(PaletteRandomSeedId, color.RandomSeed);
+            if (mode == 0 || color.PaletteColors == null) return;
+            for (int i = 0; i < PaletteColorIds.Length; i++)
+                material.SetColor(PaletteColorIds[i], color.PaletteColors[i]);
         }
 
         protected override void ApplyCustomLayerState(bool visible, int order) => _renderEnabled = visible;
@@ -285,10 +328,18 @@ namespace Aetherin
             if (_visualEffect.HasVector4("ColorA")) _visualEffect.SetVector4("ColorA", color.ColorA);
             if (_visualEffect.HasVector4("ColorB")) _visualEffect.SetVector4("ColorB", color.ColorB);
             if (_visualEffect.HasFloat("ParticleSize")) _visualEffect.SetFloat("ParticleSize", particleSize);
+            if (_visualEffect.HasInt("ParticleShape")) _visualEffect.SetInt("ParticleShape", (int)_params.Shape);
             if (_visualEffect.HasFloat("Opacity")) _visualEffect.SetFloat("Opacity", opacity);
         }
 
         private int Groups => Mathf.CeilToInt(_allocatedCapacity / (float)ThreadGroupSize);
+
+        private static int[] CreatePropertyIds(string prefix, int count)
+        {
+            var ids = new int[count];
+            for (int i = 0; i < count; i++) ids[i] = Shader.PropertyToID(prefix + i);
+            return ids;
+        }
 
         private void EnsureQuad()
         {

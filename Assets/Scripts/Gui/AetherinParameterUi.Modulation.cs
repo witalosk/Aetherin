@@ -181,6 +181,7 @@ namespace Aetherin
                         ));
 
                 case FloatModulationSource.Beat:
+                case FloatModulationSource.Beat2And4:
                 case FloatModulationSource.Bar:
                     return UI.Field("Sharpness",
                         () => modulator.BeatPulseSharpness,

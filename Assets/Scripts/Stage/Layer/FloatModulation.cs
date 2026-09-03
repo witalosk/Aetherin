@@ -16,6 +16,7 @@ namespace Aetherin
         BeatAccumulator,
         BarAccumulator,
         InputVolume,
+        Beat2And4,
     }
 
     public enum FloatModulationOperation
@@ -146,6 +147,8 @@ namespace Aetherin
             {
                 FloatModulationSource.Lfo => EvaluateLfo(context.Time, context.AnimationPhaseOffset),
                 FloatModulationSource.Beat => EvaluateBeatPulse(context.Beat, false, context.AnimationPhaseOffset),
+                FloatModulationSource.Beat2And4 => EvaluateBeat2And4Pulse(
+                    context.Beat, context.AnimationPhaseOffset),
                 FloatModulationSource.Bar => EvaluateBeatPulse(context.Beat, true, context.AnimationPhaseOffset),
                 FloatModulationSource.ElapsedTime => (float)context.Time + context.AnimationPhaseOffset,
                 FloatModulationSource.Kick => context.Audio?.Kick ?? 0f,
@@ -286,6 +289,15 @@ namespace Aetherin
 
             float phase = Mathf.Repeat((useBar ? beat.BarPhase : beat.BeatPhase) + phaseOffset, 1f);
             return Mathf.Pow(1f - Mathf.Clamp01(phase), Mathf.Max(0.01f, BeatPulseSharpness));
+        }
+
+        private float EvaluateBeat2And4Pulse(IBeatManager beat, float phaseOffset)
+        {
+            if (beat == null || !beat.IsRunning) return 0f;
+
+            // BeatInBarは0始まりなので、1と3がそれぞれ2拍目・4拍目。
+            if (beat.BeatInBar is not (1 or 3)) return 0f;
+            return EvaluateBeatPulse(beat, false, phaseOffset);
         }
 
         private float EvaluateLfo(double time, float phaseOffset)
