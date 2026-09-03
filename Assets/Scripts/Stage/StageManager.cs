@@ -29,9 +29,6 @@ namespace Aetherin
 
         public CameraWorkSwitchTiming CameraWorkTiming;
 
-        [Tooltip("表示中レイヤーに対応するPadのLED色")]
-        public Color LayerToggleColor = new(0.3f, 1f, 0.35f);
-
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -108,6 +105,7 @@ namespace Aetherin
         private int _deckRevision;
         private StageLayer _inspectedLayer;
         private CameraStage _inspectedLayerStage;
+        private int _inspectedLayerColorIndex;
         private DynamicElement _layerInspectorElement;
         private WindowElement _layerInspectorWindow;
         private int _selectedStageUiIndex;
@@ -406,7 +404,30 @@ namespace Aetherin
                 }
 
                 if (button.WasNoteOn) layer.Visible = !layer.Visible;
-                button.SetLed(layer.Visible ? _params.LayerToggleColor : _params.LayerToggleColor * 0.08f);
+                Color layerColor = GetLayerColor(index);
+                button.SetLed(layer.Visible ? layerColor : layerColor * 0.25f);
+            }
+        }
+
+        /// <summary>
+        /// Layer indexから再現可能な色を作る。UIとPadで同じ関数を使うため、
+        /// Layerの並び順とPadの色が常に対応する。
+        /// </summary>
+        private static Color GetLayerColor(int index)
+        {
+            unchecked
+            {
+                uint hash = (uint)index;
+                hash ^= hash >> 16;
+                hash *= 0x7FEB352Du;
+                hash ^= hash >> 15;
+                hash *= 0x846CA68Bu;
+                hash ^= hash >> 16;
+
+                float hue = (hash & 0x00FFFFFFu) / 16777216f;
+                float saturation = Mathf.Lerp(0.72f, 0.9f, ((hash >> 24) & 0xFFu) / 255f);
+                float value = Mathf.Lerp(0.82f, 1f, ((hash >> 8) & 0xFFu) / 255f);
+                return Color.HSVToRGB(hue, saturation, value);
             }
         }
 
@@ -427,7 +448,7 @@ namespace Aetherin
                 bool available = stage != null && i < stage.CameraWorkDecks.Count;
                 if (!available) { button.ClearLed(); continue; }
                 if (button.WasNoteOn) stage.SelectCameraWorkDeck(i);
-                button.SetLed(i == stage.SelectedCameraWorkDeck ? StageLedColor : StageLedColor * 0.08f);
+                button.SetLed(i == stage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
             }
 
             _params.CameraWorkTimingButtons ??= new List<MidiBinding>();
@@ -442,7 +463,7 @@ namespace Aetherin
                     _params.CameraWorkTiming = (CameraWorkSwitchTiming)i;
                     CurrentCameraWorkTiming = _params.CameraWorkTiming;
                 }
-                button.SetLed(i == (int)_params.CameraWorkTiming ? Color.yellow : Color.yellow * 0.08f);
+                button.SetLed(i == (int)_params.CameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
             }
         }
 
@@ -609,24 +630,6 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// ウィンドウのリサイズにImageが追従するプレビューウィンドウを作る
-        /// Imageはテクスチャの実サイズを本来のサイズとして持つため、
-        /// ウィンドウ側に初期サイズを与えて、Imageは固定サイズを持たせずflexで追従させる
-        /// </summary>
-        private static Element CreatePreviewWindowLauncher(string title, Func<Texture> readTexture)
-        {
-            return UI.WindowLauncher(title,
-                UI.Window(title,
-                    UI.Image(readTexture)
-                        .SetMinWidth(160f)
-                        .SetMinHeight(90f)
-                        .SetFlexGrow(1f)
-                        .SetFlexShrink(1f)
-                        .SetMaxWidth(800f).SetMaxHeight(450f)
-                ));
-        }
-
-        /// <summary>
         /// 左でステージを選択し、右に選択中Nextステージのレイヤー一覧を表示する。
         /// デッキはスワップで作り直されるため、_deckRevisionの変化でも右カラムを再構築する。
         /// </summary>
@@ -780,10 +783,11 @@ namespace Aetherin
             if (stage is not CameraStage cameraStage) return UI.Label("このステージはレイヤー編集に未対応です");
 
             var layers = cameraStage.Layers;
-            var layerElements = layers
-                .Where(layer => layer != null)
-                .Select(layer => CreateLayerElement(cameraStage, layer))
-                .ToArray();
+            var layerElements = new List<Element>();
+            for (int index = 0; index < layers.Count; index++)
+            {
+                if (layers[index] != null) layerElements.Add(CreateLayerElement(cameraStage, layers[index], index));
+            }
 
             return UI.Column(
                 UI.Row(
@@ -799,13 +803,19 @@ namespace Aetherin
             );
         }
 
-        private Element CreateLayerElement(CameraStage stage, StageLayer layer)
+        private Element CreateLayerElement(CameraStage stage, StageLayer layer, int layerIndex)
         {
             if (layer is GroupLayer group)
             {
-                var children = group.Children.Select(child => CreateLayerElement(stage, child)).ToArray();
+                var children = new List<Element>();
+                var groupChildren = group.Children;
+                for (int index = 0; index < groupChildren.Length; index++)
+                {
+                    StageLayer child = groupChildren[index];
+                    if (child != null) children.Add(CreateLayerElement(stage, child, index));
+                }
                 return UI.Fold(
-                    CreateLayerHeader(stage, layer),
+                    CreateLayerHeader(stage, layer, layerIndex),
                     new Element[] { UI.Column(
                         UI.Row(
                             UI.Button("+ Shape", () => stage.AddShapeLayer(group.transform)),
@@ -818,37 +828,43 @@ namespace Aetherin
                         {
                             if (_inspectedLayer != null) stage.MoveLayerToGroup(_inspectedLayer, group);
                         }),
-                        children.Length == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) });
+                        children.Count == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) });
             }
 
-            return CreateLayerHeader(stage, layer);
+            return CreateLayerHeader(stage, layer, layerIndex);
         }
 
-        private Element CreateLayerHeader(CameraStage stage, StageLayer layer)
+        private Element CreateLayerHeader(CameraStage stage, StageLayer layer, int layerColorIndex)
         {
             bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
             return UI.Row(
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
-                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer))
-                    .SetMinWidth(150f)
-                    .SetFlexGrow(1f),
+                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer, layerColorIndex)).SetMinWidth(250f).SetFlexGrow(1f).SetHeight(30f)
+                    .RegisterUpdateCallback(element =>
+                    {
+                        Color color = GetLayerColor(layerColorIndex);
+                        element.SetBackgroundColor( _inspectedLayer == layer ? color * 0.8f : layer.Visible ? color * 0.5f : color * 0.25f);
+                    }),
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(32f),
                 insideGroup ? UI.Button("Out", () => stage.MoveLayerOutOfGroup(layer)).SetWidth(38f) : null,
                 UI.Button("Delete", () => RemoveLayer(stage, layer)));
         }
 
-        private void InspectLayer(CameraStage stage, StageLayer layer)
+        private void InspectLayer(CameraStage stage, StageLayer layer, int layerColorIndex)
         {
             if (_inspectedLayerStage == stage && _inspectedLayer == layer)
             {
+                _inspectedLayerColorIndex = layerColorIndex;
+                _layerInspectorElement?.CheckAndRebuild();
                 if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
                 return;
             }
 
             _inspectedLayerStage = stage;
             _inspectedLayer = layer;
+            _inspectedLayerColorIndex = layerColorIndex;
             _layerInspectorElement?.CheckAndRebuild();
             if (_layerInspectorWindow != null) _layerInspectorWindow.IsOpen = true;
         }
@@ -866,24 +882,25 @@ namespace Aetherin
 
         private Element CreateLayerInspectorElement()
         {
-            if (_inspectedLayer == null || _inspectedLayerStage == null)
-                return UI.Label("Stage一覧のレイヤーを選択してください");
+            if (_inspectedLayer == null || _inspectedLayerStage == null) return UI.Label("Select Layer");
 
             StageLayer layer = _inspectedLayer;
             return UI.Column(
                 UI.Row(
-                    UI.Toggle("Visible", () => layer.Visible, value => layer.Visible = value),
-                    UI.Field("Name",
-                        () => layer.gameObject.name,
-                        value => layer.gameObject.name = value).SetFlexGrow(1f)),
+                    UI.Toggle(null, () => layer.Visible, value => layer.Visible = value),
+                    UI.Field(null, () => layer.gameObject.name, value => layer.gameObject.name = value).SetFlexGrow(1f)
+                ).SetBackgroundColor(GetLayerColor(_inspectedLayerColorIndex) * 0.5f),
                 UI.Field("Order", () => layer.Order, value => layer.Order = value),
-                UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType())));
+                UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType()))
+            );
         }
 
         public Element AdditiveUi()
         {
             _stages ??= new List<StageBase>();
-            _layerInspectorElement = UI.DynamicElementOnStatusChanged(() => (_deckRevision, _inspectedLayerStage, _inspectedLayer), _ => CreateLayerInspectorElement());
+            _layerInspectorElement = UI.DynamicElementOnStatusChanged(
+                () => (_deckRevision, _inspectedLayerStage, _inspectedLayer, _inspectedLayerColorIndex),
+                _ => CreateLayerInspectorElement());
             _layerInspectorWindow = UI.Window("Layer Inspector", _layerInspectorElement).SetWidth(460f);
             return UI.Column(
                 UI.Row(

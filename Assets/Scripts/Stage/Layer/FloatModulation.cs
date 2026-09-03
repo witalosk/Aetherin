@@ -287,7 +287,10 @@ namespace Aetherin
         {
             if (beat == null || !beat.IsRunning) return 0f;
 
-            float phase = Mathf.Repeat((useBar ? beat.BarPhase : beat.BeatPhase) + phaseOffset, 1f);
+            float rawPhase = (useBar ? beat.BarPhase : beat.BeatPhase) + phaseOffset;
+            float phase = Mathf.Repeat(rawPhase, 1f);
+            if (phase == 0f && rawPhase > 0f) phase = 1f;
+
             return Mathf.Pow(1f - Mathf.Clamp01(phase), Mathf.Max(0.01f, BeatPulseSharpness));
         }
 
