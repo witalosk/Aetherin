@@ -12,7 +12,7 @@ namespace Aetherin
     /// カメラと被写体はこのオブジェクトの子に置く想定
     /// (Nextとして複製されたときはStageManagerがワールドオフセットを加えるため、複製元と互いに映り込まない)
     /// </summary>
-    public class CameraStage : StageBase
+    public partial class CameraStage : StageBase
     {
         public override IReadOnlyList<StageLayer> Layers => _layers;
         public int LayerRevision { get; private set; }
@@ -43,12 +43,14 @@ namespace Aetherin
 
             _camera.targetTexture = OutputTexture;
             _camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
+            InitializeCameraWork();
             RefreshLayers();
         }
 
         private void Update()
         {
             _camera.backgroundColor = _deckStateProvider.GetState(Deck).Palette?.BackgroundColor1 ?? Color.black;
+            UpdateCameraWork();
         }
 
         /// <summary>子にあるレイヤーを、非アクティブなものも含めて描画順に収集する。</summary>

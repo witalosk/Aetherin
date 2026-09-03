@@ -21,6 +21,14 @@ namespace Aetherin
         [Tooltip("選択中のNext CameraStageにあるレイヤーを、リストのインデックス順でON/OFFするPad")]
         public List<MidiBinding> LayerToggleButtons = new();
 
+        [Tooltip("選択中のNext CameraStageにあるカメラワークデッキを選ぶPad")]
+        public List<MidiBinding> CameraWorkDeckButtons = new();
+
+        [Tooltip("カメラワークの切り替え周期を Beat / Bar / 2 Bars / 4 Bars の順で選ぶPad")]
+        public List<MidiBinding> CameraWorkTimingButtons = new();
+
+        public CameraWorkSwitchTiming CameraWorkTiming;
+
         [Tooltip("表示中レイヤーに対応するPadのLED色")]
         public Color LayerToggleColor = new(0.3f, 1f, 0.35f);
 
@@ -46,6 +54,7 @@ namespace Aetherin
     /// </summary>
     public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
+        public static CameraWorkSwitchTiming CurrentCameraWorkTiming { get; private set; }
         public IParams Params => _params;
         public bool FoldParams => true;
         public string Category => UiCategory.Main;
@@ -134,6 +143,7 @@ namespace Aetherin
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
             BuildDecks();
+            CurrentCameraWorkTiming = _params.CameraWorkTiming;
             ApplyPendingCameraStageData();
 
             if (_outputRenderer != null) _outputRenderer.material.SetTexture(MainTexId, OutputTexture);
@@ -150,10 +160,15 @@ namespace Aetherin
             _currentStages = new List<StageBase>();
             _nextStages = new List<StageBase>();
 
-            foreach (var template in _stages)
+            for (int i = 0; i < _stages.Count; i++)
             {
-                _currentStages.Add(CloneStage(template, StageDeck.Current, _currentSlotOffset, template.name));
-                _nextStages.Add(CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name));
+                StageBase template = _stages[i];
+                StageBase current = CloneStage(template, StageDeck.Current, _currentSlotOffset, template.name);
+                StageBase next = CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name);
+                if (current is CameraStage currentCamera) currentCamera.ConfigureCinemachineChannel(i * 2);
+                if (next is CameraStage nextCamera) nextCamera.ConfigureCinemachineChannel(i * 2 + 1);
+                _currentStages.Add(current);
+                _nextStages.Add(next);
                 template.gameObject.SetActive(false);
             }
 
@@ -186,6 +201,7 @@ namespace Aetherin
 
             UpdateStageSelect();
             UpdateLayerToggleButtons();
+            UpdateCameraWorkButtons();
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
@@ -257,6 +273,42 @@ namespace Aetherin
             }
         }
 
+        private void UpdateCameraWorkButtons()
+        {
+            CameraStage stage = null;
+            if (_nextStages != null && _nextStages.Count > 0)
+            {
+                int stageIndex = Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1);
+                stage = _nextStages[stageIndex] as CameraStage;
+            }
+
+            _params.CameraWorkDeckButtons ??= new List<MidiBinding>();
+            for (int i = 0; i < _params.CameraWorkDeckButtons.Count; i++)
+            {
+                MidiBinding button = _params.CameraWorkDeckButtons[i];
+                if (button == null) continue;
+                bool available = stage != null && i < stage.CameraWorkDecks.Count;
+                if (!available) { button.ClearLed(); continue; }
+                if (button.WasNoteOn) stage.SelectCameraWorkDeck(i);
+                button.SetLed(i == stage.SelectedCameraWorkDeck ? StageLedColor : StageLedColor * 0.08f);
+            }
+
+            _params.CameraWorkTimingButtons ??= new List<MidiBinding>();
+            int timingCount = Enum.GetValues(typeof(CameraWorkSwitchTiming)).Length;
+            for (int i = 0; i < _params.CameraWorkTimingButtons.Count; i++)
+            {
+                MidiBinding button = _params.CameraWorkTimingButtons[i];
+                if (button == null) continue;
+                if (i >= timingCount) { button.ClearLed(); continue; }
+                if (button.WasNoteOn)
+                {
+                    _params.CameraWorkTiming = (CameraWorkSwitchTiming)i;
+                    CurrentCameraWorkTiming = _params.CameraWorkTiming;
+                }
+                button.SetLed(i == (int)_params.CameraWorkTiming ? Color.yellow : Color.yellow * 0.08f);
+            }
+        }
+
         /// <summary>
         /// 解除時は表示中のNextをCurrentへ昇格させ、フェーダー操作へ自然に戻す
         /// </summary>
@@ -309,9 +361,17 @@ namespace Aetherin
             for (int i = 0; i < _currentStages.Count; i++)
             {
                 var source = _currentStages[i];
-                _nextStages.Add(source == null
+                StageBase next = source == null
                     ? null
-                    : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[i].name));
+                    : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[i].name);
+                if (next is CameraStage nextCamera)
+                {
+                    int channel = source is CameraStage sourceCamera && sourceCamera.CinemachineChannelIndex >= 0
+                        ? sourceCamera.CinemachineChannelIndex ^ 1
+                        : i * 2;
+                    nextCamera.ConfigureCinemachineChannel(channel);
+                }
+                _nextStages.Add(next);
             }
 
             // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
@@ -337,7 +397,12 @@ namespace Aetherin
             for (int i = 0; i < _nextStages.Count; i++)
             {
                 if (_nextStages[i] is not CameraStage stage) continue;
-                data.Stages.Add(new CameraStageLayersSaveData { StageIndex = i, Layers = stage.CaptureLayers() });
+                data.Stages.Add(new CameraStageLayersSaveData
+                {
+                    StageIndex = i,
+                    Layers = stage.CaptureLayers(),
+                    CameraWorkDecks = stage.CaptureCameraWorkDecks(),
+                });
             }
 
             return JsonUtility.ToJson(data);
@@ -359,9 +424,15 @@ namespace Aetherin
                 if (savedStage.StageIndex < 0 || savedStage.StageIndex >= _nextStages.Count) continue;
 
                 if (_nextStages[savedStage.StageIndex] is CameraStage nextStage)
+                {
                     nextStage.RestoreLayers(savedStage.Layers);
+                    nextStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
+                }
                 if (_currentStages[savedStage.StageIndex] is CameraStage currentStage)
+                {
                     currentStage.RestoreLayers(savedStage.Layers);
+                    currentStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
+                }
             }
 
             _deckRevision++;
@@ -414,8 +485,78 @@ namespace Aetherin
                                     return (_deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0);
                                 },
                                 build: _ => CreateLayerListElement(index))
-                        ).SetWidth(400f))
+                        ).SetWidth(400f)),
+                    UI.WindowLauncher("Camera Works",
+                        UI.Window($"{stageNames[index]} Camera Works",
+                            UI.DynamicElementOnStatusChanged(
+                                readStatus: () =>
+                                {
+                                    var cameraStage = _nextStages != null && index < _nextStages.Count
+                                        ? _nextStages[index] as CameraStage
+                                        : null;
+                                    return (_deckRevision, cameraStage, cameraStage?.CameraWorkRevision ?? 0);
+                                },
+                                build: _ => CreateCameraWorkListElement(index))
+                        ).SetWidth(520f))
                 )));
+        }
+
+        private Element CreateCameraWorkListElement(int stageIndex)
+        {
+            var stage = _nextStages != null && stageIndex < _nextStages.Count
+                ? _nextStages[stageIndex] as CameraStage : null;
+            if (stage == null) return UI.Label("CameraStageではありません");
+
+            var decks = stage.CameraWorkDecks.Select((deck, deckIndex) =>
+                UI.Fold(deck?.Name ?? $"Deck {deckIndex + 1}", UI.Column(
+                    UI.Row(
+                        UI.Field("Name", () => deck.Name, value => deck.Name = value).SetFlexGrow(1f),
+                        UI.Button("Select", () => stage.SelectCameraWorkDeck(deckIndex)),
+                        UI.Button("Add Work", () => stage.AddCameraWork(deckIndex)),
+                        UI.Button("▲", () => stage.MoveCameraWorkDeck(deckIndex, -1)).SetWidth(32f),
+                        UI.Button("▼", () => stage.MoveCameraWorkDeck(deckIndex, 1)).SetWidth(32f),
+                        UI.Button("Delete Deck", () => stage.RemoveCameraWorkDeck(deckIndex))),
+                    deck.Recipes == null || deck.Recipes.Count == 0
+                        ? UI.Label("カメラワークがありません")
+                        : UI.Column(deck.Recipes.Select((recipe, recipeIndex) =>
+                            CreateCameraWorkElement(stage, deckIndex, recipeIndex, recipe)).ToArray())
+                ))).ToArray();
+
+            return UI.Column(
+                UI.Row(
+                    UI.Button("Add Deck", () => stage.AddCameraWorkDeck()),
+                    UI.Button("Restart", stage.ResetCameraWork),
+                    UI.Label(() => $"Timing: {CurrentCameraWorkTiming} / Work: {stage.CurrentCameraWork + 1}")),
+                decks.Length == 0 ? UI.Label("カメラワークデッキがありません") : UI.Column(decks));
+        }
+
+        private static Element CreateCameraWorkElement(CameraStage stage, int deckIndex, int recipeIndex,
+            CameraWorkRecipe recipe)
+        {
+            recipe.EnsureInitialized();
+            return UI.Fold(recipe.Name, UI.Column(
+                UI.Row(
+                    UI.Field("Name", () => recipe.Name, value => recipe.Name = value).SetFlexGrow(1f),
+                    UI.Button("▲", () => stage.MoveCameraWork(deckIndex, recipeIndex, -1)).SetWidth(32f),
+                    UI.Button("▼", () => stage.MoveCameraWork(deckIndex, recipeIndex, 1)).SetWidth(32f),
+                    UI.Button("Delete", () => stage.RemoveCameraWork(deckIndex, recipeIndex))),
+                UI.Field("Type", () => recipe.Type, value => recipe.Type = value),
+                UI.Field("Position", Binder.Create(recipe.Position, typeof(Vector3Parameter))),
+                UI.Field("Look At", Binder.Create(recipe.LookAt, typeof(Vector3Parameter))),
+                UI.DynamicElementIf(
+                    () => recipe.Type == CameraWorkType.Orbit,
+                    () => UI.Field("Orbit Rotation", Binder.Create(recipe.OrbitRotation, typeof(Vector3Parameter)))),
+                UI.Field("Field Of View", Binder.Create(recipe.FieldOfView, typeof(FloatParameter))),
+                UI.DynamicElementIf(
+                    () => recipe.Type is CameraWorkType.Follow or CameraWorkType.Handheld,
+                    () => UI.Field("Speed", Binder.Create(recipe.Speed, typeof(FloatParameter)))),
+                UI.DynamicElementIf(
+                    () => recipe.Type == CameraWorkType.Orbit,
+                    () => UI.Field("Radius", Binder.Create(recipe.Radius, typeof(FloatParameter)))),
+                UI.DynamicElementIf(
+                    () => recipe.Type == CameraWorkType.Handheld,
+                    () => UI.Field("Noise Amount", Binder.Create(recipe.NoiseAmount, typeof(FloatParameter))))
+            ));
         }
 
         private Element CreateLayerListElement(int stageIndex)
@@ -592,5 +733,6 @@ namespace Aetherin
     {
         public int StageIndex;
         public List<CameraStageLayerSaveData> Layers = new();
+        public List<CameraWorkDeck> CameraWorkDecks = new();
     }
 }
