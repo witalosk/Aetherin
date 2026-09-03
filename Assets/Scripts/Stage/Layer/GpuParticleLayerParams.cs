@@ -94,8 +94,8 @@ namespace Aetherin
     public sealed class GpuParticleLayerParams : StageLayerParams
     {
         public ParticleRenderBackend RenderBackend;
-        [Tooltip("VfxGraph時にAssets/Resourcesから読み込むVisualEffectAssetの拡張子なし相対パス")]
-        public string VfxGraphResourcePath;
+        [Tooltip("CameraStageのVFX Graph Libraryに登録したキー")]
+        public string VfxGraphKey;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -136,6 +136,8 @@ namespace Aetherin
                 Strength = new FloatParameter(1f),
             },
         };
+
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableVfxGraphKeys;
 
         public void EnsureInitialized()
         {

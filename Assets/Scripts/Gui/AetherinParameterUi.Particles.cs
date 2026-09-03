@@ -18,14 +18,24 @@ namespace Aetherin
                 .OfType(p.Modules)
                 .SetCreateItemInstanceFunc((_, _) => new ParticleSimulationModule());
 
+            var keys = p.GetAvailableVfxGraphKeys?.Invoke();
+            Element vfxGraphSelector = keys != null && keys.Count > 0
+                ? UI.Dropdown("VFX Graph", () =>
+                    {
+                        int index = -1;
+                        for (int i = 0; i < keys.Count; i++)
+                            if (keys[i] == p.VfxGraphKey) { index = i; break; }
+                        return index < 0 ? 0 : index;
+                    }, value => p.VfxGraphKey = keys[value], keys)
+                : UI.Field("VFX Graph Key", () => p.VfxGraphKey, value => p.VfxGraphKey = value);
+
             return UI.Column(
                 UI.Toggle("Visible", () => p.Visible, value => p.Visible = value),
                 UI.Fold("Rendering", UI.Column(
                     UI.Field("Renderer", () => p.RenderBackend, value => p.RenderBackend = value),
                     UI.DynamicElementIf(
                         () => p.RenderBackend == ParticleRenderBackend.VfxGraph,
-                        () => UI.Field("VFX Resources Path", () => p.VfxGraphResourcePath,
-                            value => p.VfxGraphResourcePath = value)),
+                        () => vfxGraphSelector),
                     UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                     Param("Opacity", p.Opacity),
                     UI.Field("Order", () => p.Order, value => p.Order = value))),

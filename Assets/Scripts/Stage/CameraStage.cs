@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.VFX;
 using UnitySimpleContainer;
 
 namespace Aetherin
@@ -27,6 +28,7 @@ namespace Aetherin
 
         [SerializeField] private Camera _camera;
         [SerializeField] private ModelLayerLibrary _modelLibrary;
+        [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
@@ -119,6 +121,24 @@ namespace Aetherin
         {
             if (_modelLibrary == null)
                 _modelLibrary = FindFirstObjectByType<ModelLayerLibrary>(FindObjectsInactive.Include);
+        }
+
+        public VisualEffectAsset ResolveVfxGraph(string key)
+        {
+            EnsureVfxGraphLibrary();
+            return _vfxGraphLibrary?.Resolve(key);
+        }
+
+        public IReadOnlyList<string> GetVfxGraphKeys()
+        {
+            EnsureVfxGraphLibrary();
+            return _vfxGraphLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private void EnsureVfxGraphLibrary()
+        {
+            if (_vfxGraphLibrary == null)
+                _vfxGraphLibrary = FindFirstObjectByType<VfxGraphLibrary>(FindObjectsInactive.Include);
         }
 
         public ModelLayer AddModelLayer(Transform parent = null)

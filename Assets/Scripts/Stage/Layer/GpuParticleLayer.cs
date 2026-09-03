@@ -48,8 +48,6 @@ namespace Aetherin
         [SerializeField] private GpuParticleLayerParams _params = new();
         [SerializeField] private ComputeShader _simulationShader;
         [SerializeField] private Shader _renderShader;
-        [Tooltip("Render BackendがVfxGraphのとき、ParticleBufferを公開GraphicsBufferへ渡すVFX Asset")]
-        [SerializeField] private VisualEffectAsset _vfxAsset;
 
         private GraphicsBuffer _particles;
         private GraphicsBuffer _args;
@@ -57,8 +55,6 @@ namespace Aetherin
         private Material _material;
         private ComputeShader _compute;
         private VisualEffect _visualEffect;
-        private VisualEffectAsset _resolvedVfxAsset;
-        private string _resolvedVfxPath;
         private int _resetKernel;
         private int _moduleKernel;
         private int _allocatedCapacity;
@@ -68,6 +64,7 @@ namespace Aetherin
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
         private IDeckStateProvider _deckStateProvider;
+        private CameraStage _cameraStage;
         private StageBase _stage;
 
         public override IParams Params => _params;
@@ -103,8 +100,13 @@ namespace Aetherin
         private void Initialize()
         {
             _stage = GetComponentInParent<StageBase>();
+            _cameraStage = GetComponentInParent<CameraStage>();
             _params ??= new GpuParticleLayerParams();
             _params.EnsureInitialized();
+            _params.GetAvailableVfxGraphKeys = _cameraStage != null ? _cameraStage.GetVfxGraphKeys : null;
+            var keys = _params.GetAvailableVfxGraphKeys?.Invoke();
+            if (string.IsNullOrWhiteSpace(_params.VfxGraphKey) && keys != null && keys.Count > 0)
+                _params.VfxGraphKey = keys[0];
             EnsureResources();
             ApplyLayerState();
         }
@@ -284,18 +286,15 @@ namespace Aetherin
 
         private void EnsureVfxGraph()
         {
-            if (_resolvedVfxPath != _params.VfxGraphResourcePath)
-            {
-                _resolvedVfxPath = _params.VfxGraphResourcePath;
-                _resolvedVfxAsset = string.IsNullOrWhiteSpace(_resolvedVfxPath)
-                    ? null
-                    : Resources.Load<VisualEffectAsset>(_resolvedVfxPath);
-            }
-
-            VisualEffectAsset asset = _resolvedVfxAsset != null ? _resolvedVfxAsset : _vfxAsset;
+            _cameraStage ??= GetComponentInParent<CameraStage>();
+            VisualEffectAsset asset = _cameraStage?.ResolveVfxGraph(_params.VfxGraphKey);
             if (asset == null)
             {
-                if (_visualEffect != null) _visualEffect.enabled = false;
+                if (_visualEffect != null)
+                {
+                    _visualEffect.enabled = false;
+                    _visualEffect.visualEffectAsset = null;
+                }
                 return;
             }
 
