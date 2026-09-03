@@ -98,6 +98,9 @@ namespace Aetherin
 
             _cinemachineBrain = _camera.GetComponent<CinemachineBrain>();
             if (_cinemachineBrain == null) _cinemachineBrain = _camera.gameObject.AddComponent<CinemachineBrain>();
+            _cinemachineBrain.DefaultBlend = new CinemachineBlendDefinition(
+                CinemachineBlendDefinition.Styles.Cut,
+                0f);
             _baseCameraLocalPosition = _camera.transform.localPosition;
             _baseCameraLocalRotation = _camera.transform.localRotation;
             _baseCameraFieldOfView = _camera.fieldOfView;
