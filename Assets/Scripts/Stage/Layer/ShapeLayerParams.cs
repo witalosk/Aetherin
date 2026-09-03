@@ -25,6 +25,9 @@ namespace Aetherin
     [Serializable]
     public class ShapeLayerParams : StageLayerParams
     {
+        [Tooltip("カメラ移動を無視し、画面高を基準とするスクリーン座標へ固定して描画します")]
+        public bool ScreenSpace;
+
         public ShapePrimitive Shape = ShapePrimitive.Rectangle;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
