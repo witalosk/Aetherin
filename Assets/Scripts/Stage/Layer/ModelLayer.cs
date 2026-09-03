@@ -203,7 +203,10 @@ namespace Aetherin
             if (_modelInstance != null)
                 foreach (var animator in _modelInstance.GetComponentsInChildren<Animator>(true))
                     animator.speed = _params.PlayAnimation ? speed : 0f;
-            ApplyCustomLayerState(_params.Visible, _params.Order);
+            // Apply the effective visibility, including every ancestor GroupLayer.
+            // Calling ApplyCustomLayerState with _params.Visible here used to
+            // overwrite the group state on every Update.
+            ApplyLayerState();
         }
 
         private void ApplyColors(EvaluatedPaletteColor color, bool wire, float layerOpacity)

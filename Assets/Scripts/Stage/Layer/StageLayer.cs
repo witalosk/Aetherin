@@ -139,6 +139,10 @@ namespace Aetherin
             ApplyCustomLayerState(effectiveVisible, layerParams.Order);
         }
 
+        // GroupLayer uses this to propagate a visibility change immediately to
+        // descendants, including renderer-less GPU/VFX layers.
+        internal void RefreshLayerState() => ApplyLayerState();
+
         protected virtual void ApplyCustomLayerState(bool visible, int order) { }
     }
 }

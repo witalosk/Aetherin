@@ -433,7 +433,6 @@ namespace Aetherin
             _material.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
             ApplyWireAppearance(matrix);
             ApplyTransformedBounds(matrix);
-            ApplyRenderMode();
         }
 
         private void ApplyWireAppearance(Matrix4x4 matrix)
@@ -468,21 +467,15 @@ namespace Aetherin
             _wireMesh.bounds = new Bounds((min + max) * 0.5f, max - min);
         }
 
-        private void ApplyRenderMode()
+        protected override void ApplyCustomLayerState(bool visible, int order)
         {
-            bool visible = _params.Visible;
             _meshRenderer.forceRenderingOff = !visible || _params.RenderMode == Primitive3DRenderMode.Wireframe;
             if (_wireRenderer != null)
             {
                 _wireRenderer.forceRenderingOff = !visible || _params.RenderMode == Primitive3DRenderMode.Surface;
-                _wireRenderer.sortingOrder = _params.Order + 1;
+                _wireRenderer.sortingOrder = order + 1;
             }
-        }
-
-        protected override void LateUpdate()
-        {
-            base.LateUpdate();
-            ApplyRenderMode();
+            _meshRenderer.sortingOrder = order;
         }
 
         private void ApplyRandomPalette()

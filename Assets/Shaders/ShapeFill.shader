@@ -112,5 +112,65 @@ Shader "Aetherin/Shape Fill"
             }
             ENDHLSL
         }
+
+        // SSR in Forward+ obtains the surface normal and smoothness from the
+        // DepthNormals texture. Shape geometry is generated at runtime, so it
+        // needs an explicit pass instead of relying on URP's fallback.
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+
+            Cull Off
+            ZTest LEqual
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex DepthNormalsVert
+            #pragma fragment DepthNormalsFrag
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4x4 _ShapeMatrix;
+            CBUFFER_END
+
+            Varyings DepthNormalsVert(Attributes input)
+            {
+                Varyings output;
+                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                output.positionCS = TransformObjectToHClip(shapePosition);
+                // ShapeLayer geometry lies in the XY plane and is wound toward +Z.
+                output.normalWS = TransformObjectToWorldNormal(float3(0.0, 0.0, 1.0));
+                return output;
+            }
+
+            half4 DepthNormalsFrag(Varyings input) : SV_Target
+            {
+                float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
+                half4 output;
+#if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                output = half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), 1.0);
+#else
+                output = half4(normalWS, 1.0);
+#endif
+                return output;
+            }
+            ENDHLSL
+        }
     }
 }

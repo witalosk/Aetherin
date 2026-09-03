@@ -75,5 +75,18 @@ namespace Aetherin
             transform.localRotation = orientation;
             transform.localScale = scale;
         }
+
+        protected override void ApplyCustomLayerState(bool visible, int order)
+        {
+            // A layer may be nested below helper GameObjects, so do not rely on
+            // transform.parent being the GroupLayer itself. Every descendant
+            // evaluates the complete ancestor chain in StageLayer.ApplyLayerState().
+            var descendants = GetComponentsInChildren<StageLayer>(true);
+            for (int i = 0; i < descendants.Length; i++)
+            {
+                if (descendants[i] != this)
+                    descendants[i].RefreshLayerState();
+            }
+        }
     }
 }
