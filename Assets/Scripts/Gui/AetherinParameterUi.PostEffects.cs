@@ -88,6 +88,11 @@ namespace Aetherin
                 case PostEffectType.Posterize:
                     yield return Param("Levels", module.Scale);
                     break;
+                case PostEffectType.Bloom:
+                    yield return Param("Intensity", module.Amount);
+                    yield return Param("Radius", module.Scale);
+                    yield return Param("Threshold", module.Secondary);
+                    break;
             }
         }
 

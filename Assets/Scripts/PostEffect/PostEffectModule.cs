@@ -14,6 +14,7 @@ namespace Aetherin
         Scanline,
         Posterize,
         Invert,
+        Bloom,
     }
 
     /// <summary>
