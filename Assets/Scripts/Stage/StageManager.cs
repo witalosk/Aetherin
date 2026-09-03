@@ -883,6 +883,7 @@ namespace Aetherin
         {
             bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
             return UI.Row(
+                UI.Space().SetWidth(layer is GroupLayer ? 0f : 18f),
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
                 UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer, layerColorIndex)).SetMinWidth(250f).SetFlexGrow(1f).SetHeight(30f)

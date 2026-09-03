@@ -109,14 +109,116 @@ void ResetParticles(uint id : SV_DispatchThreadID)
     _Particles[id] = particle;
 }
 
-float3 CurlLikeField(float3 position, float time, float frequency)
+float3 Mod289(float3 x)
+{
+    return x - floor(x / 289.0) * 289.0;
+}
+
+float4 Mod289(float4 x)
+{
+    return x - floor(x / 289.0) * 289.0;
+}
+
+float4 Permute(float4 x)
+{
+    return Mod289(((x * 34.0) + 1.0) * x);
+}
+
+float4 TaylorInvSqrt(float4 r)
+{
+    return 1.79284291400159 - 0.85373472095314 * r;
+}
+
+// 3D simplex noise and its analytic gradient in simplex-space.
+// The gradient is used directly to build a divergence-free curl field.
+void SimplexNoise3DWithGradient(float3 v, out float value, out float3 gradient)
+{
+    const float2 simplex = float2(1.0 / 6.0, 1.0 / 3.0);
+
+    float3 cell = floor(v + dot(v, simplex.yyy));
+    float3 x0 = v - cell + dot(cell, simplex.xxx);
+    float3 g = step(x0.yzx, x0.xyz);
+    float3 l = 1.0 - g;
+    float3 i1 = min(g, l.zxy);
+    float3 i2 = max(g, l.zxy);
+    float3 x1 = x0 - i1 + simplex.xxx;
+    float3 x2 = x0 - i2 + simplex.yyy;
+    float3 x3 = x0 - 0.5;
+
+    cell = Mod289(cell);
+    float4 p = Permute(Permute(Permute(
+        cell.z + float4(0.0, i1.z, i2.z, 1.0))
+        + cell.y + float4(0.0, i1.y, i2.y, 1.0))
+        + cell.x + float4(0.0, i1.x, i2.x, 1.0));
+
+    float4 j = p - 49.0 * floor(p / 49.0);
+    float4 x_ = floor(j / 7.0);
+    float4 y_ = floor(j - 7.0 * x_);
+    float4 x = x_ * (2.0 / 7.0) + (1.0 / 7.0) - 1.0;
+    float4 y = y_ * (2.0 / 7.0) + (1.0 / 7.0) - 1.0;
+    float4 h = 1.0 - abs(x) - abs(y);
+    float4 b0 = float4(x.xy, y.xy);
+    float4 b1 = float4(x.zw, y.zw);
+    float4 s0 = floor(b0) * 2.0 + 1.0;
+    float4 s1 = floor(b1) * 2.0 + 1.0;
+    float4 sh = -step(h, 0.0);
+    float4 a0 = b0.xzyw + s0.xxyy * sh.xxyy;
+    float4 a1 = b1.xzyw + s1.xxyy * sh.zzww;
+    float3 gradient0 = float3(a0.xy, h.x);
+    float3 gradient1 = float3(a0.zw, h.y);
+    float3 gradient2 = float3(a1.xy, h.z);
+    float3 gradient3 = float3(a1.zw, h.w);
+
+    float4 normalizer = TaylorInvSqrt(float4(
+        dot(gradient0, gradient0),
+        dot(gradient1, gradient1),
+        dot(gradient2, gradient2),
+        dot(gradient3, gradient3)));
+    gradient0 *= normalizer.x;
+    gradient1 *= normalizer.y;
+    gradient2 *= normalizer.z;
+    gradient3 *= normalizer.w;
+
+    float4 cornerDot = float4(
+        dot(gradient0, x0),
+        dot(gradient1, x1),
+        dot(gradient2, x2),
+        dot(gradient3, x3));
+    float4 attenuation = max(0.6 - float4(
+        dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+    float4 attenuation2 = attenuation * attenuation;
+    float4 attenuation3 = attenuation2 * attenuation;
+    float4 attenuation4 = attenuation2 * attenuation2;
+
+    value = 42.0 * dot(attenuation4, cornerDot);
+    gradient = 42.0 * (
+        attenuation4.x * gradient0 - 8.0 * attenuation3.x * x0 * cornerDot.x +
+        attenuation4.y * gradient1 - 8.0 * attenuation3.y * x1 * cornerDot.y +
+        attenuation4.z * gradient2 - 8.0 * attenuation3.z * x2 * cornerDot.z +
+        attenuation4.w * gradient3 - 8.0 * attenuation3.w * x3 * cornerDot.w);
+}
+
+float3 SimplexCurlNoiseField(float3 position, float time, float frequency)
 {
     float3 p = position * frequency;
-    float t = time * _Speed;
-    return float3(
-        sin(p.y + t) - cos(p.z * 1.17 - t),
-        sin(p.z - t * 0.73) - cos(p.x + t),
-        sin(p.x + t * 1.13) - cos(p.y - t * 0.91));
+    float timeOffset = time * _Speed;
+    p += timeOffset * float3(0.73, 1.13, 0.91);
+
+    // Independent scalar potentials are required; reusing one noise sample
+    // would collapse the curl into a much less useful field.
+    float3 gradient1;
+    float3 gradient2;
+    float3 gradient3;
+    float noiseValue;
+    SimplexNoise3DWithGradient(p + float3(17.1, 31.7, 47.2), noiseValue, gradient1);
+    SimplexNoise3DWithGradient(p + float3(53.4, 11.8, 29.6), noiseValue, gradient2);
+    SimplexNoise3DWithGradient(p + float3(7.3, 61.9, 43.5), noiseValue, gradient3);
+
+    // Convert the gradients from simplex-space back to world-space.
+    return frequency * float3(
+        gradient3.y - gradient2.z,
+        gradient1.z - gradient3.x,
+        gradient2.x - gradient1.y);
 }
 
 [numthreads(256, 1, 1)]
@@ -142,10 +244,11 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     {
         particle.velocity *= exp(-max(0.0, _Strength) * _DeltaTime);
     }
-    else if (_ModuleType == 3) // Curl-like noise
+    else if (_ModuleType == 3) // Simplex curl noise
     {
         float frequency = max(0.0001, abs(_ScaleValue));
-        particle.velocity += CurlLikeField(particle.position, _TimeValue, frequency) * (_Strength * _DeltaTime);
+        particle.velocity += SimplexCurlNoiseField(particle.position, _TimeValue, frequency) *
+            (_Strength * _DeltaTime);
     }
     else if (_ModuleType == 4) // Attractor
     {
