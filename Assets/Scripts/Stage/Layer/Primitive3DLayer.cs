@@ -403,8 +403,11 @@ namespace Aetherin
             bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
             bool lit = _params.MaterialMode == Primitive3DMaterialMode.Lit;
             _material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
+            // Lit is a real opaque surface so it can participate in URP's depth/normals
+            // prepass used by SSR.  Previously the default Transparent layer blend mode
+            // kept a Lit primitive in the transparent queue, where SSR cannot reflect it.
             LayerMaterialUtility.ApplyBlendMode(_material,
-                glass ? LayerBlendMode.Transparent : _params.BlendMode);
+                glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
             _meshRenderer.receiveShadows = lit;
             _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
             _material.SetFloat(GlassTintId, _evaluatedGlassTint);

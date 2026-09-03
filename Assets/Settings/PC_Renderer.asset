@@ -35,8 +35,9 @@ MonoBehaviour:
       type: 3}
   m_RendererFeatures:
   - {fileID: 7833122117494664109}
+  - {fileID: 5241591385608628538}
   m_RendererFeatureMap: ad6b866f10d7b46c
-  m_UseNativeRenderPass: 1
+  m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 2
   m_OpaqueLayerMask:
@@ -58,6 +59,24 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 0
+--- !u!114 &5241591385608628538
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 3
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 31ec43bb34e3ff542892e0b797881487, type: 3}
+  m_Name: ScreenSpaceReflection
+  m_EditorClassIdentifier:
+  m_Active: 1
+  depthPyramidCS: {fileID: 7200000, guid: f16d03b7874a24f418713cda8a6ca007, type: 3}
+  screenSpaceReflectionsCS: {fileID: 7200000, guid: f0f28b04d94cb664398e3e0cac4dc8a6, type: 3}
+  resolveShader: {fileID: 4800000, guid: a4489dfb62c35df4a92c3cff7cd5eca6, type: 3}
+  renderingPath: 2
 --- !u!114 &7833122117494664109
 MonoBehaviour:
   m_ObjectHideFlags: 0

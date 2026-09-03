@@ -240,6 +240,17 @@ namespace Aetherin
             ResetCameraWork();
         }
 
+        public void SelectCameraWork(int deckIndex, int recipeIndex)
+        {
+            if (_cameraWorkDecks == null || deckIndex < 0 || deckIndex >= _cameraWorkDecks.Count) return;
+            CameraWorkDeck deck = _cameraWorkDecks[deckIndex];
+            if (deck?.Recipes == null || recipeIndex < 0 || recipeIndex >= deck.Recipes.Count) return;
+
+            _selectedCameraWorkDeck = deckIndex;
+            _currentCameraWork = recipeIndex;
+            _followInitialized = false;
+        }
+
         public void ResetCameraWork()
         {
             _currentCameraWork = 0;

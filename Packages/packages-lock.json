@@ -218,6 +218,14 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "com.unity.universal-screenspacereflection": {
+      "version": "file:UniversalScreenSpaceReflection",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.render-pipelines.core": "14.0.0"
+      }
+    },
     "com.unity.visualeffectgraph": {
       "version": "17.3.0",
       "depth": 0,

@@ -29,9 +29,7 @@ namespace Aetherin
 
         [Tooltip("Manual時に次のカメラワークへ進めるPad")]
         public MidiBinding CameraWorkManualButton = new();
-
-        public CameraWorkSwitchTiming CameraWorkTiming;
-
+        
         public int CurrentStageIndex;
         public int NextStageIndex;
 
@@ -54,7 +52,7 @@ namespace Aetherin
     /// </summary>
     public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
-        public static CameraWorkSwitchTiming CurrentCameraWorkTiming { get; private set; }
+        public static CameraWorkSwitchTiming CurrentCameraWorkTiming { get; private set; } = CameraWorkSwitchTiming.Manual;
         public IParams Params => _params;
         public bool FoldParams => true;
         public string Category => UiCategory.Main;
@@ -148,7 +146,6 @@ namespace Aetherin
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
             BuildDecks();
-            CurrentCameraWorkTiming = _params.CameraWorkTiming;
             ApplyPendingCameraStageData();
 
             if (_outputRenderer != null) _outputRenderer.material.SetTexture(MainTexId, OutputTexture);
@@ -465,23 +462,17 @@ namespace Aetherin
                 if (i >= timingCount) { button.ClearLed(); continue; }
                 if (button.WasNoteOn)
                 {
-                    _params.CameraWorkTiming = (CameraWorkSwitchTiming)i;
-                    CurrentCameraWorkTiming = _params.CameraWorkTiming;
+                    CurrentCameraWorkTiming = (CameraWorkSwitchTiming)i;
                 }
-                button.SetLed(i == (int)_params.CameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
+                button.SetLed(i == (int)CurrentCameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
             }
 
             _params.CameraWorkManualButton ??= new MidiBinding();
-            if (_params.CameraWorkTiming == CameraWorkSwitchTiming.Manual)
+            if (_params.CameraWorkManualButton.WasNoteOn && stage != null)
             {
-                if (_params.CameraWorkManualButton.WasNoteOn && stage != null)
-                {
-                    stage.AdvanceCameraWork();
-                }
-                _params.CameraWorkManualButton.SetLed(
-                    _params.CameraWorkManualButton.WasNoteOn ? Color.yellow * 0.5f : Color.yellow * 0.25f);
+                stage.AdvanceCameraWork();
             }
-            else _params.CameraWorkManualButton.ClearLed();
+            _params.CameraWorkManualButton.SetLed(_params.CameraWorkManualButton.WasNoteOn ? Color.yellow * 0.5f : Color.yellow * 0.25f);
         }
 
         /// <summary>
@@ -668,13 +659,16 @@ namespace Aetherin
                 UI.DynamicElementOnStatusChanged(
                     readStatus: () => (_selectedStageUiIndex, _deckRevision),
                     build: _ => CreateSelectedStageHeader(stageNames)),
-                UI.Tabs(
-                    ("Layers", UI.DynamicElementOnStatusChanged(
-                        readStatus: () => ReadSelectedStageUiStatus(stageNames.Count),
-                        build: status => CreateLayerListElement(status.index))),
-                    ("Cameras", UI.DynamicElementOnStatusChanged(
-                        readStatus: () => ReadSelectedStageUiStatus(stageNames.Count),
-                        build: status => CreateCameraWorkListElement(status.index))))
+                UI.Row(
+                    UI.Box(UI.DynamicElementOnStatusChanged(
+                        () => ReadSelectedStageUiStatus(stageNames.Count),
+                        status => CreateLayerListElement(status.index))
+                    ),
+                    UI.Box(UI.DynamicElementOnStatusChanged(
+                        () => ReadSelectedStageUiStatus(stageNames.Count),
+                        status => CreateCameraWorkListElement(status.index))
+                    )
+                )
             );
             return UI.Row(stageColumn.SetWidth(180f).SetFlexShrink(0f), layerColumn.SetMinWidth(420f).SetFlexGrow(1f));
             
@@ -761,9 +755,8 @@ namespace Aetherin
                     UI.Button("Add Deck", () => stage.AddCameraWorkDeck()),
                     UI.Button("Restart", stage.ResetCameraWork),
                     UI.Label(() => $"Timing: {CurrentCameraWorkTiming}"),
-                    UI.Field("Manual Trigger", Binder.Create(_params.CameraWorkManualButton, typeof(MidiBinding))),
                     UI.Label(() => GetCameraWorkProgressText(stage)).SetFlexGrow(1f),
-                    UI.SliderReadOnly(null, () => GetCameraWorkProgress(stage), 0f, 1f).SetWidth(120f)),
+                    UI.SliderReadOnly(null, () => GetCameraWorkProgress(stage), 0f, 1f).SetWidth(60f)),
                 decks.Length == 0 ? UI.Label("カメラワークデッキがありません") : UI.Column(decks));
         }
 
@@ -803,9 +796,10 @@ namespace Aetherin
                     .RegisterUpdateCallback(element =>
                     {
                         bool isCurrent = deckIndex == stage.SelectedCameraWorkDeck &&
-                            recipeIndex == stage.CurrentCameraWork;
+                        recipeIndex == stage.CurrentCameraWork;
                         element.SetBackgroundColor(isCurrent ? StageLedColor * 0.5f : null);
                     }),
+                UI.Button("Select", () => stage.SelectCameraWork(deckIndex, recipeIndex)),
                 UI.Button("▲", () => stage.MoveCameraWork(deckIndex, recipeIndex, -1)).SetWidth(32f),
                 UI.Button("▼", () => stage.MoveCameraWork(deckIndex, recipeIndex, 1)).SetWidth(32f),
                 UI.Button("Delete", () => RemoveCameraWork(stage, deckIndex, recipeIndex, recipe)));

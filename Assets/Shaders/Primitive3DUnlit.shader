@@ -194,5 +194,71 @@ Shader "Aetherin/Primitive 3D Unlit"
             }
             ENDHLSL
         }
+
+        // Forward+ SSR reads the normal and smoothness values from the DepthNormals buffer.
+        // The surface pass above is a custom shader, so URP cannot provide this pass for us.
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode" = "DepthNormals" }
+
+            Cull Back
+            ZTest LEqual
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex DepthNormalsVert
+            #pragma fragment DepthNormalsFrag
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+
+            struct DepthNormalsAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+            };
+
+            struct DepthNormalsVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4x4 _ShapeMatrix;
+                float4x4 _ShapeNormalMatrix;
+                float _MaterialMode;
+                float _Smoothness;
+            CBUFFER_END
+
+            DepthNormalsVaryings DepthNormalsVert(DepthNormalsAttributes input)
+            {
+                DepthNormalsVaryings output;
+                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                output.positionCS = TransformObjectToHClip(shapePosition);
+                float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, input.normalOS));
+                output.normalWS = TransformObjectToWorldNormal(shapeNormal);
+                return output;
+            }
+
+            half4 DepthNormalsFrag(DepthNormalsVaryings input) : SV_Target
+            {
+                // Only the custom Lit mode should contribute to SSR's normal buffer.
+                if (_MaterialMode <= 1.5) discard;
+
+                float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
+                half4 output;
+#if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                output = half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), _Smoothness);
+#else
+                output = half4(normalWS, _Smoothness);
+#endif
+                return output;
+            }
+            ENDHLSL
+        }
     }
 }
