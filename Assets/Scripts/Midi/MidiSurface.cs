@@ -35,7 +35,8 @@ namespace Aetherin
         public bool IsHardwareConnected => _input != null && _input.IsConnected;
         public bool IsEmulating => _params.AlwaysAllowEmulation || !IsHardwareConnected;
         public IParams Params => _params;
-        public string Category => UiCategory.Settings;
+        public bool FoldParams => true;
+        public string Category => UiCategory.Main;
 
         public event Action<int, float> OnNoteOn;
         public event Action<int> OnNoteOff;
@@ -266,7 +267,7 @@ namespace Aetherin
                     readStatus: () => IsEmulating,
                     build: CreateSurfaceElement),
                 UI.Button("Clear LEDs", ClearLeds)
-            );
+            ).SetOpenFlag(true);
         }
 
         private Element CreateSurfaceElement(bool emulating)
