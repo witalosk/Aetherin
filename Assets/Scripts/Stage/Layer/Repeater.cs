@@ -16,6 +16,7 @@ namespace Aetherin
         GridXY,
         GridXZ,
         GridXYZ,
+        Radial,
     }
 
     public enum RepeaterValueMode
@@ -44,7 +45,7 @@ namespace Aetherin
         [Tooltip("3Dグリッドの1層あたりの行数。XY / XZでは使用しません")]
         public IntParameter Rows = new(4);
 
-        [Tooltip("Linearではコピーごとの移動量、GridではXYZ各軸のセル間隔")]
+        [Tooltip("Linearではコピーごとの移動量、GridではXYZ各軸のセル間隔、RadialではXを半径として使用")]
         public Vector3Parameter Position = new(new Vector3(1f, 0f, 0f));
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -206,6 +207,14 @@ namespace Aetherin
 
             if (ValueMode == RepeaterValueMode.Sequential) return;
 
+            if (ValueMode == RepeaterValueMode.Spectrum)
+            {
+                float value = GetCopyValue(index, 0);
+                rotation *= value;
+                scale = Vector3.one + (scale - Vector3.one) * value;
+                return;
+            }
+
             position = Vector3.Scale(position, GetCopyVector(index, 0));
             rotation = Vector3.Scale(rotation, GetCopyVector(index, 3));
             scale = Vector3.one + Vector3.Scale(scale - Vector3.one, GetCopyVector(index, 6));
@@ -298,6 +307,15 @@ namespace Aetherin
             color.r = 0f;
             for (int i = 0; i < baseVertexCount; i++) colors.Add(color);
 
+            bool independentCopies = repeater.ValueMode == RepeaterValueMode.Spectrum ||
+                                     repeater.LayoutMode == RepeaterLayoutMode.Radial;
+            if (independentCopies)
+            {
+                AppendIndependentCopies(vertices, colors, uvs, baseVertexCount,
+                    repeater, copyProvider);
+                return baseVertexCount;
+            }
+
             if (repeater.Copies <= 1) return baseVertexCount;
 
             Matrix4x4 accumulated = Matrix4x4.identity;
@@ -362,6 +380,74 @@ namespace Aetherin
             }
 
             return baseVertexCount;
+        }
+
+        private static void AppendIndependentCopies(
+            List<Vector3> vertices,
+            List<Color> colors,
+            List<Vector2> uvs,
+            int baseVertexCount,
+            in EvaluatedRepeater repeater,
+            IRepeaterCopyProvider copyProvider)
+        {
+            Color color = Color.white;
+            for (int copy = 1; copy < repeater.Copies; copy++)
+            {
+                Matrix4x4 matrix = GetIndependentCopyMatrix(copy, repeater, copyProvider);
+                color.a = repeater.GetOpacity(copy) *
+                          (copyProvider?.GetRepeaterCopyOpacity(
+                              copy, repeater.AnimationPhaseOffset * copy) ?? 1f);
+                color.r = copy;
+                for (int vertex = 0; vertex < baseVertexCount; vertex++)
+                {
+                    vertices.Add(matrix.MultiplyPoint3x4(vertices[vertex]));
+                    colors.Add(color);
+                    if (uvs != null) uvs.Add(uvs[vertex]);
+                }
+            }
+
+            Matrix4x4 firstMatrix = GetIndependentCopyMatrix(0, repeater, copyProvider);
+            for (int vertex = 0; vertex < baseVertexCount; vertex++)
+                vertices[vertex] = firstMatrix.MultiplyPoint3x4(vertices[vertex]);
+        }
+
+        private static Matrix4x4 GetIndependentCopyMatrix(
+            int copy,
+            in EvaluatedRepeater repeater,
+            IRepeaterCopyProvider copyProvider)
+        {
+            repeater.GetTransform(copy, out Vector3 position, out Vector3 rotation,
+                out Vector3 scale, out Vector3 anchor);
+
+            Vector3 layoutPosition;
+            if (repeater.LayoutMode == RepeaterLayoutMode.Radial)
+            {
+                float angle = 360f * copy / Mathf.Max(1, repeater.Copies);
+                layoutPosition = Quaternion.AngleAxis(angle, Vector3.forward) *
+                                 (Vector3.up * position.x);
+                rotation.z += angle;
+            }
+            else if (repeater.LayoutMode == RepeaterLayoutMode.Linear)
+            {
+                layoutPosition = position * copy;
+            }
+            else
+            {
+                Vector3 gridIndex = GetGridIndex(copy, repeater.LayoutMode,
+                    repeater.Columns, repeater.Rows);
+                layoutPosition = Vector3.Scale(position, gridIndex);
+            }
+
+            Matrix4x4 matrix = Matrix4x4.Translate(layoutPosition) *
+                               Matrix4x4.Translate(anchor) *
+                               Matrix4x4.TRS(Vector3.zero, Quaternion.Euler(rotation), scale) *
+                               Matrix4x4.Translate(-anchor);
+            if (repeater.TransformMode == RepeaterTransformMode.FromSource && copyProvider != null)
+            {
+                matrix = copyProvider.GetRepeaterCopyTransform(
+                             copy, repeater.AnimationPhaseOffset * copy) * matrix;
+            }
+            return matrix;
         }
 
         public static void ApplyIndices(
