@@ -161,7 +161,7 @@ namespace Aetherin
         {
             EnsureParameterObjects();
             _params.RadialSegments = Mathf.Max(3, _params.RadialSegments);
-            _params.LatitudeSegments = Mathf.Max(2, _params.LatitudeSegments);
+            _params.IcosphereSubdivisions = Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5);
             _params.CornerSegments = Mathf.Max(1, _params.CornerSegments);
             _params.Size.BaseValue.x = Mathf.Max(0f, _params.Size.BaseValue.x);
             _params.Size.BaseValue.y = Mathf.Max(0f, _params.Size.BaseValue.y);
@@ -525,10 +525,10 @@ namespace Aetherin
             {
                 int hash = 17;
                 hash = hash * 31 + (int)_params.Primitive;
-                if (_params.Primitive is Primitive3DType.Sphere or Primitive3DType.Cylinder)
+                if (_params.Primitive == Primitive3DType.Cylinder)
                     hash = hash * 31 + _params.RadialSegments;
-                if (_params.Primitive == Primitive3DType.Sphere)
-                    hash = hash * 31 + _params.LatitudeSegments;
+                if (_params.Primitive == Primitive3DType.Icosphere)
+                    hash = hash * 31 + _params.IcosphereSubdivisions;
                 if (_params.Primitive == Primitive3DType.RoundedBox)
                 {
                     hash = hash * 31 + _params.CornerSegments;

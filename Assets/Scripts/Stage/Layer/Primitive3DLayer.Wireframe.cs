@@ -36,8 +36,8 @@ namespace Aetherin
                 case Primitive3DType.RoundedBox:
                     BuildRoundedBoxWireframe(radius);
                     break;
-                case Primitive3DType.Sphere:
-                    BuildSphereWireframe(radius);
+                case Primitive3DType.Icosphere:
+                    BuildIcosphereWireframe(radius);
                     break;
                 case Primitive3DType.Tetrahedron:
                     BuildTetrahedronWireframe(radius);
@@ -134,44 +134,29 @@ namespace Aetherin
             }
         }
 
-        private void BuildSphereWireframe(float radius)
+        private void BuildIcosphereWireframe(float radius)
         {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            int latitude = Mathf.Max(2, _params.LatitudeSegments);
+            BuildIcosphereTopology(
+                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5),
+                out System.Collections.Generic.List<Vector3> vertices,
+                out System.Collections.Generic.List<int> triangles);
+            var edges = new System.Collections.Generic.HashSet<ulong>();
 
-            // 緯線。極では半径が0になるので除外する。
-            for (int y = 1; y < latitude; y++)
+            for (int i = 0; i < triangles.Count; i += 3)
             {
-                float theta = Mathf.PI * y / latitude;
-                float ringRadius = Mathf.Sin(theta) * 0.5f;
-                float py = Mathf.Cos(theta) * 0.5f;
-                for (int x = 0; x < radial; x++)
-                {
-                    float a0 = Mathf.PI * 2f * x / radial;
-                    float a1 = Mathf.PI * 2f * (x + 1) / radial;
-                    AddWireEdge(
-                        new Vector3(Mathf.Cos(a0) * ringRadius, py, Mathf.Sin(a0) * ringRadius),
-                        new Vector3(Mathf.Cos(a1) * ringRadius, py, Mathf.Sin(a1) * ringRadius), radius);
-                }
-            }
+                AddEdge(triangles[i], triangles[i + 1]);
+                AddEdge(triangles[i + 1], triangles[i + 2]);
+                AddEdge(triangles[i + 2], triangles[i]);
 
-            // 経線。三角形分割の対角線は含めない。
-            for (int x = 0; x < radial; x++)
-            {
-                float phi = Mathf.PI * 2f * x / radial;
-                for (int y = 0; y < latitude; y++)
+                void AddEdge(int a, int b)
                 {
-                    float t0 = Mathf.PI * y / latitude;
-                    float t1 = Mathf.PI * (y + 1) / latitude;
-                    AddWireEdge(SpherePoint(phi, t0), SpherePoint(phi, t1), radius);
+                    uint min = (uint)Mathf.Min(a, b);
+                    uint max = (uint)Mathf.Max(a, b);
+                    ulong key = ((ulong)min << 32) | max;
+                    if (edges.Add(key)) AddWireEdge(vertices[a], vertices[b], radius);
                 }
             }
         }
-
-        private static Vector3 SpherePoint(float phi, float theta) => new(
-            Mathf.Cos(phi) * Mathf.Sin(theta) * 0.5f,
-            Mathf.Cos(theta) * 0.5f,
-            Mathf.Sin(phi) * Mathf.Sin(theta) * 0.5f);
 
         private void AddWireEdge(Vector3 a, Vector3 b, float radius)
         {

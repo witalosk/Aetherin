@@ -16,7 +16,14 @@ namespace Aetherin
     /// </summary>
     public partial class CameraStage : StageBase
     {
-        public override IReadOnlyList<StageLayer> Layers => _layers;
+        public override IReadOnlyList<StageLayer> Layers
+        {
+            get
+            {
+                EnsureLayersInitialized();
+                return _layers;
+            }
+        }
         public int LayerRevision { get; private set; }
         public Camera StageCamera
         {
@@ -32,6 +39,7 @@ namespace Aetherin
         [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
         [SerializeField] private FontAssetLibrary _fontAssetLibrary;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
+        private bool _layersInitialized;
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
 
@@ -72,7 +80,13 @@ namespace Aetherin
                 .Where(layer => layer != null && layer.gameObject.activeSelf && layer.transform.parent == transform)
                 .ToArray();
             Array.Sort(_layers, (a, b) => a.Order.CompareTo(b.Order));
+            _layersInitialized = true;
             LayerRevision++;
+        }
+
+        private void EnsureLayersInitialized()
+        {
+            if (!_layersInitialized) RefreshLayers();
         }
 
         public void SetLayerVisible(int index, bool visible)
@@ -282,6 +296,7 @@ namespace Aetherin
 
         public List<CameraStageLayerSaveData> CaptureLayers()
         {
+            EnsureLayersInitialized();
             return _layers
                 .Select(CaptureLayer)
                 .ToList();

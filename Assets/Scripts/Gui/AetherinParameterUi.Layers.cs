@@ -211,11 +211,12 @@ namespace Aetherin
                 UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
                 UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
                 UI.DynamicElementIf(
-                    () => p.Primitive is Primitive3DType.Sphere or Primitive3DType.Cylinder,
+                    () => p.Primitive == Primitive3DType.Cylinder,
                     () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
                 UI.DynamicElementIf(
-                    () => p.Primitive == Primitive3DType.Sphere,
-                    () => UI.Field("Latitude Segments", () => p.LatitudeSegments, value => p.LatitudeSegments = value)),
+                    () => p.Primitive == Primitive3DType.Icosphere,
+                    () => UI.Field("Subdivisions", () => p.IcosphereSubdivisions,
+                        value => p.IcosphereSubdivisions = Math.Max(0, Math.Min(5, value)))),
                 Param("Size", p.Size),
                 UI.DynamicElementIf(
                     () => p.Primitive == Primitive3DType.RoundedBox,

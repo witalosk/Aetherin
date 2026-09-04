@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Aetherin
@@ -25,8 +26,8 @@ namespace Aetherin
                 case Primitive3DType.RoundedBox:
                     BuildRoundedBox();
                     break;
-                case Primitive3DType.Sphere:
-                    BuildSphere();
+                case Primitive3DType.Icosphere:
+                    BuildIcosphere();
                     break;
                 case Primitive3DType.Tetrahedron:
                     BuildTetrahedron();
@@ -161,40 +162,91 @@ namespace Aetherin
             AddTriangleOutward(b, d, c);
         }
 
-        private void BuildSphere()
+        private void BuildIcosphere()
         {
-            int radial = Mathf.Max(3, _params.RadialSegments);
-            int latitude = Mathf.Max(2, _params.LatitudeSegments);
-            EnsureCapacity(_vertices, (radial + 1) * (latitude + 1));
-            EnsureCapacity(_triangles, radial * latitude * 6);
+            BuildIcosphereTopology(
+                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5),
+                out List<Vector3> vertices,
+                out List<int> triangles);
+            EnsureCapacity(_vertices, vertices.Count);
+            EnsureCapacity(_uvs, vertices.Count);
+            EnsureCapacity(_triangles, triangles.Count);
 
-            for (int y = 0; y <= latitude; y++)
+            foreach (Vector3 vertex in vertices)
             {
-                float theta = Mathf.PI * y / latitude;
-                float ringRadius = Mathf.Sin(theta) * 0.5f;
-                float py = Mathf.Cos(theta) * 0.5f;
-                for (int x = 0; x <= radial; x++)
+                _vertices.Add(vertex);
+                Vector3 direction = vertex.normalized;
+                _uvs.Add(new Vector2(
+                    Mathf.Atan2(direction.z, direction.x) / (Mathf.PI * 2f) + 0.5f,
+                    Mathf.Asin(direction.y) / Mathf.PI + 0.5f));
+            }
+            _triangles.AddRange(triangles);
+        }
+
+        private static void BuildIcosphereTopology(
+            int subdivisions,
+            out List<Vector3> vertices,
+            out List<int> triangles)
+        {
+            float t = (1f + Mathf.Sqrt(5f)) * 0.5f;
+            var generatedVertices = new List<Vector3>
+            {
+                new(-1f, t, 0f), new(1f, t, 0f), new(-1f, -t, 0f), new(1f, -t, 0f),
+                new(0f, -1f, t), new(0f, 1f, t), new(0f, -1f, -t), new(0f, 1f, -t),
+                new(t, 0f, -1f), new(t, 0f, 1f), new(-t, 0f, -1f), new(-t, 0f, 1f),
+            };
+            for (int i = 0; i < generatedVertices.Count; i++)
+                generatedVertices[i] = generatedVertices[i].normalized * 0.5f;
+
+            var generatedTriangles = new List<int>
+            {
+                0, 11, 5, 0, 5, 1, 0, 1, 7, 0, 7, 10, 0, 10, 11,
+                1, 5, 9, 5, 11, 4, 11, 10, 2, 10, 7, 6, 7, 1, 8,
+                3, 9, 4, 3, 4, 2, 3, 2, 6, 3, 6, 8, 3, 8, 9,
+                4, 9, 5, 2, 4, 11, 6, 2, 10, 8, 6, 7, 9, 8, 1,
+            };
+
+            for (int subdivision = 0; subdivision < subdivisions; subdivision++)
+            {
+                var midpointCache = new Dictionary<ulong, int>();
+                var subdivided = new List<int>(generatedTriangles.Count * 4);
+
+                int Midpoint(int a, int b)
                 {
-                    float phi = Mathf.PI * 2f * x / radial;
-                    _vertices.Add(new Vector3(
-                        Mathf.Cos(phi) * ringRadius,
-                        py,
-                        Mathf.Sin(phi) * ringRadius));
-                    _uvs.Add(new Vector2(x / (float)radial, 1f - y / (float)latitude));
+                    uint min = (uint)Mathf.Min(a, b);
+                    uint max = (uint)Mathf.Max(a, b);
+                    ulong key = ((ulong)min << 32) | max;
+                    if (midpointCache.TryGetValue(key, out int cached)) return cached;
+
+                    int index = generatedVertices.Count;
+                    generatedVertices.Add(
+                        ((generatedVertices[a] + generatedVertices[b]) * 0.5f).normalized * 0.5f);
+                    midpointCache.Add(key, index);
+                    return index;
                 }
+
+                for (int i = 0; i < generatedTriangles.Count; i += 3)
+                {
+                    int a = generatedTriangles[i];
+                    int b = generatedTriangles[i + 1];
+                    int c = generatedTriangles[i + 2];
+                    int ab = Midpoint(a, b);
+                    int bc = Midpoint(b, c);
+                    int ca = Midpoint(c, a);
+                    subdivided.AddRange(new[]
+                    {
+                        a, ab, ca,
+                        b, bc, ab,
+                        c, ca, bc,
+                        ab, bc, ca,
+                    });
+                }
+
+                generatedTriangles = subdivided;
             }
 
-            int stride = radial + 1;
-            for (int y = 0; y < latitude; y++)
-            {
-                for (int x = 0; x < radial; x++)
-                {
-                    int a = y * stride + x;
-                    int b = a + stride;
-                    AddIndexedTriangleOutward(a, a + 1, b);
-                    AddIndexedTriangleOutward(a + 1, b + 1, b);
-                }
-            }
+            vertices = generatedVertices;
+            triangles = generatedTriangles;
         }
 
         private void BuildCylinder()

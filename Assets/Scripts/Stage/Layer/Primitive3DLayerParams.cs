@@ -7,7 +7,7 @@ namespace Aetherin
     {
         Cube,
         RoundedBox,
-        Sphere,
+        Icosphere,
         Tetrahedron,
         Cylinder,
     }
@@ -56,8 +56,8 @@ namespace Aetherin
         [Min(3)]
         public int RadialSegments = 32;
 
-        [Min(2)]
-        public int LatitudeSegments = 16;
+        [Range(0, 5)]
+        public int IcosphereSubdivisions = 2;
 
         public Primitive3DColorMode ColorMode;
         public PaletteColorSource ColorA = PaletteColorSource.AccentColor1;
