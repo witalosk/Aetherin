@@ -17,6 +17,12 @@ namespace Aetherin
         Bloom,
     }
 
+    public enum PostEffectControlMode
+    {
+        Fader,
+        OutputPad,
+    }
+
     /// <summary>
     /// リスト内で並べ替え・保存できるポストエフェクト1段分。
     /// パラメータは型ごとにUIで必要なものだけ表示する。
@@ -44,10 +50,22 @@ namespace Aetherin
         public string Name = "Deck";
         public bool Enabled = true;
         [Range(0f, 1f)] public FloatParameter Strength = new(1f);
+        [Tooltip("Faderは従来のCurrent / Next経路、Output Padは押下中だけ最終Outputへ適用")]
+        public PostEffectControlMode ControlMode;
         [Tooltip("このDeck全体の強度を0..1で操作するフェーダー")]
         public MidiCcBinding Fader = new();
+        [Tooltip("押している間だけ最終OutputへこのDeckを適用するPad")]
+        public MidiBinding OutputPad = new();
         [HideInInspector] public float CurrentFaderValue = 1f;
         public System.Collections.Generic.List<PostEffectModule> Modules = new();
+
+        public void EnsureInitialized()
+        {
+            Strength ??= new FloatParameter(1f);
+            Fader ??= new MidiCcBinding();
+            OutputPad ??= new MidiBinding();
+            Modules ??= new System.Collections.Generic.List<PostEffectModule>();
+        }
     }
 
     [Serializable]

@@ -33,6 +33,7 @@ namespace Aetherin
         {
             var deck = binder.Get();
             if (deck == null) return UI.Label("-");
+            deck.EnsureInitialized();
 
             return UI.Column(
                 UI.Row(
@@ -42,7 +43,13 @@ namespace Aetherin
                     UI.Slider("Strength", () => deck.Strength.BaseValue,
                         value => deck.Strength.BaseValue = value, 0f, 1f).SetFlexGrow(1f),
                     CreateModulationLauncher($"{deck.Name} Strength", deck.Strength.Modulation)),
-                UI.Field("Fader (CC)", Binder.Create(deck.Fader, typeof(MidiCcBinding))),
+                UI.Field("Control", () => deck.ControlMode, value => deck.ControlMode = value),
+                UI.DynamicElementIf(
+                    () => deck.ControlMode == PostEffectControlMode.Fader,
+                    () => UI.Field("Fader (CC)", Binder.Create(deck.Fader, typeof(MidiCcBinding)))),
+                UI.DynamicElementIf(
+                    () => deck.ControlMode == PostEffectControlMode.OutputPad,
+                    () => UI.Field("Output Pad (Hold)", Binder.Create(deck.OutputPad, typeof(MidiBinding)))),
                 UI.List("Modules",
                     () => deck.Modules,
                     value => deck.Modules = value,

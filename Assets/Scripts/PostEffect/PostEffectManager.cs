@@ -29,6 +29,7 @@ namespace Aetherin
         private Material _material;
         private StackRuntime _current = new();
         private StackRuntime _next = new();
+        private StackRuntime _output = new();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
 
@@ -64,6 +65,19 @@ namespace Aetherin
         }
 
         /// <summary>
+        /// クロスフェード後の最終Outputへ、Pad押下中のDeckだけを即時適用する。
+        /// 既存のCurrent / Nextのポストエフェクト経路とは別のパス。
+        /// </summary>
+        public Texture ProcessOutput(Texture source)
+        {
+            var context = new ModulationContext(
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+            _params ??= new PostEffectManagerParams();
+            _params.Next ??= new PostEffectStack();
+            return Process(source, _params.Next, _output, context, true);
+        }
+
+        /// <summary>
         /// フェーダー到達時に、編集対象だったNextをCurrentへ昇格する。
         /// PreviousFrameBlendの履歴も一緒に移し、新しいNextは履歴なしで開始する。
         /// </summary>
@@ -89,7 +103,12 @@ namespace Aetherin
             _next = new StackRuntime();
         }
 
-        private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context)
+        private Texture Process(
+            Texture source,
+            PostEffectStack stack,
+            StackRuntime runtime,
+            in ModulationContext context,
+            bool outputOnly = false)
         {
             if (source == null || _material == null || stack?.Decks == null)
                 return source;
@@ -102,12 +121,21 @@ namespace Aetherin
 
             foreach (var deck in stack.Decks)
             {
-                if (deck == null || !deck.Enabled || deck.Modules == null) continue;
+                if (deck == null || !deck.Enabled) continue;
+                deck.EnsureInitialized();
+                if (deck.Modules == null) continue;
+
+                bool isOutputPadDeck = deck.ControlMode == PostEffectControlMode.OutputPad;
+                if (outputOnly != isOutputPadDeck) continue;
+                if (outputOnly && deck.OutputPad?.IsNoteOn != true) continue;
 
                 float deckStrength = Mathf.Clamp01(deck.Strength?.Evaluate(context) ?? 1f);
-                deckStrength *= context.AllowMidi
-                    ? deck.Fader?.IsAssigned == true ? deck.Fader.GetValue(1f) : 1f
-                    : deck.CurrentFaderValue;
+                if (!outputOnly)
+                {
+                    deckStrength *= context.AllowMidi
+                        ? deck.Fader?.IsAssigned == true ? deck.Fader.GetValue(1f) : 1f
+                        : deck.CurrentFaderValue;
+                }
                 if (deckStrength <= 0f) continue;
 
                 foreach (var module in deck.Modules)
@@ -137,6 +165,11 @@ namespace Aetherin
                 Graphics.Blit(input, runtime.History);
                 runtime.HistoryValid = true;
             }
+            else if (outputOnly)
+            {
+                // Padを離した後に、前回の押下中の履歴を次回へ持ち越さない。
+                runtime.HistoryValid = false;
+            }
 
             return input;
         }
@@ -145,6 +178,7 @@ namespace Aetherin
         {
             _current.Dispose();
             _next.Dispose();
+            _output.Dispose();
             if (_material != null)
             {
                 if (Application.isPlaying) UnityEngine.Object.Destroy(_material);

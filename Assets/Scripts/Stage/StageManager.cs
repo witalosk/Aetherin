@@ -352,7 +352,8 @@ namespace Aetherin
             _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
             _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
             Graphics.Blit(null, _crossFadeTexture, _crossFadeMaterial);
-            Graphics.Blit(_crossFadeTexture, OutputTexture);
+            Texture outputTexture = _postEffectManager.ProcessOutput(_crossFadeTexture);
+            Graphics.Blit(outputTexture, OutputTexture);
 
             if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, _currentPostTexture);
             if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, _nextPostTexture);

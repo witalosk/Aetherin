@@ -6,6 +6,7 @@ namespace Aetherin
     {
         Texture ProcessCurrent(Texture source);
         Texture ProcessNext(Texture source);
+        Texture ProcessOutput(Texture source);
         void PromoteNextToCurrent();
     }
 }
