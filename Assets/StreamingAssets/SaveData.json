@@ -557,7 +557,7 @@
         "CameraWorkManualButton": {
           "_noteNumber": 3
         },
-        "CurrentStageIndex": 0,
+        "CurrentStageIndex": 2,
         "NextStageIndex": 2,
         "NextStageOffset": {
           "x": 0.0,
@@ -701,6 +701,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -769,6 +786,23 @@
                       }
                     },
                     "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.0,
@@ -869,6 +903,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -932,6 +983,23 @@
                       }
                     },
                     "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.0,
@@ -1102,6 +1170,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -1206,6 +1291,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -1279,13 +1381,13 @@
               {
                 "Type": "gpu-particle",
                 "Name": "GPU Particle Layer",
-                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":3,\"RenderBackend\":0,\"VfxGraphKey\":\"\",\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Capacity\":81920,\"Seed\":1,\"EmitterOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"EmitterSize\":{\"BaseValue\":{\"x\":200.0,\"y\":200.0,\"z\":200.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Lifetime\":{\"MinMaxPower\":{\"x\":6.0,\"y\":12.0,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"InitialSpeed\":{\"MinMaxPower\":{\"x\":0.20000000298023225,\"y\":0.30000001192092898,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"SimulationSpeed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"ParticleSize\":{\"MinMaxPower\":{\"x\":0.03500000014901161,\"y\":0.5,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"InitialRotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"RotationRandom\":{\"BaseValue\":{\"x\":360.0,\"y\":360.0,\"z\":360.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"AngularVelocity\":{\"BaseValue\":{\"x\":60.0,\"y\":60.0,\"z\":60.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"AngularVelocityRandom\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Shape\":3,\"Color\":{\"Mode\":2,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"Modules\":[{\"Enabled\":true,\"Type\":8,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.10000000149011612,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.5,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.9000000357627869,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":true,\"Type\":3,\"Strength\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":true,\"Type\":0,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":true,\"Type\":6,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":200.0,\"y\":200.0,\"z\":200.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0}]}",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":3,\"RenderBackend\":0,\"VfxGraphKey\":\"\",\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Capacity\":81920,\"Seed\":1,\"EmitterOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"EmitterSize\":{\"BaseValue\":{\"x\":200.0,\"y\":200.0,\"z\":200.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Lifetime\":{\"MinMaxPower\":{\"x\":12.0,\"y\":12.0,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"InitialSpeed\":{\"MinMaxPower\":{\"x\":0.20000000298023225,\"y\":0.30000001192092898,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"SimulationSpeed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"ParticleSize\":{\"MinMaxPower\":{\"x\":0.03500000014901161,\"y\":0.5,\"z\":1.0},\"Modulation\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"InitialRotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"RotationRandom\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"AngularVelocity\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"AngularVelocityRandom\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Shape\":3,\"Color\":{\"Mode\":2,\"Color\":2,\"GradientColorA\":2,\"GradientColorB\":3,\"RandomSeed\":22,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"Modules\":[{\"Enabled\":false,\"Type\":8,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.10000000149011612,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.5,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":0.9000000357627869,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":true,\"Type\":3,\"Strength\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":true,\"Type\":0,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":0.0,\"y\":-1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0},{\"Enabled\":false,\"Type\":6,\"Strength\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Vector\":{\"BaseValue\":{\"x\":200.0,\"y\":200.0,\"z\":200.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Axis\":{\"BaseValue\":{\"x\":0.0,\"y\":1.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Secondary\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"OverLifeCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":1.0,\"inSlope\":0.0,\"outSlope\":-1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":0.0,\"inSlope\":-1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"Target\":0}]}",
                 "Children": []
               },
               {
                 "Type": "primitive3d",
-                "Name": "Primitive 3D Layer",
-                "ParamsJson": "{\"Visible\":false,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":4,\"Primitive\":3,\"RenderMode\":0,\"MaterialMode\":1,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":30.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"CornerRadius\":{\"BaseValue\":0.15000000596046449,\"Modulation\":{\"Modulators\":[]}},\"CornerSegments\":6,\"RadialSegments\":32,\"IcosphereSubdivisions\":2,\"ColorMode\":0,\"ColorA\":2,\"ColorB\":1,\"PaletteRandomSeed\":0,\"ColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"GlassRefraction\":{\"BaseValue\":0.02500000037252903,\"Modulation\":{\"Modulators\":[]}},\"GlassTint\":{\"BaseValue\":0.20000000298023225,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelPower\":{\"BaseValue\":3.0,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelIntensity\":{\"BaseValue\":0.800000011920929,\"Modulation\":{\"Modulators\":[]}},\"GlassChromaticAberration\":{\"BaseValue\":0.0020000000949949028,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortion\":{\"BaseValue\":0.09000000357627869,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortionScale\":{\"BaseValue\":12.0,\"Modulation\":{\"Modulators\":[]}},\"WireColor\":2,\"WireWidth\":{\"BaseValue\":0.014999999664723874,\"Modulation\":{\"Modulators\":[]}},\"WireColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"WireAlpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvScale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"LightDirection\":{\"BaseValue\":{\"x\":0.30000001192092898,\"y\":0.800000011920929,\"z\":-0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ToonThreshold\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":28,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":4,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.8600000143051148,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":2.4100000858306886,\"Offset\":0.0,\"LfoFrequency\":0.019999999552965165,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":4.53000020980835,\"Offset\":0.0,\"LfoFrequency\":0.009999999776482582,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":1,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":3.5899999141693117,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
+                "Name": "PrismTetrahedron",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":4,\"Primitive\":3,\"RenderMode\":0,\"MaterialMode\":1,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":30.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"CornerRadius\":{\"BaseValue\":0.15000000596046449,\"Modulation\":{\"Modulators\":[]}},\"CornerSegments\":6,\"RadialSegments\":32,\"IcosphereSubdivisions\":2,\"ColorMode\":0,\"ColorA\":2,\"ColorB\":1,\"PaletteRandomSeed\":0,\"ColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"GlassRefraction\":{\"BaseValue\":0.02500000037252903,\"Modulation\":{\"Modulators\":[]}},\"GlassTint\":{\"BaseValue\":0.20000000298023225,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelPower\":{\"BaseValue\":3.0,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelIntensity\":{\"BaseValue\":0.800000011920929,\"Modulation\":{\"Modulators\":[]}},\"GlassChromaticAberration\":{\"BaseValue\":0.0020000000949949028,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortion\":{\"BaseValue\":0.09000000357627869,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortionScale\":{\"BaseValue\":12.0,\"Modulation\":{\"Modulators\":[]}},\"WireColor\":2,\"WireWidth\":{\"BaseValue\":0.014999999664723874,\"Modulation\":{\"Modulators\":[]}},\"WireColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"WireAlpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvScale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"LightDirection\":{\"BaseValue\":{\"x\":0.30000001192092898,\"y\":0.800000011920929,\"z\":-0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ToonThreshold\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":28,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":4,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.8600000143051148,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":2.4100000858306886,\"Offset\":0.0,\"LfoFrequency\":0.019999999552965165,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":4.53000020980835,\"Offset\":0.0,\"LfoFrequency\":0.009999999776482582,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":1,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":3.5899999141693117,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
                 "Children": []
               },
               {
@@ -1316,7 +1418,7 @@
               {
                 "Type": "primitive3d",
                 "Name": "Primitive 3D Layer",
-                "ParamsJson": "{\"Visible\":false,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":8,\"Primitive\":0,\"RenderMode\":0,\"MaterialMode\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":360.0,\"Offset\":0.0,\"LfoFrequency\":0.019999999552965165,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":0.5,\"y\":0.5,\"z\":0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"CornerRadius\":{\"BaseValue\":0.15000000596046449,\"Modulation\":{\"Modulators\":[]}},\"CornerSegments\":6,\"RadialSegments\":32,\"IcosphereSubdivisions\":2,\"ColorMode\":0,\"ColorA\":3,\"ColorB\":3,\"PaletteRandomSeed\":0,\"ColorIntensity\":{\"BaseValue\":1.2899999618530274,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Metallic\":{\"BaseValue\":0.6499999761581421,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.25,\"Modulation\":{\"Modulators\":[]}},\"GlassRefraction\":{\"BaseValue\":0.02500000037252903,\"Modulation\":{\"Modulators\":[]}},\"GlassTint\":{\"BaseValue\":0.20000000298023225,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelPower\":{\"BaseValue\":3.0,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelIntensity\":{\"BaseValue\":0.800000011920929,\"Modulation\":{\"Modulators\":[]}},\"GlassChromaticAberration\":{\"BaseValue\":0.0020000000949949028,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortion\":{\"BaseValue\":0.003000000026077032,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortionScale\":{\"BaseValue\":12.0,\"Modulation\":{\"Modulators\":[]}},\"WireColor\":2,\"WireWidth\":{\"BaseValue\":0.014999999664723874,\"Modulation\":{\"Modulators\":[]}},\"WireColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"WireAlpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvScale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"LightDirection\":{\"BaseValue\":{\"x\":0.30000001192092898,\"y\":0.800000011920929,\"z\":-0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ToonThreshold\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":13,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":4,\"Columns\":{\"BaseValue\":0,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":16.700000762939454,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.0,\"y\":10.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":2,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":8,\"Primitive\":0,\"RenderMode\":0,\"MaterialMode\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":360.0,\"Offset\":0.0,\"LfoFrequency\":0.019999999552965165,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"BeatPulseSharpness\":3.0,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":0.5,\"y\":0.5,\"z\":0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"CornerRadius\":{\"BaseValue\":0.15000000596046449,\"Modulation\":{\"Modulators\":[]}},\"CornerSegments\":6,\"RadialSegments\":32,\"IcosphereSubdivisions\":2,\"ColorMode\":0,\"ColorA\":3,\"ColorB\":3,\"PaletteRandomSeed\":0,\"ColorIntensity\":{\"BaseValue\":1.2899999618530274,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Metallic\":{\"BaseValue\":0.6499999761581421,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.25,\"Modulation\":{\"Modulators\":[]}},\"GlassRefraction\":{\"BaseValue\":0.02500000037252903,\"Modulation\":{\"Modulators\":[]}},\"GlassTint\":{\"BaseValue\":0.20000000298023225,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelPower\":{\"BaseValue\":3.0,\"Modulation\":{\"Modulators\":[]}},\"GlassFresnelIntensity\":{\"BaseValue\":0.800000011920929,\"Modulation\":{\"Modulators\":[]}},\"GlassChromaticAberration\":{\"BaseValue\":0.0020000000949949028,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortion\":{\"BaseValue\":0.003000000026077032,\"Modulation\":{\"Modulators\":[]}},\"GlassDistortionScale\":{\"BaseValue\":12.0,\"Modulation\":{\"Modulators\":[]}},\"WireColor\":2,\"WireWidth\":{\"BaseValue\":0.014999999664723874,\"Modulation\":{\"Modulators\":[]}},\"WireColorIntensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"WireAlpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvScale\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UvOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"LightDirection\":{\"BaseValue\":{\"x\":0.30000001192092898,\"y\":0.800000011920929,\"z\":-0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ToonThreshold\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":13,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":4,\"Columns\":{\"BaseValue\":0,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":16.700000762939454,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.0,\"y\":10.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":2,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
                 "Children": []
               }
             ],
@@ -1326,7 +1428,7 @@
                 "Recipes": [
                   {
                     "Name": "Camera Work 1",
-                    "Type": 0,
+                    "Type": 3,
                     "Position": {
                       "BaseValue": {
                         "x": 0.0,
@@ -1348,6 +1450,23 @@
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.5,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
                         "z": 0.0
                       },
                       "ApplyXModulationToAllAxes": false,
@@ -1385,7 +1504,7 @@
                       }
                     },
                     "Speed": {
-                      "BaseValue": 1.0,
+                      "BaseValue": 0.10000000149011612,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -1397,7 +1516,7 @@
                       }
                     },
                     "NoiseAmount": {
-                      "BaseValue": 0.0,
+                      "BaseValue": 1.7400000095367432,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -1457,6 +1576,23 @@
                             "AccumulatorTransitionSharpness": 3.0
                           }
                         ]
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
                       },
                       "YModulation": {
                         "Modulators": []
@@ -1569,6 +1705,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -1660,6 +1813,23 @@
                       "BaseValue": {
                         "x": -0.93000000715255737,
                         "y": 0.079999998211860657,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
                         "z": 0.0
                       },
                       "ApplyXModulationToAllAxes": false,
@@ -1777,6 +1947,23 @@
                         "Modulators": []
                       }
                     },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
                     "OrbitRotation": {
                       "BaseValue": {
                         "x": 0.0,
@@ -1808,6 +1995,152 @@
                     },
                     "Radius": {
                       "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  },
+                  {
+                    "Name": "Camera Work 6",
+                    "Type": 1,
+                    "Position": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 0,
+                            "Operation": 0,
+                            "Amount": 0.5,
+                            "Offset": 0.0,
+                            "LfoFrequency": 0.10000000149011612,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "BeatPulseSharpness": 3.0,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": -75.300003051757813,
+                        "z": 90.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 6,
+                            "Operation": 0,
+                            "Amount": 67.4000015258789,
+                            "Offset": 0.0,
+                            "LfoFrequency": 1.0,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "BeatPulseSharpness": 3.0,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FieldOfView": {
+                      "BaseValue": 90.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 3.5999999046325684,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -1883,7 +2216,7 @@
               "Name": "Deck",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.15299999713897705,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -1907,7 +2240,7 @@
                     }
                   },
                   "Amount": {
-                    "BaseValue": 0.05000000074505806,
+                    "BaseValue": 0.019999999552965164,
                     "Modulation": {
                       "Modulators": [
                         {
@@ -1962,7 +2295,7 @@
               "Name": "Blend",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.0,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -2016,7 +2349,7 @@
               "Name": "Bloom",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.0,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -2028,7 +2361,7 @@
               "OutputPad": {
                 "_noteNumber": -1
               },
-              "CurrentFaderValue": 0.0,
+              "CurrentFaderValue": 1.0,
               "Modules": [
                 {
                   "Enabled": true,
@@ -2101,7 +2434,7 @@
               ]
             },
             {
-              "Name": "Deck",
+              "Name": "Distortion",
               "Enabled": true,
               "Strength": {
                 "BaseValue": 1.0,
@@ -2114,7 +2447,7 @@
                 "_ccNumber": 53
               },
               "OutputPad": {
-                "_noteNumber": -1
+                "_noteNumber": 112
               },
               "CurrentFaderValue": 0.0,
               "Modules": [
@@ -2122,19 +2455,19 @@
                   "Enabled": true,
                   "Type": 2,
                   "Strength": {
-                    "BaseValue": 1.0,
+                    "BaseValue": 0.99000000953674316,
                     "Modulation": {
                       "Modulators": []
                     }
                   },
                   "Amount": {
-                    "BaseValue": 0.019999999552965164,
+                    "BaseValue": 0.15999999642372131,
                     "Modulation": {
                       "Modulators": []
                     }
                   },
                   "Scale": {
-                    "BaseValue": 4.0,
+                    "BaseValue": 7.0999999046325684,
                     "Modulation": {
                       "Modulators": []
                     }
@@ -2162,7 +2495,7 @@
               "Name": "Deck",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.15299999713897705,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -2186,7 +2519,7 @@
                     }
                   },
                   "Amount": {
-                    "BaseValue": 0.05000000074505806,
+                    "BaseValue": 0.019999999552965164,
                     "Modulation": {
                       "Modulators": [
                         {
@@ -2241,7 +2574,7 @@
               "Name": "Blend",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.0,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -2295,7 +2628,7 @@
               "Name": "Bloom",
               "Enabled": true,
               "Strength": {
-                "BaseValue": 1.0,
+                "BaseValue": 0.0,
                 "Modulation": {
                   "Modulators": []
                 }
@@ -2380,7 +2713,7 @@
               ]
             },
             {
-              "Name": "Deck",
+              "Name": "Distortion",
               "Enabled": true,
               "Strength": {
                 "BaseValue": 1.0,
@@ -2393,7 +2726,7 @@
                 "_ccNumber": 53
               },
               "OutputPad": {
-                "_noteNumber": -1
+                "_noteNumber": 112
               },
               "CurrentFaderValue": 1.0,
               "Modules": [
@@ -2401,19 +2734,19 @@
                   "Enabled": true,
                   "Type": 2,
                   "Strength": {
-                    "BaseValue": 1.0,
+                    "BaseValue": 0.99000000953674316,
                     "Modulation": {
                       "Modulators": []
                     }
                   },
                   "Amount": {
-                    "BaseValue": 0.019999999552965164,
+                    "BaseValue": 0.15999999642372131,
                     "Modulation": {
                       "Modulators": []
                     }
                   },
                   "Scale": {
-                    "BaseValue": 4.0,
+                    "BaseValue": 7.0999999046325684,
                     "Modulation": {
                       "Modulators": []
                     }

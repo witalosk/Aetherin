@@ -461,22 +461,23 @@ namespace Aetherin
 
         private void UpdateCameraWorkButtons()
         {
-            CameraStage stage = null;
-            if (_nextStages != null && _nextStages.Count > 0)
-            {
-                int stageIndex = Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1);
-                stage = _nextStages[stageIndex] as CameraStage;
-            }
+            CameraStage nextStage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            CameraStage currentStage = GetCameraStage(_currentStages, _params.CurrentStageIndex);
 
             _params.CameraWorkDeckButtons ??= new List<MidiBinding>();
             for (int i = 0; i < _params.CameraWorkDeckButtons.Count; i++)
             {
                 MidiBinding button = _params.CameraWorkDeckButtons[i];
                 if (button == null) continue;
-                bool available = stage != null && i < stage.CameraWorkDecks.Count;
+                bool available = nextStage != null && i < nextStage.CameraWorkDecks.Count;
                 if (!available) { button.ClearLed(); continue; }
-                if (button.WasNoteOn) stage.SelectCameraWorkDeck(i);
-                button.SetLed(i == stage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
+                if (button.WasNoteOn)
+                {
+                    nextStage.SelectCameraWorkDeck(i);
+                    if (currentStage != null && i < currentStage.CameraWorkDecks.Count)
+                        currentStage.SelectCameraWorkDeck(i);
+                }
+                button.SetLed(i == nextStage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
             }
 
             _params.CameraWorkTimingButtons ??= new List<MidiBinding>();
@@ -494,11 +495,18 @@ namespace Aetherin
             }
 
             _params.CameraWorkManualButton ??= new MidiBinding();
-            if (_params.CameraWorkManualButton.WasNoteOn && stage != null)
+            if (_params.CameraWorkManualButton.WasNoteOn)
             {
-                stage.AdvanceCameraWork();
+                nextStage?.AdvanceCameraWork();
+                currentStage?.AdvanceCameraWork();
             }
             _params.CameraWorkManualButton.SetLed(_params.CameraWorkManualButton.WasNoteOn ? Color.yellow * 0.5f : Color.yellow * 0.25f);
+        }
+
+        private static CameraStage GetCameraStage(IReadOnlyList<StageBase> stages, int selectedIndex)
+        {
+            if (stages == null || stages.Count == 0) return null;
+            return stages[Mathf.Clamp(selectedIndex, 0, stages.Count - 1)] as CameraStage;
         }
 
         /// <summary>
@@ -836,6 +844,7 @@ namespace Aetherin
         {
             yield return UI.Field("Position", Binder.Create(recipe.Position, typeof(Vector3Parameter)));
             yield return UI.Field("Look At", Binder.Create(recipe.LookAt, typeof(Vector3Parameter)));
+            yield return UI.Field("Aim Rotation", Binder.Create(recipe.AimRotation, typeof(Vector3Parameter)));
             if (recipe.Type == CameraWorkType.Orbit)
                 yield return UI.Field("Orbit Rotation", Binder.Create(recipe.OrbitRotation, typeof(Vector3Parameter)));
             yield return UI.Field("Field Of View", Binder.Create(recipe.FieldOfView, typeof(FloatParameter)));

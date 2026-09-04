@@ -29,6 +29,8 @@ namespace Aetherin
         public CameraWorkType Type;
         public Vector3Parameter Position = new(Vector3.zero);
         public Vector3Parameter LookAt = new(Vector3.zero);
+        [Tooltip("中心を見る姿勢を基準に、カメラのローカル軸で加える回転。Y ±90°で周回の接線方向、Y 180°で外側を向く")]
+        public Vector3Parameter AimRotation = new(Vector3.zero);
         public Vector3Parameter OrbitRotation = new(Vector3.zero);
         public FloatParameter FieldOfView = new(60f);
         public FloatParameter Speed = new(1f);
@@ -39,6 +41,7 @@ namespace Aetherin
         {
             Position ??= new Vector3Parameter(Vector3.zero);
             LookAt ??= new Vector3Parameter(Vector3.zero);
+            AimRotation ??= new Vector3Parameter(Vector3.zero);
             OrbitRotation ??= new Vector3Parameter(Vector3.zero);
             FieldOfView ??= new FloatParameter(60f);
             Speed ??= new FloatParameter(1f);
@@ -78,8 +81,8 @@ namespace Aetherin
 
         private CinemachineBrain _cinemachineBrain;
         private CinemachineCamera _cinemachineCamera;
-        private int _selectedCameraWorkDeck;
-        private int _currentCameraWork;
+        [SerializeField] private int _selectedCameraWorkDeck;
+        [SerializeField] private int _currentCameraWork;
         private Vector3 _followPosition;
         private bool _followInitialized;
         private Vector3 _baseCameraLocalPosition;
@@ -128,7 +131,7 @@ namespace Aetherin
             _cinemachineCamera.Priority = 100;
             _cinemachineCamera.enabled = false;
             ApplyCinemachineChannel();
-            ResetCameraWork();
+            _followInitialized = false;
         }
 
         private void ApplyCinemachineChannel()
@@ -201,9 +204,10 @@ namespace Aetherin
             Vector3 worldPosition = transform.TransformPoint(position);
             Vector3 worldLookAt = transform.TransformPoint(lookAt);
             Vector3 direction = worldLookAt - worldPosition;
-            Quaternion rotation = direction.sqrMagnitude > 0.000001f
+            Quaternion centerRotation = direction.sqrMagnitude > 0.000001f
                 ? Quaternion.LookRotation(direction, transform.up)
                 : transform.rotation;
+            Quaternion rotation = centerRotation * Quaternion.Euler(recipe.AimRotation.Evaluate(context));
             _cinemachineCamera.transform.SetPositionAndRotation(worldPosition, rotation);
 
             LensSettings lens = _cinemachineCamera.Lens;
