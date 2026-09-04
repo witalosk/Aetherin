@@ -318,16 +318,15 @@
       "url": "https://registry.npmjs.com"
     },
     "jp.keijiro.minis": {
-      "version": "1.3.2",
+      "version": "file:Minis",
       "depth": 0,
-      "source": "registry",
+      "source": "embedded",
       "dependencies": {
         "jp.keijiro.rtmidi": "2.2.0",
         "com.unity.inputsystem": "1.0.1",
         "com.unity.mathematics": "1.3.2",
         "com.unity.burst": "1.8.21"
-      },
-      "url": "https://registry.npmjs.com"
+      }
     },
     "jp.keijiro.rtmidi": {
       "version": "2.2.0",

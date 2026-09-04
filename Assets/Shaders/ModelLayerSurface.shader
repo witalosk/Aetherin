@@ -15,6 +15,8 @@ Shader "Aetherin/Model Layer Surface"
         Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Opaque" }
         Pass
         {
+            Name "ModelLayerSurface"
+            Tags { "LightMode"="UniversalForward" }
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             HLSLPROGRAM
@@ -44,6 +46,60 @@ Shader "Aetherin/Model Layer Surface"
                 float light = 0.35 + 0.65 * saturate(dot(normalize(i.normalWS), normalize(float3(0.3,0.8,-0.5))));
                 color.rgb *= light;
                 return color;
+            }
+            ENDHLSL
+        }
+
+        // Forward+ SSR traces against the camera depth and this DepthNormals buffer.
+        // Without this pass ModelLayer is visible in the main pass but cannot be hit by SSR.
+        Pass
+        {
+            Name "DepthNormals"
+            Tags { "LightMode"="DepthNormals" }
+
+            Cull Back
+            ZTest LEqual
+            ZWrite On
+
+            HLSLPROGRAM
+            #pragma vertex DepthNormalsVert
+            #pragma fragment DepthNormalsFrag
+            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+
+            struct DepthNormalsAttributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS : NORMAL;
+            };
+
+            struct DepthNormalsVaryings
+            {
+                float4 positionCS : SV_POSITION;
+                float3 normalWS : TEXCOORD0;
+            };
+
+            DepthNormalsVaryings DepthNormalsVert(DepthNormalsAttributes input)
+            {
+                DepthNormalsVaryings output;
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
+                return output;
+            }
+
+            half4 DepthNormalsFrag(DepthNormalsVaryings input) : SV_Target
+            {
+                float3 normalWS = NormalizeNormalPerPixel(input.normalWS);
+                half4 output;
+#if defined(_GBUFFER_NORMALS_OCT)
+                float2 octNormalWS = PackNormalOctQuadEncode(normalWS);
+                output = half4(PackFloat2To888(saturate(octNormalWS * 0.5 + 0.5)), 0.5);
+#else
+                output = half4(normalWS, 0.5);
+#endif
+                return output;
             }
             ENDHLSL
         }

@@ -62,7 +62,13 @@ namespace Aetherin
             }
 
             _camera.targetTexture = OutputTexture;
-            _camera.GetUniversalAdditionalCameraData().requiresColorOption = CameraOverrideOption.On;
+            UniversalAdditionalCameraData cameraData = _camera.GetUniversalAdditionalCameraData();
+            cameraData.requiresColorOption = CameraOverrideOption.On;
+            // Current / NextはそれぞれこのカメラでRenderTextureへ描画するため、
+            // URPのPost Processingを明示的に有効にしないとGlobal Volumeが評価されない。
+            cameraData.renderPostProcessing = true;
+            cameraData.volumeLayerMask = ~0;
+            cameraData.volumeTrigger = _camera.transform;
             InitializeCameraWork();
             RefreshLayers();
         }

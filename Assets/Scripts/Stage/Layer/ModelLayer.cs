@@ -63,6 +63,7 @@ namespace Aetherin
             _stage = GetComponentInParent<StageBase>();
             if (_surfaceShader == null) _surfaceShader = Shader.Find("Aetherin/Model Layer Surface");
             if (_wireShader == null) _wireShader = Shader.Find("Aetherin/Model Layer Wire");
+            RemoveCopiedModelInstances();
             EnsureModel();
             EvaluateAndApply();
         }
@@ -116,6 +117,24 @@ namespace Aetherin
                 renderer.sharedMaterials = BuildMaterialArray(renderer.sharedMaterials.Length, material);
                 _materials.Add(material);
                 CreateWireRenderer(renderer);
+            }
+        }
+
+        // StageManagerはStage全体をInstantiateしてSwap後のNextを作る。
+        // この実行時生成モデルも子として複製される一方、_modelInstanceは非シリアライズなので
+        // 複製先ではnullとなり、EnsureModelがさらに1個生成してしまう。複製された子を除去して
+        // 新しいStage専用のモデルだけを生成する。
+        private void RemoveCopiedModelInstances()
+        {
+            if (_modelInstance != null) return;
+
+            for (int index = transform.childCount - 1; index >= 0; index--)
+            {
+                Transform child = transform.GetChild(index);
+                if (!child.name.StartsWith("Model (")) continue;
+
+                child.gameObject.SetActive(false);
+                DestroyRuntimeObject(child.gameObject);
             }
         }
 

@@ -27,6 +27,7 @@ namespace Aetherin
             Load();
         }
 
+        [ContextMenu("Save")]
         public void Save(string path = null)
         {
             path ??= GetDefaultPath();
@@ -80,6 +81,7 @@ namespace Aetherin
             File.WriteAllText(path, saveData.ToString(Formatting.Indented));
         }
 
+        [ContextMenu("Load")]
         public void Load(string path = null)
         {
             path ??= GetDefaultPath();

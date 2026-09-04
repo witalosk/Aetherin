@@ -24,7 +24,7 @@ namespace Aetherin
         public bool Visible = true;
 
         public FloatParameter Opacity = new(1f);
-        public LayerBlendMode BlendMode = LayerBlendMode.Transparent;
+        public LayerBlendMode BlendMode = LayerBlendMode.Opaque;
 
         [Tooltip("CameraStage 内での描画順。大きい値ほど手前に描画されます")]
         public int Order;

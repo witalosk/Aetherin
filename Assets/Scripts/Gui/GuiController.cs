@@ -56,7 +56,7 @@ namespace Aetherin
                 UI.Window(uiTarget.gameObject.name, UI.Column(
                     UI.Field("Params", Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).SetOpenFlag(!uiTarget.FoldParams),
                     uiTarget.AdditiveUi()
-                ))
+                )).SetClosable(false)
             );
         }
 
