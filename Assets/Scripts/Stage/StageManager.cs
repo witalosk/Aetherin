@@ -337,6 +337,7 @@ namespace Aetherin
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
 
             UpdateStageSelect();
+            UpdateStageActivity();
             UpdateLayerToggleButtons();
             UpdateCameraWorkButtons();
 
@@ -357,6 +358,30 @@ namespace Aetherin
 
             if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, _currentPostTexture);
             if (_nextPreviewRenderer != null) _nextPreviewRenderer.material.SetTexture(MainTexId, _nextPostTexture);
+        }
+
+        /// <summary>
+        /// 同じデッキ内の別ステージが選択中ステージのカメラへ映り込まないよう、
+        /// Current / Next それぞれで選択中のステージだけを有効にする。
+        /// 特にランタイム追加ステージは同じスロット位置から生成されるため、この分離が必要。
+        /// </summary>
+        private void UpdateStageActivity()
+        {
+            SetOnlySelectedStageActive(_currentStages, _params.CurrentStageIndex);
+            SetOnlySelectedStageActive(_nextStages, _params.NextStageIndex);
+        }
+
+        private static void SetOnlySelectedStageActive(IReadOnlyList<StageBase> stages, int selectedIndex)
+        {
+            if (stages == null || stages.Count == 0) return;
+            selectedIndex = Mathf.Clamp(selectedIndex, 0, stages.Count - 1);
+
+            for (int i = 0; i < stages.Count; i++)
+            {
+                StageBase stage = stages[i];
+                if (stage != null && stage.gameObject.activeSelf != (i == selectedIndex))
+                    stage.gameObject.SetActive(i == selectedIndex);
+            }
         }
 
         /// <summary>
@@ -544,6 +569,7 @@ namespace Aetherin
             // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
             _currentState.CopyFrom(NextState);
             _postEffectManager.PromoteNextToCurrent();
+            UpdateStageActivity();
 
             _deckRevision++;
         }
@@ -678,7 +704,7 @@ namespace Aetherin
                 int stageIndex = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
 
                 return UI.Row(
-                    UI.Field(null, () => GetStageDisplayName(_stages[stageIndex], stageIndex), value => RenameCameraStage(stageNames[stageIndex], value)).SetFlexGrow(1f),
+                    UI.Field(null, () => GetStageDisplayName(_stages[stageIndex], stageIndex), value => RenameCameraStage(_stages[stageIndex].StageId, value)).SetFlexGrow(1f),
                     UI.Button("Duplicate", () => DuplicateCameraStage(_stages[stageIndex].StageId)),
                     UI.Button("Delete", () => RemoveCameraStage(_stages[stageIndex].StageId))
                 ).SetBackgroundColor(Color.black * 0.5f);

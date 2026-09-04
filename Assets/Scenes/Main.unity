@@ -805,7 +805,8 @@ MonoBehaviour:
     LayerToggleButtons: []
     CameraWorkDeckButtons: []
     CameraWorkTimingButtons: []
-    CameraWorkTiming: 0
+    CameraWorkManualButton:
+      _noteNumber: -1
     CurrentStageIndex: 0
     NextStageIndex: 0
     NextStageOffset: {x: 0, y: 1000, z: 0}
@@ -1372,6 +1373,7 @@ MonoBehaviour:
   _params:
     MainTapKey: 40
     SubTapKey: 38
+    PlayStopKey: 1
     EstimateBeatsPerBar: 1
     BeatsPerBar: 4
     MaxBeatsPerBar: 8

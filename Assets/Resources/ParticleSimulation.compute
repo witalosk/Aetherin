@@ -267,8 +267,12 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     else if (_ModuleType == 6) // Wrap bounds
     {
         float3 size = max(abs(_Vector), 0.0001);
-        particle.position = _EmitterOffset +
-            fmod(particle.position - _EmitterOffset + size * 0.5 + size * 8.0, size) - size * 0.5;
+        float3 relative = particle.position - _EmitterOffset + size * 0.5;
+        // HLSL fmod keeps the dividend's sign. The previous fixed +8-cell offset
+        // therefore stopped wrapping particles that travelled farther in the
+        // negative direction, allowing them to reach and cross the camera.
+        relative -= floor(relative / size) * size;
+        particle.position = _EmitterOffset + relative - size * 0.5;
     }
     else if (_ModuleType == 7) // Color / opacity over life
     {
