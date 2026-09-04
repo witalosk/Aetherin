@@ -22,9 +22,12 @@ namespace Aetherin
         private Vector3[][] _baseVertices;
         private Color32[][] _baseColors;
         private int _layoutHash;
+        private CameraStage _cameraStage;
+        private string _loadedFontAssetKey;
         private string _loadedFontFamily;
         private string _loadedFontStyle;
         private string _fontRequestKey;
+        private bool _ownsFontAsset;
 
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
@@ -72,8 +75,13 @@ namespace Aetherin
         private void Initialize()
         {
             _stage = GetComponentInParent<StageBase>();
+            _cameraStage = GetComponentInParent<CameraStage>();
             _params ??= new TextLayerParams();
             _params.EnsureInitialized();
+            _params.GetAvailableFontAssetKeys = _cameraStage != null ? _cameraStage.GetFontAssetKeys : null;
+            var keys = _params.GetAvailableFontAssetKeys?.Invoke();
+            if (string.IsNullOrWhiteSpace(_params.FontAssetKey) && keys != null && keys.Count > 0)
+                _params.FontAssetKey = keys[0];
             _text = GetComponent<TextMeshPro>();
             _fontRequestKey = null;
             EnsureFont();
@@ -99,13 +107,35 @@ namespace Aetherin
         private void EnsureFont()
         {
             if (_text == null) return;
+            _cameraStage ??= GetComponentInParent<CameraStage>();
+
+            string assetKey = _params.FontAssetKey?.Trim();
+            if (!string.IsNullOrWhiteSpace(assetKey))
+            {
+                TMP_FontAsset libraryFontAsset = _cameraStage?.ResolveFontAsset(assetKey);
+                string libraryRequestKey = $"asset\n{assetKey}";
+                if (_fontAsset != null && !_ownsFontAsset && _loadedFontAssetKey == assetKey &&
+                    _fontAsset == libraryFontAsset) return;
+                if (_fontAsset == null && _fontRequestKey == libraryRequestKey) return;
+
+                ReleaseFontResources();
+                _loadedFontAssetKey = assetKey;
+                _fontRequestKey = libraryRequestKey;
+                _fontAsset = libraryFontAsset;
+                _ownsFontAsset = false;
+                ApplyFontAsset();
+                return;
+            }
+
             string family = string.IsNullOrWhiteSpace(_params.FontFamily) ? "Arial" : _params.FontFamily.Trim();
             string style = string.IsNullOrWhiteSpace(_params.FontStyle) ? "Regular" : _params.FontStyle.Trim();
-            if (_fontAsset != null && _loadedFontFamily == family && _loadedFontStyle == style) return;
+            if (_fontAsset != null && _ownsFontAsset && _loadedFontAssetKey == null &&
+                _loadedFontFamily == family && _loadedFontStyle == style) return;
             string requestKey = $"{family}\n{style}";
             if (_fontAsset == null && _fontRequestKey == requestKey) return;
 
             ReleaseFontResources();
+            _loadedFontAssetKey = null;
             _loadedFontFamily = family;
             _loadedFontStyle = style;
             _fontRequestKey = requestKey;
@@ -113,6 +143,7 @@ namespace Aetherin
             try
             {
                 _fontAsset = TMP_FontAsset.CreateFontAsset(family, style, 90);
+                _ownsFontAsset = _fontAsset != null;
                 if (_fontAsset == null)
                 {
                     _sourceFont = Font.CreateDynamicFontFromOSFont(family, 90);
@@ -120,6 +151,7 @@ namespace Aetherin
                     {
                         _sourceFont.hideFlags = HideFlags.HideAndDontSave;
                         _fontAsset = TMP_FontAsset.CreateFontAsset(_sourceFont);
+                        _ownsFontAsset = _fontAsset != null;
                     }
                 }
             }
@@ -128,8 +160,13 @@ namespace Aetherin
                 Debug.LogWarning($"[TextLayer] OS font '{family} {style}' could not be loaded: {exception.Message}", this);
             }
 
+            ApplyFontAsset();
+        }
+
+        private void ApplyFontAsset()
+        {
             if (_fontAsset == null) return;
-            _fontAsset.hideFlags = HideFlags.HideAndDontSave;
+            if (_ownsFontAsset) _fontAsset.hideFlags = HideFlags.HideAndDontSave;
             _fontAsset.TryAddCharacters(_params.Text ?? string.Empty, out _);
             _text.font = _fontAsset;
             _material = new Material(_fontAsset.material) { hideFlags = HideFlags.HideAndDontSave };
@@ -338,12 +375,21 @@ namespace Aetherin
 
         private void ReleaseFontResources()
         {
+            if (_text != null)
+            {
+                _text.font = null;
+                _text.fontSharedMaterial = null;
+            }
             DestroyResource(_material);
-            DestroyResource(_fontAsset);
+            if (_ownsFontAsset) DestroyResource(_fontAsset);
             DestroyResource(_sourceFont);
             _material = null;
             _fontAsset = null;
             _sourceFont = null;
+            _ownsFontAsset = false;
+            _loadedFontAssetKey = null;
+            _loadedFontFamily = null;
+            _loadedFontStyle = null;
             _baseVertices = null;
             _baseColors = null;
             _layoutHash = 0;

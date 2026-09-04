@@ -76,6 +76,8 @@ namespace Aetherin
     public sealed class TextLayerParams : StageLayerParams
     {
         [TextArea] public string Text = "Aetherin";
+        [Tooltip("CameraStageのFont Asset Libraryに登録したキー")]
+        public string FontAssetKey;
         [Tooltip("OSにインストールされたフォントファミリー名")]
         public string FontFamily = "Arial";
         public string FontStyle = "Regular";
@@ -113,6 +115,8 @@ namespace Aetherin
                 },
             },
         };
+
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableFontAssetKeys;
 
         public void EnsureInitialized()
         {

@@ -12,6 +12,17 @@ namespace Aetherin
             if (p == null) return UI.Label("-");
             p.EnsureInitialized();
 
+            var fontAssetKeys = p.GetAvailableFontAssetKeys?.Invoke();
+            Element fontSelector = fontAssetKeys != null && fontAssetKeys.Count > 0
+                ? UI.Dropdown("Font Asset", () =>
+                    {
+                        int index = -1;
+                        for (int i = 0; i < fontAssetKeys.Count; i++)
+                            if (fontAssetKeys[i] == p.FontAssetKey) { index = i; break; }
+                        return index < 0 ? 0 : index;
+                    }, value => p.FontAssetKey = fontAssetKeys[value], fontAssetKeys)
+                : UI.Field("Font Asset Key", () => p.FontAssetKey, value => p.FontAssetKey = value);
+
             var animatorListOption = new ListViewOption(
                     reorderable: true, fixedSize: false, header: true, suppressAutoIndent: true)
                 .OfType(p.Animators)
@@ -23,9 +34,12 @@ namespace Aetherin
                 Param("Opacity", p.Opacity),
                 UI.Field("Order", () => p.Order, value => p.Order = value),
                 UI.Field("Text", () => p.Text, value => p.Text = value),
-                UI.Row(
-                    UI.Field("Font", () => p.FontFamily, value => p.FontFamily = value).SetFlexGrow(1f),
-                    UI.Field("Style", () => p.FontStyle, value => p.FontStyle = value).SetFlexGrow(1f)),
+                fontSelector,
+                UI.DynamicElementIf(
+                    () => string.IsNullOrWhiteSpace(p.FontAssetKey),
+                    () => UI.Row(
+                        UI.Field("Font Family", () => p.FontFamily, value => p.FontFamily = value).SetFlexGrow(1f),
+                        UI.Field("Style", () => p.FontStyle, value => p.FontStyle = value).SetFlexGrow(1f))),
                 Param("Font Size", p.FontSize),
                 Param("Character Spacing", p.CharacterSpacing),
                 Param("Word Spacing", p.WordSpacing),

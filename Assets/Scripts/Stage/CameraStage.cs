@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.VFX;
@@ -29,6 +30,7 @@ namespace Aetherin
         [SerializeField] private Camera _camera;
         [SerializeField] private ModelLayerLibrary _modelLibrary;
         [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
+        [SerializeField] private FontAssetLibrary _fontAssetLibrary;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
@@ -139,6 +141,24 @@ namespace Aetherin
         {
             if (_vfxGraphLibrary == null)
                 _vfxGraphLibrary = FindFirstObjectByType<VfxGraphLibrary>(FindObjectsInactive.Include);
+        }
+
+        public TMP_FontAsset ResolveFontAsset(string key)
+        {
+            EnsureFontAssetLibrary();
+            return _fontAssetLibrary?.Resolve(key);
+        }
+
+        public IReadOnlyList<string> GetFontAssetKeys()
+        {
+            EnsureFontAssetLibrary();
+            return _fontAssetLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private void EnsureFontAssetLibrary()
+        {
+            if (_fontAssetLibrary == null)
+                _fontAssetLibrary = FindFirstObjectByType<FontAssetLibrary>(FindObjectsInactive.Include);
         }
 
         public ModelLayer AddModelLayer(Transform parent = null)
