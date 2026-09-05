@@ -11,35 +11,19 @@ namespace Aetherin
     public class StageManagerParams : IParams
     {
         public MidiCcBinding CrossFader = new(ApcMiniMk2.MasterFaderCc);
-
-        [Tooltip("即時モード (フェーダーを介さずNextへの操作を最終出力へ即時反映) を切り替えるボタン")]
         public MidiBinding ImmediateModeButton = new();
-
-        [Tooltip("Nextに出すステージを選ぶボタン (登録ステージと同じ並び)")]
         public List<MidiBinding> StageSelectButtons = new();
-
-        [Tooltip("選択中のNext CameraStageにあるレイヤーを、リストのインデックス順でON/OFFするPad")]
         public List<MidiBinding> LayerToggleButtons = new();
-
-        [Tooltip("選択中のNext CameraStageにあるカメラワークデッキを選ぶPad")]
         public List<MidiBinding> CameraWorkDeckButtons = new();
-
-        [Tooltip("カメラワークの切り替え周期を Beat / Bar / 2 Bars / 4 Bars / Manual の順で選ぶPad")]
         public List<MidiBinding> CameraWorkTimingButtons = new();
-
-        [Tooltip("Manual時に次のカメラワークへ進めるPad")]
         public MidiBinding CameraWorkManualButton = new();
-        
+        public MidiBinding RandomLayerHighButton = new();
+        public MidiBinding RandomLayerMidButton = new();
+        public MidiBinding RandomLayerLowButton = new();
         public int CurrentStageIndex;
-        public int NextStageIndex;
-
-        [Tooltip("CameraStageで複製元が映り込まないようにするためのオフセット")]
+        public int NextStageIndex; 
         public Vector3 NextStageOffset = new(0f, 1000f, 0f);
-
-        [Tooltip("フェーダーがこの値まで振り切ったらCurrent / Nextを入れ替える")]
-        [Range(0.9f, 1f)]
-        public float SwapThreshold = 0.99f;
-
+        [Range(0.9f, 1f)] public float SwapThreshold = 0.99f;
     }
 
     /// <summary>
@@ -126,10 +110,7 @@ namespace Aetherin
         private readonly HashSet<string> _runtimeStageIds = new();
 
         [Inject]
-        public void Construct(
-            IContainer container,
-            IApplicationManager applicationManager,
-            IPostEffectManager postEffectManager)
+        public void Construct(IContainer container, IApplicationManager applicationManager, IPostEffectManager postEffectManager)
         {
             _container = container;
             _applicationManager = applicationManager;
@@ -339,6 +320,7 @@ namespace Aetherin
             UpdateStageSelect();
             UpdateStageActivity();
             UpdateLayerToggleButtons();
+            UpdateRandomLayerButtons();
             UpdateCameraWorkButtons();
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
@@ -434,6 +416,60 @@ namespace Aetherin
                 if (button.WasNoteOn) layer.Visible = !layer.Visible;
                 Color layerColor = GetLayerColor(index);
                 button.SetLed(layer.Visible ? layerColor : layerColor * 0.25f);
+            }
+        }
+
+        /// <summary>
+        /// Nextステージのレイヤーをランダムに選び、指定割合だけ表示する。
+        /// High は80〜90%、Mid は40〜50%、Low は10〜30%の範囲で、毎回選ぶ数も変える。
+        /// </summary>
+        private void UpdateRandomLayerButtons()
+        {
+            _params.RandomLayerHighButton ??= new MidiBinding();
+            _params.RandomLayerMidButton ??= new MidiBinding();
+            _params.RandomLayerLowButton ??= new MidiBinding();
+
+            CameraStage nextStage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            if (_params.RandomLayerHighButton.WasNoteOn)
+                SelectRandomNextLayers(nextStage, 0.8f, 0.9f);
+            if (_params.RandomLayerMidButton.WasNoteOn)
+                SelectRandomNextLayers(nextStage, 0.4f, 0.5f);
+            if (_params.RandomLayerLowButton.WasNoteOn)
+                SelectRandomNextLayers(nextStage, 0.1f, 0.3f);
+
+            float sinVal = Mathf.Sin(Time.time * 10f) * 0.5f;
+            _params.RandomLayerHighButton.SetLed(Color.red * sinVal);
+            _params.RandomLayerMidButton.SetLed(Color.green * sinVal);
+            _params.RandomLayerLowButton.SetLed(Color.blue * sinVal);
+        }
+
+        private static void SelectRandomNextLayers(CameraStage stage, float minRatio, float maxRatio)
+        {
+            IReadOnlyList<StageLayer> layers = stage?.Layers;
+            if (layers == null || layers.Count == 0) return;
+
+            int minimum = Mathf.CeilToInt(layers.Count * minRatio);
+            int maximum = Mathf.FloorToInt(layers.Count * maxRatio);
+            minimum = Mathf.Clamp(minimum, 1, layers.Count);
+            maximum = Mathf.Clamp(Mathf.Max(minimum, maximum), minimum, layers.Count);
+            int selectedCount = UnityEngine.Random.Range(minimum, maximum + 1);
+
+            var indices = Enumerable.Range(0, layers.Count).ToList();
+            for (int i = 0; i < selectedCount; i++)
+            {
+                int randomIndex = UnityEngine.Random.Range(i, indices.Count);
+                (indices[i], indices[randomIndex]) = (indices[randomIndex], indices[i]);
+            }
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                if (layers[i] != null) layers[i].Visible = false;
+            }
+
+            for (int i = 0; i < selectedCount; i++)
+            {
+                StageLayer layer = layers[indices[i]];
+                if (layer != null) layer.Visible = true;
             }
         }
 
