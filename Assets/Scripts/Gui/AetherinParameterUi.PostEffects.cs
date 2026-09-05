@@ -14,8 +14,31 @@ namespace Aetherin
 
             return UI.Column(
                 label,
-                UI.Label("編集対象: Next（フェーダー到達時にCurrentへ昇格）"),
-                UI.Fold("Next", UI.Field(null, Binder.Create(manager.Next, typeof(PostEffectStack)))));
+                UI.Label("詳細設定は下の Current / Next エディタから操作できます。"));
+        }
+
+        private static Element CreateDeckVolumeEffectsElement(
+            LabelElement label, IBinder<DeckVolumeEffects> binder)
+        {
+            var effects = binder.Get();
+            if (effects == null) return UI.Label("-");
+            effects.EnsureInitialized();
+
+            return UI.Column(
+                label,
+                UI.Fold("Bloom", UI.Column(
+                    UI.Toggle("Enabled", () => effects.BloomEnabled, value => effects.BloomEnabled = value),
+                    UI.Field("Toggle Pad", Binder.Create(effects.BloomToggleButton, typeof(MidiBinding))),
+                    Param("Intensity", effects.BloomIntensity),
+                    Param("Threshold", effects.BloomThreshold),
+                    Param("Scatter", effects.BloomScatter))),
+                UI.Fold("Depth Of Field", UI.Column(
+                    UI.Toggle("Enabled", () => effects.DepthOfFieldEnabled, value => effects.DepthOfFieldEnabled = value),
+                    UI.Field("Toggle Pad", Binder.Create(effects.DepthOfFieldToggleButton, typeof(MidiBinding))),
+                    UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value),
+                    Param("Focus Distance", effects.FocusDistance),
+                    Param("Aperture", effects.Aperture),
+                    Param("Focal Length", effects.FocalLength))));
         }
 
         private static Element CreatePostEffectStackElement(LabelElement label, IBinder<PostEffectStack> binder)

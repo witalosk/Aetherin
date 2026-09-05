@@ -7,6 +7,7 @@ namespace Aetherin
         Texture ProcessCurrent(Texture source);
         Texture ProcessNext(Texture source);
         Texture ProcessOutput(Texture source);
+        void ApplyDeckVolumes(Camera currentCamera, Camera nextCamera);
         void PromoteNextToCurrent();
     }
 }

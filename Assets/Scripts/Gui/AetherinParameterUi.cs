@@ -29,6 +29,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<ModelLayerParams>(CreateModelLayerParamsElement);
             UICustom.RegisterElementCreationFunc<GroupLayerParams>(CreateGroupLayerParamsElement);
             UICustom.RegisterElementCreationFunc<PostEffectManagerParams>(CreatePostEffectManagerElement);
+            UICustom.RegisterElementCreationFunc<DeckVolumeEffects>(CreateDeckVolumeEffectsElement);
             UICustom.RegisterElementCreationFunc<PostEffectStack>(CreatePostEffectStackElement);
             UICustom.RegisterElementCreationFunc<PostEffectDeck>(CreatePostEffectDeckElement);
             UICustom.RegisterElementCreationFunc<PostEffectModule>(CreatePostEffectModuleElement);

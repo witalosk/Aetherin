@@ -325,6 +325,10 @@ namespace Aetherin
 
             if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
 
+            _postEffectManager.ApplyDeckVolumes(
+                GetCameraStage(_currentStages, _params.CurrentStageIndex)?.StageCamera,
+                GetCameraStage(_nextStages, _params.NextStageIndex)?.StageCamera);
+
             var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
             var nextTexture = GetStageTexture(_nextStages, _params.NextStageIndex);
 
