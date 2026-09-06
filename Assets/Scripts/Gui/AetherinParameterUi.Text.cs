@@ -29,42 +29,48 @@ namespace Aetherin
                 .SetCreateItemInstanceFunc((_, index) => new TextAnimatorParams { Name = $"Animator {index + 1}" });
 
             return UI.Column(
-                UI.Toggle("Visible", () => p.Visible, value => p.Visible = value),
-                UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
-                Param("Opacity", p.Opacity),
-                UI.Field("Order", () => p.Order, value => p.Order = value),
-                UI.Field("Text", () => p.Text, value => p.Text = value),
-                fontSelector,
-                UI.DynamicElementIf(
-                    () => string.IsNullOrWhiteSpace(p.FontAssetKey),
-                    () => UI.Row(
-                        UI.Field("Font Family", () => p.FontFamily, value => p.FontFamily = value).SetFlexGrow(1f),
-                        UI.Field("Style", () => p.FontStyle, value => p.FontStyle = value).SetFlexGrow(1f))),
-                Param("Font Size", p.FontSize),
-                Param("Character Spacing", p.CharacterSpacing),
-                Param("Word Spacing", p.WordSpacing),
-                Param("Line Spacing", p.LineSpacing),
-                UI.Field("Alignment", () => p.Alignment, value => p.Alignment = value),
-                UI.Field("Layout", () => p.Layout, value => p.Layout = value),
-                UI.DynamicElementIf(
-                    () => p.Layout != TextLayoutMode.Linear,
-                    () => UI.Column(
-                        Param("Radius", p.PathRadius),
-                        Param("Start Angle", p.PathStartAngle),
+                UI.Tabs(
+                    ("Text", UI.Column(
+                        UI.Field("Text", () => p.Text, value => p.Text = value),
+                        fontSelector,
                         UI.DynamicElementIf(
-                            () => p.Layout == TextLayoutMode.Arc,
-                            () => Param("End Angle", p.PathEndAngle)),
-                        UI.Toggle("Clockwise", () => p.PathClockwise, value => p.PathClockwise = value),
-                        UI.Toggle("Orient To Path", () => p.OrientToPath, value => p.OrientToPath = value),
+                            () => string.IsNullOrWhiteSpace(p.FontAssetKey),
+                            () => UI.Row(
+                                UI.Field("Font Family", () => p.FontFamily, value => p.FontFamily = value).SetFlexGrow(1f),
+                                UI.Field("Style", () => p.FontStyle, value => p.FontStyle = value).SetFlexGrow(1f))),
+                        Param("Font Size", p.FontSize),
+                        Param("Character Spacing", p.CharacterSpacing),
+                        Param("Word Spacing", p.WordSpacing),
+                        Param("Line Spacing", p.LineSpacing),
+                        UI.Field("Alignment", () => p.Alignment, value => p.Alignment = value))),
+                    ("Layout", UI.Column(
+                        UI.Field("Layout", () => p.Layout, value => p.Layout = value),
                         UI.DynamicElementIf(
-                            () => p.OrientToPath,
-                            () => Param("Rotation Offset", p.PathRotationOffset)))),
-                Param("Position", p.Position),
-                Param("Rotation", p.Rotation),
-                Param("Scale", p.Scale),
-                Param("Anchor", p.Anchor),
-                Param("Color", p.Color),
-                UI.List("Animators", () => p.Animators, value => p.Animators = value, animatorListOption));
+                            () => p.Layout != TextLayoutMode.Linear,
+                            () => UI.Column(
+                                Param("Radius", p.PathRadius),
+                                Param("Start Angle", p.PathStartAngle),
+                                UI.DynamicElementIf(
+                                    () => p.Layout == TextLayoutMode.Arc,
+                                    () => Param("End Angle", p.PathEndAngle)),
+                                UI.Toggle("Clockwise", () => p.PathClockwise, value => p.PathClockwise = value),
+                                UI.Toggle("Orient To Path", () => p.OrientToPath, value => p.OrientToPath = value),
+                                UI.DynamicElementIf(
+                                    () => p.OrientToPath,
+                                    () => Param("Rotation Offset", p.PathRotationOffset)))))),
+                    ("Transform", UI.Column(
+                        UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
+                        Param("Position", p.Position),
+                        Param("Rotation", p.Rotation),
+                        Param("Scale", p.Scale),
+                        Param("Anchor", p.Anchor))),
+                    ("Appearance", UI.Column(
+                        Param("Color", p.Color),
+                        Param("Opacity", p.Opacity),
+                        UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value))),
+                    ("Animators", UI.List("Animators", () => p.Animators, value => p.Animators = value,
+                        animatorListOption)))
+            );
         }
 
         private static Element CreateTextAnimatorElement(

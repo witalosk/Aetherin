@@ -75,6 +75,9 @@ namespace Aetherin
     [Serializable]
     public sealed class TextLayerParams : StageLayerParams
     {
+        [Tooltip("カメラ移動を無視し、画面高を基準とするスクリーン座標へ固定して描画します")]
+        public bool ScreenSpace;
+
         [TextArea] public string Text = "Aetherin";
         [Tooltip("CameraStageのFont Asset Libraryに登録したキー")]
         public string FontAssetKey;

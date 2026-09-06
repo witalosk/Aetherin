@@ -104,6 +104,17 @@ namespace Aetherin
             ApplyAppearance(context);
         }
 
+        protected override void LateUpdate()
+        {
+            base.LateUpdate();
+            if (!_params.ScreenSpace) return;
+
+            var context = new ModulationContext(
+                Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
+                _audio, _beat, Application.isPlaying);
+            ApplyTransform(context);
+        }
+
         private void EnsureFont()
         {
             if (_text == null) return;
@@ -359,10 +370,48 @@ namespace Aetherin
 
         private void ApplyTransform(in ModulationContext context)
         {
-            transform.localPosition = _params.Position?.Evaluate(context) ?? Vector3.zero;
-            transform.localRotation = Quaternion.Euler(_params.Rotation?.Evaluate(context) ?? Vector3.zero);
-            transform.localScale = _params.Scale?.Evaluate(context) ?? Vector3.one;
+            Vector3 position = _params.Position?.Evaluate(context) ?? Vector3.zero;
+            Vector3 rotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
+            Vector3 scale = _params.Scale?.Evaluate(context) ?? Vector3.one;
+
+            if (!_params.ScreenSpace)
+            {
+                transform.localPosition = position;
+                transform.localRotation = Quaternion.Euler(rotation);
+                transform.localScale = scale;
+                return;
+            }
+
+            _cameraStage ??= GetComponentInParent<CameraStage>();
+            Camera camera = _cameraStage?.StageCamera;
+            if (camera == null) return;
+
+            float depth = camera.orthographic
+                ? Mathf.Max(camera.nearClipPlane + 0.01f, 1f)
+                : Mathf.Max(camera.nearClipPlane + 0.01f, 10f);
+            float halfHeight = camera.orthographic
+                ? camera.orthographicSize
+                : depth * Mathf.Tan(camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            Vector3 cameraSpacePosition = new(
+                position.x * halfHeight,
+                position.y * halfHeight,
+                depth + position.z * halfHeight);
+
+            transform.SetPositionAndRotation(
+                camera.transform.TransformPoint(cameraSpacePosition),
+                camera.transform.rotation * Quaternion.Euler(rotation));
+            // ShapeLayerのScreen Spaceは親Transformも行列で打ち消す。
+            // TextMeshProは通常Transformで描画するため、親Groupのスケールをここで相殺して揃える。
+            Vector3 desiredWorldScale = scale * halfHeight;
+            Vector3 parentScale = transform.parent != null ? transform.parent.lossyScale : Vector3.one;
+            transform.localScale = new Vector3(
+                DivideByParentScale(desiredWorldScale.x, parentScale.x),
+                DivideByParentScale(desiredWorldScale.y, parentScale.y),
+                DivideByParentScale(desiredWorldScale.z, parentScale.z));
         }
+
+        private static float DivideByParentScale(float value, float parentScale) =>
+            Mathf.Abs(parentScale) > 0.0001f ? value / parentScale : value;
 
         private void ApplyAppearance(in ModulationContext context)
         {
