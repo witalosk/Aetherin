@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 0
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 0}
+  m_SkyboxMaterial: {fileID: 2100000, guid: b22d7be7b41d68745aecdfce4c70c426, type: 2}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -807,6 +807,12 @@ MonoBehaviour:
     CameraWorkTimingButtons: []
     CameraWorkManualButton:
       _noteNumber: -1
+    RandomLayerHighButton:
+      _noteNumber: -1
+    RandomLayerMidButton:
+      _noteNumber: -1
+    RandomLayerLowButton:
+      _noteNumber: -1
     CurrentStageIndex: 0
     NextStageIndex: 0
     NextStageOffset: {x: 0, y: 1000, z: 0}
@@ -1039,7 +1045,10 @@ MonoBehaviour:
   _camera: {fileID: 174343825}
   _modelLibrary: {fileID: 1994971893}
   _vfxGraphLibrary: {fileID: 0}
+  _fontAssetLibrary: {fileID: 0}
   _cameraWorkDecks: []
+  _selectedCameraWorkDeck: 0
+  _currentCameraWork: 0
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1993,6 +2002,88 @@ MonoBehaviour:
       Decks: []
     Next:
       Decks: []
+    CurrentVolume:
+      BloomEnabled: 1
+      BloomToggleButton:
+        _noteNumber: -1
+      BloomIntensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      BloomThreshold:
+        BaseValue: 0.9
+        Modulation:
+          Modulators: []
+      BloomScatter:
+        BaseValue: 0.5
+        Modulation:
+          Modulators: []
+      DepthOfFieldEnabled: 1
+      DepthOfFieldToggleButton:
+        _noteNumber: -1
+      DepthOfFieldMode: 1
+      FocusDistance:
+        BaseValue: 10
+        Modulation:
+          Modulators: []
+      AutoFocusEnabled: 0
+      AutoFocusMaxDistance:
+        BaseValue: 100
+        Modulation:
+          Modulators: []
+      AutoFocusLerpSpeed:
+        BaseValue: 6
+        Modulation:
+          Modulators: []
+      Aperture:
+        BaseValue: 5.6
+        Modulation:
+          Modulators: []
+      FocalLength:
+        BaseValue: 50
+        Modulation:
+          Modulators: []
+    NextVolume:
+      BloomEnabled: 1
+      BloomToggleButton:
+        _noteNumber: -1
+      BloomIntensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      BloomThreshold:
+        BaseValue: 0.9
+        Modulation:
+          Modulators: []
+      BloomScatter:
+        BaseValue: 0.5
+        Modulation:
+          Modulators: []
+      DepthOfFieldEnabled: 1
+      DepthOfFieldToggleButton:
+        _noteNumber: -1
+      DepthOfFieldMode: 1
+      FocusDistance:
+        BaseValue: 10
+        Modulation:
+          Modulators: []
+      AutoFocusEnabled: 0
+      AutoFocusMaxDistance:
+        BaseValue: 100
+        Modulation:
+          Modulators: []
+      AutoFocusLerpSpeed:
+        BaseValue: 6
+        Modulation:
+          Modulators: []
+      Aperture:
+        BaseValue: 5.6
+        Modulation:
+          Modulators: []
+      FocalLength:
+        BaseValue: 50
+        Modulation:
+          Modulators: []
 --- !u!1 &2134490627
 GameObject:
   m_ObjectHideFlags: 0

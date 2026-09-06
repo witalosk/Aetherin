@@ -495,6 +495,7 @@ namespace Aetherin
         private static float GetMedianDistance(float[] distances, int count)
         {
             Array.Sort(distances, 0, count);
+            return distances[0];
             int middle = count / 2;
             return count % 2 == 0
                 ? (distances[middle - 1] + distances[middle]) * 0.5f

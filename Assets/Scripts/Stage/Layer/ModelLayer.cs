@@ -12,6 +12,16 @@ namespace Aetherin
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int GradientId = Shader.PropertyToID("_UseGradient");
         private static readonly int GradientParamsId = Shader.PropertyToID("_GradientParams");
+        private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
+        private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
+        private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
+        private static readonly int GlassRefractionId = Shader.PropertyToID("_GlassRefraction");
+        private static readonly int GlassTintId = Shader.PropertyToID("_GlassTint");
+        private static readonly int GlassFresnelPowerId = Shader.PropertyToID("_GlassFresnelPower");
+        private static readonly int GlassFresnelIntensityId = Shader.PropertyToID("_GlassFresnelIntensity");
+        private static readonly int GlassChromaticAberrationId = Shader.PropertyToID("_GlassChromaticAberration");
+        private static readonly int GlassDistortionId = Shader.PropertyToID("_GlassDistortion");
+        private static readonly int GlassDistortionScaleId = Shader.PropertyToID("_GlassDistortionScale");
 
         [SerializeField] private ModelLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -93,6 +103,15 @@ namespace Aetherin
             _params.Color ??= new PaletteColorParameter();
             _params.WireColor ??= new PaletteColorParameter();
             _params.AnimationSpeed ??= new FloatParameter(1f);
+            _params.Metallic ??= new FloatParameter(0f);
+            _params.Smoothness ??= new FloatParameter(0.5f);
+            _params.GlassRefraction ??= new FloatParameter(0.025f);
+            _params.GlassTint ??= new FloatParameter(0.2f);
+            _params.GlassFresnelPower ??= new FloatParameter(3f);
+            _params.GlassFresnelIntensity ??= new FloatParameter(0.8f);
+            _params.GlassChromaticAberration ??= new FloatParameter(0.002f);
+            _params.GlassDistortion ??= new FloatParameter(0.003f);
+            _params.GlassDistortionScale ??= new FloatParameter(12f);
             _params.Color.EnsureInitialized();
             _params.WireColor.EnsureInitialized();
         }
@@ -115,6 +134,7 @@ namespace Aetherin
                 _surfaceRenderers.Add(renderer);
                 var material = new Material(_surfaceShader) { name = "Model Layer Surface (Runtime)" };
                 renderer.sharedMaterials = BuildMaterialArray(renderer.sharedMaterials.Length, material);
+                renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
                 _materials.Add(material);
                 CreateWireRenderer(renderer);
             }
@@ -216,8 +236,8 @@ namespace Aetherin
             ColorPalette palette = Application.isPlaying && _deckState != null
                 ? _deckState.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
                 : PaletteColorParameter.FallbackPalette;
-            ApplyColors(EvaluatedPaletteColor.Evaluate(_params.Color, palette, context), false, layerOpacity);
-            ApplyColors(EvaluatedPaletteColor.Evaluate(_params.WireColor, palette, context), true, layerOpacity);
+            ApplyColors(EvaluatedPaletteColor.Evaluate(_params.Color, palette, context), false, layerOpacity, context);
+            ApplyColors(EvaluatedPaletteColor.Evaluate(_params.WireColor, palette, context), true, layerOpacity, context);
             float speed = _params.AnimationSpeed.Evaluate(context);
             if (_modelInstance != null)
                 foreach (var animator in _modelInstance.GetComponentsInChildren<Animator>(true))
@@ -228,7 +248,7 @@ namespace Aetherin
             ApplyLayerState();
         }
 
-        private void ApplyColors(EvaluatedPaletteColor color, bool wire, float layerOpacity)
+        private void ApplyColors(EvaluatedPaletteColor color, bool wire, float layerOpacity, ModulationContext context)
         {
             var renderers = wire ? _wireRenderers : _surfaceRenderers;
             for (int i = 0; i < renderers.Count; i++)
@@ -245,9 +265,27 @@ namespace Aetherin
                 material.SetColor(ColorBId, b);
                 material.SetFloat(GradientId, color.IsGradient ? 1f : 0f);
                 material.SetVector(GradientParamsId, new Vector4(color.AngleDegrees, color.Offset, color.Scale, 0f));
-                LayerMaterialUtility.ApplyBlendMode(material, _params.BlendMode);
+                if (!wire)
+                {
+                    bool glass = _params.MaterialMode == ModelLayerMaterialMode.Glass;
+                    bool lit = _params.MaterialMode == ModelLayerMaterialMode.Lit;
+                    material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
+                    material.SetFloat(MetallicId, Mathf.Clamp01(_params.Metallic.Evaluate(context)));
+                    material.SetFloat(SmoothnessId, Mathf.Clamp01(_params.Smoothness.Evaluate(context)));
+                    material.SetFloat(GlassRefractionId, Mathf.Max(0f, _params.GlassRefraction.Evaluate(context)));
+                    material.SetFloat(GlassTintId, Mathf.Clamp01(_params.GlassTint.Evaluate(context)));
+                    material.SetFloat(GlassFresnelPowerId, Mathf.Max(0.01f, _params.GlassFresnelPower.Evaluate(context)));
+                    material.SetFloat(GlassFresnelIntensityId, Mathf.Max(0f, _params.GlassFresnelIntensity.Evaluate(context)));
+                    material.SetFloat(GlassChromaticAberrationId, Mathf.Max(0f, _params.GlassChromaticAberration.Evaluate(context)));
+                    material.SetFloat(GlassDistortionId, Mathf.Max(0f, _params.GlassDistortion.Evaluate(context)));
+                    material.SetFloat(GlassDistortionScaleId, Mathf.Max(0.01f, _params.GlassDistortionScale.Evaluate(context)));
+                    LayerMaterialUtility.ApplyBlendMode(material, glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
+                    renderers[i].receiveShadows = lit;
+                }
+                else LayerMaterialUtility.ApplyBlendMode(material, _params.MaterialMode == ModelLayerMaterialMode.Glass ? LayerBlendMode.Transparent : _params.BlendMode);
             }
         }
+
 
         protected override void ApplyCustomLayerState(bool visible, int order)
         {

@@ -32,7 +32,7 @@ namespace Aetherin
         private const int ButtonCount = 8;
         private const int FaderCount = 9;
         private const float LedFlushInterval = 1f / 15f;
-        private const int MaxLedMessagesPerFlush = 8;
+        private const int MaxLedMessagesPerFlush = 32;
 
         public bool IsHardwareConnected => _input != null && _input.IsConnected;
         public bool IsEmulating => _params.AlwaysAllowEmulation || !IsHardwareConnected;
