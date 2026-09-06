@@ -561,6 +561,7 @@ namespace Aetherin
         /// </summary>
         private void SwapDecks()
         {
+            MidiDiagnostics.RecordCritical("Stage swap begin");
             // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
             _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
 
@@ -616,6 +617,7 @@ namespace Aetherin
             UpdateStageActivity();
 
             _deckRevision++;
+            MidiDiagnostics.Record("Stage swap complete");
         }
 
         private static Texture GetStageTexture(List<StageBase> stages, int index)

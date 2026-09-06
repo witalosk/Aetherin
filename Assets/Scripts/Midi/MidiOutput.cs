@@ -76,7 +76,10 @@ namespace Aetherin
         {
             if (!_isOpen || message.IsEmpty) return;
 
-            if (_midiOut.SendMessage(message) < 0)
+            MidiDiagnostics.RecordCritical($"MIDI output begin ({message.Length} bytes)");
+            int result = _midiOut.SendMessage(message);
+            MidiDiagnostics.Record($"MIDI output complete ({message.Length} bytes, result={result})");
+            if (result < 0)
             {
                 // 送信に失敗した場合はデバイスが外れたものとして再接続待ちに戻す
                 _lastError = _midiOut.IsOk ? "SendMessage failed" : _midiOut.Error;

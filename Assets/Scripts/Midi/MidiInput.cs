@@ -109,7 +109,11 @@ namespace Aetherin
             Array.Clear(_noteOnThisFrame, 0, ValueCount);
             Array.Clear(_noteOffThisFrame, 0, ValueCount);
 
-            if (_pendingEvents.Count == 0) return;
+            if (_pendingEvents.Count == 0)
+            {
+                MidiDiagnostics.FlushIfDue();
+                return;
+            }
 
             _dispatchingEvents.Clear();
             _dispatchingEvents.AddRange(_pendingEvents);
@@ -134,6 +138,7 @@ namespace Aetherin
                         break;
                 }
             }
+            MidiDiagnostics.FlushIfDue();
         }
 
         private void OnEnable()
@@ -295,6 +300,7 @@ namespace Aetherin
         private void HandleNoteOn(MidiNoteControl note, float velocity)
         {
             int number = note.noteNumber;
+            MidiDiagnostics.Record($"MIDI input note-on {number}");
             _noteStates[number] = true;
             _velocities[number] = velocity;
 
@@ -309,6 +315,7 @@ namespace Aetherin
 
         private void HandleNoteOffCore(int number)
         {
+            MidiDiagnostics.Record($"MIDI input note-off {number}");
             _noteStates[number] = false;
             _velocities[number] = 0f;
 
@@ -325,6 +332,7 @@ namespace Aetherin
         private void HandleControlChange(MidiValueControl control, float value)
         {
             int number = control.controlNumber;
+            MidiDiagnostics.Record($"MIDI input CC {number}");
             if (_ccRawValues[number] < 0) AddReceivedCcNumber(number);
             _ccRawValues[number] = Mathf.RoundToInt(value * 127f);
 

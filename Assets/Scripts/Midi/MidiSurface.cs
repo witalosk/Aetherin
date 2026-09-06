@@ -31,6 +31,8 @@ namespace Aetherin
         private const int PadCount = 64;
         private const int ButtonCount = 8;
         private const int FaderCount = 9;
+        private const float LedFlushInterval = 1f / 15f;
+        private const int MaxLedMessagesPerFlush = 8;
 
         public bool IsHardwareConnected => _input != null && _input.IsConnected;
         public bool IsEmulating => _params.AlwaysAllowEmulation || !IsHardwareConnected;
@@ -51,6 +53,9 @@ namespace Aetherin
         private readonly Color[] _padColors = new Color[PadCount];
         private readonly ApcMiniMk2.ButtonLedState[] _trackLeds = new ApcMiniMk2.ButtonLedState[ButtonCount];
         private readonly ApcMiniMk2.ButtonLedState[] _sceneLeds = new ApcMiniMk2.ButtonLedState[ButtonCount];
+        private readonly bool[] _dirtyPads = new bool[PadCount];
+        private readonly bool[] _dirtyTrackLeds = new bool[ButtonCount];
+        private readonly bool[] _dirtySceneLeds = new bool[ButtonCount];
 
         private readonly bool[] _emulatedNotes = new bool[ValueCount];
 
@@ -65,6 +70,7 @@ namespace Aetherin
         private readonly float[] _emulatedCcValues = CreateFilledArray(-1f);
 
         private bool _wasOutputConnected;
+        private float _nextLedFlushTime;
 
         [Inject]
         public void Construct(IMidiInput input, IMidiOutput output)
@@ -124,7 +130,7 @@ namespace Aetherin
             if (_padColors[index] == color) return;
 
             _padColors[index] = color;
-            _output?.SetPadRgb(noteNumber, color);
+            _dirtyPads[index] = true;
         }
 
         public void SetPad(int x, int y, Color color) => SetPad(ApcMiniMk2.GetPadNote(x, y), color);
@@ -134,7 +140,7 @@ namespace Aetherin
             if (index < 0 || index >= ButtonCount || _trackLeds[index] == state) return;
 
             _trackLeds[index] = state;
-            _output?.SetButtonLed(ApcMiniMk2.TrackButtonFirst + index, state);
+            _dirtyTrackLeds[index] = true;
         }
 
         public void SetSceneLed(int index, ApcMiniMk2.ButtonLedState state)
@@ -142,7 +148,7 @@ namespace Aetherin
             if (index < 0 || index >= ButtonCount || _sceneLeds[index] == state) return;
 
             _sceneLeds[index] = state;
-            _output?.SetButtonLed(ApcMiniMk2.SceneButtonFirst + index, state);
+            _dirtySceneLeds[index] = true;
         }
 
         public void ClearLeds()
@@ -150,8 +156,7 @@ namespace Aetherin
             Array.Fill(_padColors, Color.black);
             Array.Fill(_trackLeds, ApcMiniMk2.ButtonLedState.Off);
             Array.Fill(_sceneLeds, ApcMiniMk2.ButtonLedState.Off);
-
-            _output?.ClearAllLeds();
+            MarkAllLedsDirty();
         }
 
         public Color GetPadColor(int noteNumber)
@@ -161,23 +166,14 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// 保持しているLEDの状態を実機に送り直す
-        /// 後から接続された実機のLEDは消えているため、接続を検知したタイミングで呼ぶ
+        /// 保持しているLEDの状態を送信待ちにする。送信はUpdateで間引く。
+        /// 同期RtMidi呼び出しを1フレームへ集中させないため、再接続時も同じ経路を使う。
         /// </summary>
-        private void ResendAllLeds()
+        private void MarkAllLedsDirty()
         {
-            if (_output == null) return;
-
-            for (int i = 0; i < PadCount; i++)
-            {
-                _output.SetPadRgb(ApcMiniMk2.PadFirst + i, _padColors[i]);
-            }
-
-            for (int i = 0; i < ButtonCount; i++)
-            {
-                _output.SetButtonLed(ApcMiniMk2.TrackButtonFirst + i, _trackLeds[i]);
-                _output.SetButtonLed(ApcMiniMk2.SceneButtonFirst + i, _sceneLeds[i]);
-            }
+            Array.Fill(_dirtyPads, true);
+            Array.Fill(_dirtyTrackLeds, true);
+            Array.Fill(_dirtySceneLeds, true);
         }
 
         #endregion
@@ -197,8 +193,38 @@ namespace Aetherin
 
             // 実機が後から接続されたらLEDの状態を送り直す
             bool outputConnected = _output != null && _output.IsConnected;
-            if (outputConnected && !_wasOutputConnected) ResendAllLeds();
+            if (outputConnected && !_wasOutputConnected) MarkAllLedsDirty();
             _wasOutputConnected = outputConnected;
+            FlushLedOutput(outputConnected);
+        }
+
+        private void FlushLedOutput(bool outputConnected)
+        {
+            if (!outputConnected || _output == null || Time.unscaledTime < _nextLedFlushTime) return;
+            _nextLedFlushTime = Time.unscaledTime + LedFlushInterval;
+
+            int sent = 0;
+            for (int i = 0; i < PadCount && sent < MaxLedMessagesPerFlush; i++)
+            {
+                if (!_dirtyPads[i]) continue;
+                _output.SetPadRgb(ApcMiniMk2.PadFirst + i, _padColors[i]);
+                _dirtyPads[i] = false;
+                sent++;
+            }
+            for (int i = 0; i < ButtonCount && sent < MaxLedMessagesPerFlush; i++)
+            {
+                if (!_dirtyTrackLeds[i]) continue;
+                _output.SetButtonLed(ApcMiniMk2.TrackButtonFirst + i, _trackLeds[i]);
+                _dirtyTrackLeds[i] = false;
+                sent++;
+            }
+            for (int i = 0; i < ButtonCount && sent < MaxLedMessagesPerFlush; i++)
+            {
+                if (!_dirtySceneLeds[i]) continue;
+                _output.SetButtonLed(ApcMiniMk2.SceneButtonFirst + i, _sceneLeds[i]);
+                _dirtySceneLeds[i] = false;
+                sent++;
+            }
         }
 
         /// <summary>
