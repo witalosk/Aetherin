@@ -23,6 +23,8 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float4 _MainTex_TexelSize;
             int _EffectType;
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
+            float _Hue, _Saturation, _Value, _BlackLevel, _WhiteLevel, _Gamma;
+            int _ShutterMode;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float3 bloomSample(float2 uv)
@@ -39,6 +41,21 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 float2 i = floor(p), f = frac(p); f = f * f * (3.0 - 2.0 * f);
                 return lerp(lerp(hash21(i), hash21(i + float2(1,0)), f.x),
                             lerp(hash21(i + float2(0,1)), hash21(i + 1), f.x), f.y);
+            }
+
+            float3 rgbToHsv(float3 c)
+            {
+                float4 k = float4(0.0, -0.3333333, 0.6666667, -1.0);
+                float4 p = lerp(float4(c.bg, k.wz), float4(c.gb, k.xy), step(c.b, c.g));
+                float4 q = lerp(float4(p.xyw, c.r), float4(c.r, p.yzx), step(p.x, c.r));
+                float d = q.x - min(q.w, q.y);
+                return float3(abs(q.z + (q.w - q.y) / (6.0 * d + 0.00001)), d / (q.x + 0.00001), q.x);
+            }
+
+            float3 hsvToRgb(float3 c)
+            {
+                float3 p = abs(frac(c.xxx + float3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0);
+                return c.z * lerp(float3(1.0, 1.0, 1.0), saturate(p - 1.0), c.y);
             }
 
             float4 frag(v2f i) : SV_Target
@@ -116,6 +133,89 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     bloom += bloomSample(uv + float2( offset.x, -offset.y));
                     bloom += bloomSample(uv + float2(-offset.x, -offset.y));
                     fx.rgb = src.rgb + bloom * (max(0.0, _Amount) / 16.0);
+                }
+                else if (_EffectType == 10) // LED display
+                {
+                    float leds = max(2.0, abs(_Scale));
+                    float2 grid = float2(leds, leds * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
+                    float2 cell = frac(uv * grid) - 0.5;
+                    float dotRadius = lerp(0.08, 0.5, saturate(_Amount));
+                    float dot = 1.0 - smoothstep(dotRadius * 0.82, dotRadius, length(cell));
+                    float2 sampleUv = (floor(uv * grid) + 0.5) / grid;
+                    fx = tex2D(_MainTex, sampleUv) * dot;
+                }
+                else if (_EffectType == 11) // Horizontal fold
+                {
+                    float folds = max(1.0, round(abs(_Scale)));
+                    float foldedX = abs(frac(uv.x * folds) * 2.0 - 1.0);
+                    float2 foldedUv = float2(foldedX, uv.y);
+                    fx = tex2D(_MainTex, lerp(uv, foldedUv, saturate(_Amount)));
+                }
+                else if (_EffectType == 12) // Hash-selected invert blocks
+                {
+                    float cells = max(1.0, round(abs(_Scale)));
+                    float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
+                    float frame = floor(_TimeValue * max(0.0, abs(_Speed)));
+                    float selected = step(hash21(floor(uv * grid) + frame * 19.17), saturate(_Amount));
+                    fx.rgb = lerp(src.rgb, 1.0 - src.rgb, selected);
+                }
+                else if (_EffectType == 13) // Grid
+                {
+                    float cells = max(1.0, abs(_Scale));
+                    float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
+                    float2 line = abs(frac(uv * grid) - 0.5);
+                    float width = lerp(0.002, 0.18, saturate(_Amount));
+                    float gridLine = step(0.5 - width, max(line.x, line.y));
+                    fx.rgb *= 1.0 - gridLine;
+                }
+                else if (_EffectType == 14) // Noise
+                {
+                    float grain = max(1.0, abs(_Scale));
+                    float frame = floor(_TimeValue * max(0.0, abs(_Speed)) * 30.0);
+                    float noise = hash21(floor(uv * grain) + frame * 7.31) * 2.0 - 1.0;
+                    fx.rgb = saturate(src.rgb + noise * _Amount);
+                }
+                else if (_EffectType == 15) // Block glitch
+                {
+                    float blocks = max(1.0, abs(_Scale));
+                    float2 grid = float2(blocks, blocks * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
+                    float2 block = floor(uv * grid);
+                    float frame = floor(_TimeValue * max(0.0, abs(_Speed)) * 12.0);
+                    float active = step(1.0 - saturate(_Secondary), hash21(block + frame * 13.37));
+                    float offset = (hash21(block + frame * 31.73) * 2.0 - 1.0) * _Amount * active;
+                    fx = tex2D(_MainTex, uv + float2(offset, 0.0));
+                }
+                else if (_EffectType == 16) // HSV levels
+                {
+                    float black = saturate(_BlackLevel);
+                    float white = max(black + 0.0001, saturate(_WhiteLevel));
+                    float3 levels = saturate((src.rgb - black) / (white - black));
+                    levels = pow(levels, 1.0 / max(0.001, _Gamma));
+                    float3 hsv = rgbToHsv(levels);
+                    hsv.x = frac(hsv.x + _Hue);
+                    hsv.y = saturate(hsv.y * max(0.0, _Saturation));
+                    hsv.z = saturate(hsv.z * max(0.0, _Value));
+                    fx.rgb = hsvToRgb(hsv);
+                }
+                else if (_EffectType == 17) // Shutter
+                {
+                    float close = saturate(_Amount);
+                    float openMask;
+                    if (_ShutterMode == 0)
+                    {
+                        openMask = 1.0 - step(0.5 * (1.0 - close), abs(uv.y - 0.5));
+                    }
+                    else if (_ShutterMode == 1)
+                    {
+                        openMask = 1.0 - step(0.5 * (1.0 - close), abs(uv.x - 0.5));
+                    }
+                    else
+                    {
+                        float aspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
+                        float distanceFromCenter = length((uv - 0.5) * float2(aspect, 1.0));
+                        openMask = 1.0 - step(0.75 * (1.0 - close), distanceFromCenter);
+                    }
+                    fx.rgb = src.rgb * openMask;
                 }
 
                 return lerp(src, fx, saturate(_Strength));

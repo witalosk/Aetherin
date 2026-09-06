@@ -83,6 +83,7 @@ namespace Aetherin
         {
             var module = binder.Get();
             if (module == null) return UI.Label("-");
+            module.EnsureInitialized();
 
             return UI.Column(
                 UI.Row(
@@ -135,6 +136,46 @@ namespace Aetherin
                     yield return Param("Intensity", module.Amount);
                     yield return Param("Radius", module.Scale);
                     yield return Param("Threshold", module.Secondary);
+                    break;
+                case PostEffectType.LedDisplay:
+                    yield return Param("Dot Size", module.Amount);
+                    yield return Param("LEDs", module.Scale);
+                    break;
+                case PostEffectType.HorizontalFold:
+                    yield return Param("Fold Amount", module.Amount);
+                    yield return Param("Folds", module.Scale);
+                    break;
+                case PostEffectType.HashInvertBlocks:
+                    yield return Param("Coverage", module.Amount);
+                    yield return Param("Grid", module.Scale);
+                    yield return Param("Change Speed", module.Speed);
+                    break;
+                case PostEffectType.Grid:
+                    yield return Param("Line Width", module.Amount);
+                    yield return Param("Cells", module.Scale);
+                    break;
+                case PostEffectType.Noise:
+                    yield return Param("Amount", module.Amount);
+                    yield return Param("Grain Size", module.Scale);
+                    yield return Param("Speed", module.Speed);
+                    break;
+                case PostEffectType.BlockGlitch:
+                    yield return Param("Displacement", module.Amount);
+                    yield return Param("Blocks", module.Scale);
+                    yield return Param("Speed", module.Speed);
+                    yield return Param("Coverage", module.Secondary);
+                    break;
+                case PostEffectType.HsvLevels:
+                    yield return Param("Hue", module.Hue);
+                    yield return Param("Saturation", module.Saturation);
+                    yield return Param("Value", module.Value);
+                    yield return Param("Black Level", module.BlackLevel);
+                    yield return Param("White Level", module.WhiteLevel);
+                    yield return Param("Gamma", module.Gamma);
+                    break;
+                case PostEffectType.Shutter:
+                    yield return UI.Field("Mode", () => module.ShutterMode, value => module.ShutterMode = value);
+                    yield return Param("Close", module.Amount);
                     break;
             }
         }

@@ -90,7 +90,6 @@ namespace Aetherin
         private int _deckRevision;
         private StageLayer _inspectedLayer;
         private CameraStage _inspectedLayerStage;
-        private int _inspectedLayerColorIndex;
         private CameraWorkRecipe _inspectedCameraWork;
         private CameraStage _inspectedCameraWorkStage;
         private DynamicElement _inspectorElement;
@@ -418,7 +417,7 @@ namespace Aetherin
                 }
 
                 if (button.WasNoteOn) layer.Visible = !layer.Visible;
-                Color layerColor = GetLayerColor(index);
+                Color layerColor = GetLayerColor(layer);
                 button.SetLed(layer.Visible ? layerColor : layerColor * 0.25f);
             }
         }
@@ -478,25 +477,22 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// Layer indexから再現可能な色を作る。UIとPadで同じ関数を使うため、
-        /// Layerの並び順とPadの色が常に対応する。
+        /// レイヤー種別に対応する色を返す。UIとPadで同じ関数を使うため、
+        /// 同じ種別のレイヤーは配置順にかかわらず常に同じ色になる。
         /// </summary>
-        private static Color GetLayerColor(int index)
+        private static Color GetLayerColor(StageLayer layer)
         {
-            unchecked
+            return layer switch
             {
-                uint hash = (uint)index;
-                hash ^= hash >> 16;
-                hash *= 0x7FEB352Du;
-                hash ^= hash >> 15;
-                hash *= 0x846CA68Bu;
-                hash ^= hash >> 16;
-
-                float hue = (hash & 0x00FFFFFFu) / 16777216f;
-                float saturation = Mathf.Lerp(0.72f, 0.9f, ((hash >> 24) & 0xFFu) / 255f);
-                float value = Mathf.Lerp(0.82f, 1f, ((hash >> 8) & 0xFFu) / 255f);
-                return Color.HSVToRGB(hue, saturation, value);
-            }
+                GroupLayer => new Color(0.72f, 0.42f, 1f),
+                ShapeLayer => new Color(0.2f, 0.8f, 1f),
+                Primitive3DLayer => new Color(1f, 0.56f, 0.18f),
+                ModelLayer => new Color(0.35f, 0.9f, 0.5f),
+                GpuParticleLayer => new Color(1f, 0.3f, 0.66f),
+                TextLayer => new Color(1f, 0.88f, 0.22f),
+                RuntimeShaderLayer => new Color(0.2f, 0.95f, 0.82f),
+                _ => new Color(0.7f, 0.7f, 0.7f),
+            };
         }
 
         private void UpdateCameraWorkButtons()
@@ -907,7 +903,7 @@ namespace Aetherin
             var layerElements = new List<Element>();
             for (int index = 0; index < layers.Count; index++)
             {
-                if (layers[index] != null) layerElements.Add(CreateLayerElement(cameraStage, layers[index], index));
+                if (layers[index] != null) layerElements.Add(CreateLayerElement(cameraStage, layers[index]));
             }
 
             return UI.Column(
@@ -924,7 +920,7 @@ namespace Aetherin
             );
         }
 
-        private Element CreateLayerElement(CameraStage stage, StageLayer layer, int layerIndex)
+        private Element CreateLayerElement(CameraStage stage, StageLayer layer)
         {
             if (layer is GroupLayer group)
             {
@@ -933,10 +929,10 @@ namespace Aetherin
                 for (int index = 0; index < groupChildren.Length; index++)
                 {
                     StageLayer child = groupChildren[index];
-                    if (child != null) children.Add(CreateLayerElement(stage, child, index));
+                    if (child != null) children.Add(CreateLayerElement(stage, child));
                 }
                 return UI.Fold(
-                    CreateLayerHeader(stage, layer, layerIndex),
+                    CreateLayerHeader(stage, layer),
                     new Element[] { UI.Column(
                         UI.Row(
                             UI.Button("+ Shape", () => stage.AddShapeLayer(group.transform)),
@@ -952,20 +948,20 @@ namespace Aetherin
                         children.Count == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) });
             }
 
-            return CreateLayerHeader(stage, layer, layerIndex);
+            return CreateLayerHeader(stage, layer);
         }
 
-        private Element CreateLayerHeader(CameraStage stage, StageLayer layer, int layerColorIndex)
+        private Element CreateLayerHeader(CameraStage stage, StageLayer layer)
         {
             bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
             return UI.Row(
                 UI.Space().SetWidth(layer is GroupLayer ? 0f : 18f),
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
-                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer, layerColorIndex)).SetMinWidth(250f).SetFlexGrow(1f).SetHeight(30f)
+                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer)).SetMinWidth(250f).SetFlexGrow(1f).SetHeight(30f)
                     .RegisterUpdateCallback(element =>
                     {
-                        Color color = GetLayerColor(layerColorIndex);
+                        Color color = GetLayerColor(layer);
                         element.SetBackgroundColor( _inspectedLayer == layer ? color * 0.8f : layer.Visible ? color * 0.5f : color * 0.25f);
                     }),
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
@@ -974,13 +970,12 @@ namespace Aetherin
                 UI.Button("Delete", () => RemoveLayer(stage, layer)));
         }
 
-        private void InspectLayer(CameraStage stage, StageLayer layer, int layerColorIndex)
+        private void InspectLayer(CameraStage stage, StageLayer layer)
         {
             _inspectedCameraWork = null;
             _inspectedCameraWorkStage = null;
             if (_inspectedLayerStage == stage && _inspectedLayer == layer)
             {
-                _inspectedLayerColorIndex = layerColorIndex;
                 _inspectorElement?.CheckAndRebuild();
                 if (_inspectorWindow != null) _inspectorWindow.IsOpen = true;
                 return;
@@ -988,7 +983,6 @@ namespace Aetherin
 
             _inspectedLayerStage = stage;
             _inspectedLayer = layer;
-            _inspectedLayerColorIndex = layerColorIndex;
             _inspectorElement?.CheckAndRebuild();
             if (_inspectorWindow != null) _inspectorWindow.IsOpen = true;
         }
@@ -1044,7 +1038,7 @@ namespace Aetherin
                 UI.Row(
                     UI.Toggle(null, () => layer.Visible, value => layer.Visible = value),
                     UI.Field(null, () => layer.gameObject.name, value => layer.gameObject.name = value).SetFlexGrow(1f)
-                ).SetBackgroundColor(GetLayerColor(_inspectedLayerColorIndex) * 0.5f),
+                ).SetBackgroundColor(GetLayerColor(layer) * 0.5f),
                 UI.Field("Order", () => layer.Order, value => layer.Order = value),
                 UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType()))
             );
@@ -1067,7 +1061,7 @@ namespace Aetherin
         {
             _stages ??= new List<StageBase>();
             _inspectorElement = UI.DynamicElementOnStatusChanged(
-                () => (_deckRevision, _inspectedLayerStage, _inspectedLayer, _inspectedLayerColorIndex,
+                () => (_deckRevision, _inspectedLayerStage, _inspectedLayer,
                     _inspectedCameraWorkStage, _inspectedCameraWork),
                 _ => CreateInspectorElement());
             _inspectorWindow = UI.Window("Inspector", _inspectorElement).SetWidth(460f);

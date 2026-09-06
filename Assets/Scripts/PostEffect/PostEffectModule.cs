@@ -15,6 +15,21 @@ namespace Aetherin
         Posterize,
         Invert,
         Bloom,
+        LedDisplay,
+        HorizontalFold,
+        HashInvertBlocks,
+        Grid,
+        Noise,
+        BlockGlitch,
+        HsvLevels,
+        Shutter,
+    }
+
+    public enum ShutterMode
+    {
+        TopBottom,
+        LeftRight,
+        Circle,
     }
 
     public enum PostEffectControlMode
@@ -83,6 +98,24 @@ namespace Aetherin
         public FloatParameter Speed = new(1f);
         [Tooltip("エフェクトごとの補助パラメータ")]
         public FloatParameter Secondary = new(0.5f);
+
+        [Tooltip("HSV Levels: 色相の回転（-1..1 が1周）")] public FloatParameter Hue = new(0f);
+        [Tooltip("HSV Levels: 彩度の倍率")] public FloatParameter Saturation = new(1f);
+        [Tooltip("HSV Levels: 明度の倍率")] public FloatParameter Value = new(1f);
+        [Tooltip("HSV Levels: 入力の黒点")] public FloatParameter BlackLevel = new(0f);
+        [Tooltip("HSV Levels: 入力の白点")] public FloatParameter WhiteLevel = new(1f);
+        [Tooltip("HSV Levels: ガンマ")] public FloatParameter Gamma = new(1f);
+        [Tooltip("Shutter: 閉じる方向")] public ShutterMode ShutterMode;
+
+        public void EnsureInitialized()
+        {
+            Strength ??= new FloatParameter(1f); Amount ??= new FloatParameter(0.02f);
+            Scale ??= new FloatParameter(4f); Speed ??= new FloatParameter(1f);
+            Secondary ??= new FloatParameter(0.5f); Hue ??= new FloatParameter(0f);
+            Saturation ??= new FloatParameter(1f); Value ??= new FloatParameter(1f);
+            BlackLevel ??= new FloatParameter(0f); WhiteLevel ??= new FloatParameter(1f);
+            Gamma ??= new FloatParameter(1f);
+        }
     }
 
     [Serializable]

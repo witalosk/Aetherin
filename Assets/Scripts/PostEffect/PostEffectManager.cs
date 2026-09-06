@@ -30,6 +30,13 @@ namespace Aetherin
         private static readonly int SpeedId = Shader.PropertyToID("_Speed");
         private static readonly int SecondaryId = Shader.PropertyToID("_Secondary");
         private static readonly int TimeValueId = Shader.PropertyToID("_TimeValue");
+        private static readonly int HueId = Shader.PropertyToID("_Hue");
+        private static readonly int SaturationId = Shader.PropertyToID("_Saturation");
+        private static readonly int ValueId = Shader.PropertyToID("_Value");
+        private static readonly int BlackLevelId = Shader.PropertyToID("_BlackLevel");
+        private static readonly int WhiteLevelId = Shader.PropertyToID("_WhiteLevel");
+        private static readonly int GammaId = Shader.PropertyToID("_Gamma");
+        private static readonly int ShutterModeId = Shader.PropertyToID("_ShutterMode");
 
         private Material _material;
         private StackRuntime _current = new();
@@ -194,6 +201,7 @@ namespace Aetherin
                 foreach (var module in deck.Modules)
                 {
                     if (module == null || !module.Enabled) continue;
+                    module.EnsureInitialized();
                     float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(context) ?? 1f);
                     if (strength <= 0f) continue;
 
@@ -207,6 +215,13 @@ namespace Aetherin
                     _material.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
                     _material.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 0f);
                     _material.SetFloat(TimeValueId, (float)context.Time);
+                    _material.SetFloat(HueId, module.Hue?.Evaluate(context) ?? 0f);
+                    _material.SetFloat(SaturationId, module.Saturation?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(ValueId, module.Value?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(BlackLevelId, module.BlackLevel?.Evaluate(context) ?? 0f);
+                    _material.SetFloat(WhiteLevelId, module.WhiteLevel?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(GammaId, module.Gamma?.Evaluate(context) ?? 1f);
+                    _material.SetInt(ShutterModeId, (int)module.ShutterMode);
                     Graphics.Blit(input, target, _material);
                     input = target;
                     wroteAny = true;
