@@ -4,6 +4,7 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
     {
         _MainTex ("Runtime Output", 2D) = "black" {}
         _AetherinOpacity ("Opacity", Range(0, 1)) = 1
+        [HideInInspector] _AlphaClip ("Alpha Clip", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
@@ -27,6 +28,7 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
             TEXTURE2D(_MainTex);
             SAMPLER(sampler_MainTex);
             float _AetherinOpacity;
+            float _AlphaClip;
 
             Varyings Vert(Attributes input)
             {
@@ -40,6 +42,7 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
             {
                 half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 color.a *= _AetherinOpacity;
+                if (_AlphaClip > 0.5) clip(color.a - 0.1);
                 return color;
             }
             ENDHLSL
