@@ -58,27 +58,30 @@ namespace Aetherin
             if (p == null) return UI.Label("-");
 
             return UI.Column(
-                Param("Opacity", p.Opacity),
-                UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
-                UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
-                UI.Field("Shape", () => p.Shape, value => p.Shape = value),
-                UI.DynamicElementOnStatusChanged(
-                    readStatus: () => p.Shape,
-                    build: shape => CreateShapeSpecificElement(p, shape)),
-                Param("Size", p.Size),
-                Param("Position", p.Position),
-                Param("Rotation", p.Rotation),
-                Param("Scale", p.Scale),
-                Param("Anchor", p.Anchor),
-                UI.Toggle("Fill", () => p.FillEnabled, value => p.FillEnabled = value),
-                UI.DynamicElementIf(() => p.FillEnabled, () => Param("Fill Color", p.FillColor)),
-                UI.Toggle("Stroke", () => p.StrokeEnabled, value => p.StrokeEnabled = value),
-                UI.DynamicElementIf(() => p.StrokeEnabled, () => UI.Column(
-                    Param("Stroke Width", p.StrokeWidth),
-                    Param("Stroke Color", p.StrokeColor),
-                    Param("Stroke Trim", p.StrokeTrim)
-                )),
-                Param("Repeater", p.Repeater)
+                UI.Tabs(
+                    ("Shape", UI.Column(
+                        UI.Field("Shape", () => p.Shape, value => p.Shape = value),
+                        UI.DynamicElementOnStatusChanged(
+                            readStatus: () => p.Shape,
+                            build: shape => CreateShapeSpecificElement(p, shape)),
+                        Param("Size", p.Size))),
+                    ("Transform", UI.Column(
+                        UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
+                        Param("Position", p.Position),
+                        Param("Rotation", p.Rotation),
+                        Param("Scale", p.Scale),
+                        Param("Anchor", p.Anchor))),
+                    ("Style", UI.Column(
+                        Param("Opacity", p.Opacity),
+                        UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
+                        UI.Toggle("Fill", () => p.FillEnabled, value => p.FillEnabled = value),
+                        UI.DynamicElementIf(() => p.FillEnabled, () => Param("Fill Color", p.FillColor)),
+                        UI.Toggle("Stroke", () => p.StrokeEnabled, value => p.StrokeEnabled = value),
+                        UI.DynamicElementIf(() => p.StrokeEnabled, () => UI.Column(
+                            Param("Stroke Width", p.StrokeWidth),
+                            Param("Stroke Color", p.StrokeColor),
+                            Param("Stroke Trim", p.StrokeTrim))))),
+                    ("Repeater", Param("Repeater", p.Repeater)))
             );
         }
 
@@ -168,28 +171,32 @@ namespace Aetherin
             p.EnsureInitialized();
 
             return UI.Column(
-                UI.Label("Runtime HLSL"),
-                UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
-                    .SetMinHeight(320f),
-                UI.Row(
-                    UI.Button("Compile", () => p.CompileRequested?.Invoke()).SetWidth(100f),
-                    UI.Label(() => p.CompileMessage).SetFlexGrow(1f)),
-                Param("Opacity", p.Opacity),
-                UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
-                Param("Size", p.Size),
-                Param("Position", p.Position),
-                Param("Rotation", p.Rotation),
-                Param("Scale", p.Scale),
-                Param("Anchor", p.Anchor),
-                UI.Fold("User Parameters", UI.Column(
-                    Param("Float 0", p.UserFloat0),
-                    Param("Float 1", p.UserFloat1),
-                    Param("Float 2", p.UserFloat2),
-                    Param("Float 3", p.UserFloat3),
-                    Param("Vector 0", p.UserVector0),
-                    Param("Vector 1", p.UserVector1),
-                    Param("Vector 2", p.UserVector2),
-                    Param("Vector 3", p.UserVector3))));
+                UI.Tabs(
+                    ("Shader", UI.Column(
+                        UI.Field("Name", () => p.ShaderName, value => p.ShaderName = value),
+                        UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
+                            .SetMinHeight(320f),
+                        UI.Row(
+                            UI.Button("Compile", () => p.CompileRequested?.Invoke()).SetWidth(100f),
+                            UI.Label(() => p.CompileMessage).SetFlexGrow(1f)))),
+                    ("Transform", UI.Column(
+                        Param("Size", p.Size),
+                        Param("Position", p.Position),
+                        Param("Rotation", p.Rotation),
+                        Param("Scale", p.Scale),
+                        Param("Anchor", p.Anchor))),
+                    ("Rendering", UI.Column(
+                        Param("Opacity", p.Opacity),
+                        UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value))),
+                    ("Parameters", UI.Column(
+                        Param("Float 0", p.UserFloat0),
+                        Param("Float 1", p.UserFloat1),
+                        Param("Float 2", p.UserFloat2),
+                        Param("Float 3", p.UserFloat3),
+                        Param("Vector 0", p.UserVector0),
+                        Param("Vector 1", p.UserVector1),
+                        Param("Vector 2", p.UserVector2),
+                        Param("Vector 3", p.UserVector3)))));
         }
 
         #endregion
@@ -204,46 +211,50 @@ namespace Aetherin
             if (p == null) return UI.Label("-");
 
             return UI.Column(
-                Param("Opacity", p.Opacity),
-                UI.DynamicElementIf(
-                    () => p.MaterialMode != Primitive3DMaterialMode.Glass,
-                    () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
-                UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
-                UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
-                UI.DynamicElementIf(
-                    () => p.Primitive == Primitive3DType.Cylinder,
-                    () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
-                UI.DynamicElementIf(
-                    () => p.Primitive == Primitive3DType.Icosphere,
-                    () => UI.Field("Subdivisions", () => p.IcosphereSubdivisions,
-                        value => p.IcosphereSubdivisions = Math.Max(0, Math.Min(5, value)))),
-                Param("Size", p.Size),
-                UI.DynamicElementIf(
-                    () => p.Primitive == Primitive3DType.RoundedBox,
-                    () => UI.Column(
-                        Param("Corner Radius", p.CornerRadius),
-                        UI.Field("Corner Segments", () => p.CornerSegments,
-                            value => p.CornerSegments = value))),
-                Param("Position", p.Position),
-                Param("Rotation", p.Rotation),
-                Param("Scale", p.Scale),
-                Param("Anchor", p.Anchor),
-                UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
-                UI.DynamicElementOnStatusChanged(
-                    readStatus: () => p.MaterialMode,
-                    build: mode => mode == Primitive3DMaterialMode.Glass
-                        ? CreateGlassMaterialElement(p)
-                        : mode == Primitive3DMaterialMode.Lit
-                            ? CreateLitMaterialElement(p)
-                            : CreateStandardMaterialElement(p)),
-                UI.DynamicElementIf(
-                    () => p.RenderMode != Primitive3DRenderMode.Surface,
-                    () => UI.Column(
-                        UI.Field("Wire Color", () => p.WireColor, value => p.WireColor = value),
-                        Param("Wire Width", p.WireWidth),
-                        Param("Wire Intensity", p.WireColorIntensity),
-                        Param("Wire Alpha", p.WireAlpha))),
-                Param("Repeater", p.Repeater)
+                UI.Tabs(
+                    ("Shape", UI.Column(
+                        UI.Field("Primitive", () => p.Primitive, value => p.Primitive = value),
+                        UI.Field("Render Mode", () => p.RenderMode, value => p.RenderMode = value),
+                        UI.DynamicElementIf(
+                            () => p.Primitive == Primitive3DType.Cylinder,
+                            () => UI.Field("Radial Segments", () => p.RadialSegments, value => p.RadialSegments = value)),
+                        UI.DynamicElementIf(
+                            () => p.Primitive == Primitive3DType.Icosphere,
+                            () => UI.Field("Subdivisions", () => p.IcosphereSubdivisions,
+                                value => p.IcosphereSubdivisions = Math.Max(0, Math.Min(5, value)))),
+                        Param("Size", p.Size),
+                        UI.DynamicElementIf(
+                            () => p.Primitive == Primitive3DType.RoundedBox,
+                            () => UI.Column(
+                                Param("Corner Radius", p.CornerRadius),
+                                UI.Field("Corner Segments", () => p.CornerSegments,
+                                    value => p.CornerSegments = value))))),
+                    ("Transform", UI.Column(
+                        Param("Position", p.Position),
+                        Param("Rotation", p.Rotation),
+                        Param("Scale", p.Scale),
+                        Param("Anchor", p.Anchor))),
+                    ("Material", UI.Column(
+                        Param("Opacity", p.Opacity),
+                        UI.DynamicElementIf(
+                            () => p.MaterialMode != Primitive3DMaterialMode.Glass,
+                            () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
+                        UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
+                        UI.DynamicElementOnStatusChanged(
+                            readStatus: () => p.MaterialMode,
+                            build: mode => mode == Primitive3DMaterialMode.Glass
+                                ? CreateGlassMaterialElement(p)
+                                : mode == Primitive3DMaterialMode.Lit
+                                    ? CreateLitMaterialElement(p)
+                                    : CreateStandardMaterialElement(p)),
+                        UI.DynamicElementIf(
+                            () => p.RenderMode != Primitive3DRenderMode.Surface,
+                            () => UI.Column(
+                                UI.Field("Wire Color", () => p.WireColor, value => p.WireColor = value),
+                                Param("Wire Width", p.WireWidth),
+                                Param("Wire Intensity", p.WireColorIntensity),
+                                Param("Wire Alpha", p.WireAlpha))))),
+                    ("Repeater", Param("Repeater", p.Repeater)))
             );
         }
 
