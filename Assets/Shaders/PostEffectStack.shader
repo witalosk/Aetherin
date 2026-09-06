@@ -186,9 +186,9 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 {
                     float cells = max(1.0, abs(_Scale));
                     float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
-                    float2 line = abs(frac(uv * grid) - 0.5);
+                    float2 l = abs(frac(uv * grid) - 0.5); 
                     float width = lerp(0.002, 0.18, saturate(_Amount));
-                    float gridLine = step(0.5 - width, max(line.x, line.y));
+                    float gridLine = step(0.5 - width, max(l.x, l.y));
                     fx.rgb *= 1.0 - gridLine;
                 }
                 else if (_EffectType == 14) // Noise
@@ -268,6 +268,20 @@ Shader "Hidden/Aetherin/PostEffectStack"
 
                     float ink = saturate(max(edgeInk, hatchInk));
                     fx = float4(1.0 - ink, 1.0 - ink, 1.0 - ink, src.a);
+                }
+                else if (_EffectType == 19) // Light leak
+                {
+                    float angle = _Secondary * 6.2831853 + _TimeValue * _Speed * 0.15;
+                    float2 direction = float2(cos(angle), sin(angle));
+                    float aspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
+                    float size = max(0.05, 0.1 + abs(_Scale) * 0.05);
+                    float2 sourcePosition = 0.5 + direction * (0.5 + size * 0.4);
+                    float2 leakVector = (uv - sourcePosition) * float2(aspect, 1.0);
+                    float radialLeak = 1.0 - smoothstep(size, size * 2.2, length(leakVector));
+                    float directionalLeak = saturate(dot(normalize(uv - 0.5 + 0.0001), -direction) * 0.5 + 0.5);
+                    float leak = radialLeak * (0.65 + directionalLeak * 0.35) * max(0.0, _Amount);
+                    float3 leakColor = lerp(float3(1.0, 0.18, 0.03), float3(1.0, 0.82, 0.32), radialLeak);
+                    fx.rgb = 1.0 - (1.0 - src.rgb) * (1.0 - leakColor * leak);
                 }
 
                 return lerp(src, fx, saturate(_Strength));

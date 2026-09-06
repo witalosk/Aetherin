@@ -24,6 +24,7 @@ namespace Aetherin
         HsvLevels,
         Shutter,
         HandDrawn,
+        LightLeak,
     }
 
     public enum ShutterMode

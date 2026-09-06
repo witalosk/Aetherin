@@ -11,6 +11,7 @@ namespace Aetherin
         None,
         InvertBackgroundBrightness,
         SwapAccent,
+        SwapBackgroundAndAccent,
         InvertAll,
     }
 
@@ -56,6 +57,12 @@ namespace Aetherin
                     (result.AccentColor1, result.AccentColor2) =
                         (result.AccentColor2, result.AccentColor1);
                     break;
+                case ColorPaletteVariation.SwapBackgroundAndAccent:
+                    (result.BackgroundColor1, result.AccentColor1) =
+                        (result.AccentColor1, result.BackgroundColor1);
+                    (result.BackgroundColor2, result.AccentColor2) =
+                        (result.AccentColor2, result.BackgroundColor2);
+                    break;
                 case ColorPaletteVariation.InvertAll:
                     result.BackgroundColor1 = ColorUtility.Invert(result.BackgroundColor1);
                     result.BackgroundColor2 = ColorUtility.Invert(result.BackgroundColor2);
@@ -73,6 +80,7 @@ namespace Aetherin
         {
             ColorPaletteVariation.InvertBackgroundBrightness => "Dark / Light",
             ColorPaletteVariation.SwapAccent => "Swap Accent",
+            ColorPaletteVariation.SwapBackgroundAndAccent => "Swap Background / Accent",
             ColorPaletteVariation.InvertAll => "Invert All",
             _ => "Normal",
         };
@@ -127,6 +135,7 @@ namespace Aetherin
             ColorPaletteVariation.None,
             ColorPaletteVariation.InvertBackgroundBrightness,
             ColorPaletteVariation.SwapAccent,
+            ColorPaletteVariation.SwapBackgroundAndAccent,
             ColorPaletteVariation.InvertAll,
         };
 

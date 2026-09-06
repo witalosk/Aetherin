@@ -191,6 +191,12 @@ namespace Aetherin
                     yield return Param("Wiggle Amount", module.Secondary);
                     yield return Param("Wiggle FPS", module.HandDrawnFrameRate);
                     break;
+                case PostEffectType.LightLeak:
+                    yield return Param("Intensity", module.Amount);
+                    yield return Param("Size", module.Scale);
+                    yield return Param("Drift Speed", module.Speed);
+                    yield return Param("Angle", module.Secondary);
+                    break;
             }
         }
 
