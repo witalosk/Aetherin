@@ -37,6 +37,13 @@ namespace Aetherin
                     UI.Field("Toggle Pad", Binder.Create(effects.DepthOfFieldToggleButton, typeof(MidiBinding))),
                     UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value),
                     Param("Focus Distance", effects.FocusDistance),
+                    UI.Toggle("Auto Focus (3x3 Rays)", () => effects.AutoFocusEnabled,
+                        value => effects.AutoFocusEnabled = value),
+                    UI.DynamicElementIf(
+                        () => effects.AutoFocusEnabled,
+                        () => UI.Column(
+                            Param("Auto Focus Max Distance", effects.AutoFocusMaxDistance),
+                            Param("Auto Focus Lerp Speed", effects.AutoFocusLerpSpeed))),
                     Param("Aperture", effects.Aperture),
                     Param("Focal Length", effects.FocalLength))));
         }
@@ -176,6 +183,13 @@ namespace Aetherin
                 case PostEffectType.Shutter:
                     yield return UI.Field("Mode", () => module.ShutterMode, value => module.ShutterMode = value);
                     yield return Param("Close", module.Amount);
+                    break;
+                case PostEffectType.HandDrawn:
+                    yield return Param("Edge Threshold", module.Amount);
+                    yield return Param("Hatch Density", module.Scale);
+                    yield return Param("Wiggle Speed", module.Speed);
+                    yield return Param("Wiggle Amount", module.Secondary);
+                    yield return Param("Wiggle FPS", module.HandDrawnFrameRate);
                     break;
             }
         }

@@ -37,6 +37,7 @@ namespace Aetherin
         private static readonly int WhiteLevelId = Shader.PropertyToID("_WhiteLevel");
         private static readonly int GammaId = Shader.PropertyToID("_Gamma");
         private static readonly int ShutterModeId = Shader.PropertyToID("_ShutterMode");
+        private static readonly int HandDrawnFrameRateId = Shader.PropertyToID("_HandDrawnFrameRate");
 
         private Material _material;
         private StackRuntime _current = new();
@@ -44,6 +45,8 @@ namespace Aetherin
         private StackRuntime _output = new();
         private VolumeProfile _currentVolumeProfile;
         private VolumeProfile _nextVolumeProfile;
+        private readonly AutoFocusState _currentAutoFocus = new();
+        private readonly AutoFocusState _nextAutoFocus = new();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
         // 0はVolume、1以降はNextのDeckインデックス + 1。
@@ -113,8 +116,8 @@ namespace Aetherin
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false);
             var nextContext = new ModulationContext(
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
-            ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentContext);
-            ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextContext);
+            ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentCamera, currentContext, _currentAutoFocus);
+            ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextCamera, nextContext, _nextAutoFocus);
             ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
             ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
         }
@@ -222,6 +225,7 @@ namespace Aetherin
                     _material.SetFloat(WhiteLevelId, module.WhiteLevel?.Evaluate(context) ?? 1f);
                     _material.SetFloat(GammaId, module.Gamma?.Evaluate(context) ?? 1f);
                     _material.SetInt(ShutterModeId, (int)module.ShutterMode);
+                    _material.SetFloat(HandDrawnFrameRateId, module.HandDrawnFrameRate?.Evaluate(context) ?? 8f);
                     Graphics.Blit(input, target, _material);
                     input = target;
                     wroteAny = true;
@@ -417,8 +421,9 @@ namespace Aetherin
             cameraData.volumeLayerMask = 1 << layer;
         }
 
-        private static void ApplyVolumeSettings(
-            VolumeProfile profile, DeckVolumeEffects settings, in ModulationContext context)
+        private void ApplyVolumeSettings(
+            VolumeProfile profile, DeckVolumeEffects settings, Camera camera,
+            in ModulationContext context, AutoFocusState autoFocus)
         {
             settings.EnsureInitialized();
             if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
@@ -439,11 +444,61 @@ namespace Aetherin
                     : DepthOfFieldMode.Gaussian
                 : DepthOfFieldMode.Off;
             depthOfField.focusDistance.overrideState = true;
-            depthOfField.focusDistance.value = Mathf.Max(0.1f, settings.FocusDistance.Evaluate(context));
+            depthOfField.focusDistance.value = EvaluateFocusDistance(settings, camera, context, autoFocus);
             depthOfField.aperture.overrideState = true;
             depthOfField.aperture.value = Mathf.Clamp(settings.Aperture.Evaluate(context), 1f, 32f);
             depthOfField.focalLength.overrideState = true;
             depthOfField.focalLength.value = Mathf.Clamp(settings.FocalLength.Evaluate(context), 1f, 300f);
+        }
+
+        private static float EvaluateFocusDistance(
+            DeckVolumeEffects settings, Camera camera, in ModulationContext context, AutoFocusState state)
+        {
+            float manualDistance = Mathf.Max(0.1f, settings.FocusDistance.Evaluate(context));
+            if (!settings.AutoFocusEnabled || camera == null)
+            {
+                state.Initialized = false;
+                return manualDistance;
+            }
+
+            int hitCount = 0;
+            float maxDistance = Mathf.Max(0.1f, settings.AutoFocusMaxDistance.Evaluate(context));
+            for (int y = 0; y < 3; y++)
+            {
+                for (int x = 0; x < 3; x++)
+                {
+                    Ray ray = camera.ViewportPointToRay(new Vector3(x * 0.5f, y * 0.5f, 0f));
+                    if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, Physics.DefaultRaycastLayers,
+                            QueryTriggerInteraction.Ignore))
+                        state.HitDistances[hitCount++] = hit.distance;
+                }
+            }
+
+            float targetDistance = hitCount > 0
+                ? GetMedianDistance(state.HitDistances, hitCount)
+                : manualDistance;
+            if (!state.Initialized)
+            {
+                state.SmoothedDistance = targetDistance;
+                state.Initialized = true;
+            }
+            else
+            {
+                float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 1f / 60f;
+                float lerpFactor = 1f - Mathf.Exp(-Mathf.Max(0f, settings.AutoFocusLerpSpeed.Evaluate(context)) * deltaTime);
+                state.SmoothedDistance = Mathf.Lerp(state.SmoothedDistance, targetDistance, lerpFactor);
+            }
+
+            return Mathf.Max(0.1f, state.SmoothedDistance);
+        }
+
+        private static float GetMedianDistance(float[] distances, int count)
+        {
+            Array.Sort(distances, 0, count);
+            int middle = count / 2;
+            return count % 2 == 0
+                ? (distances[middle - 1] + distances[middle]) * 0.5f
+                : distances[middle];
         }
 
         private static void DestroyRuntimeProfile(VolumeProfile profile)
@@ -507,6 +562,13 @@ namespace Aetherin
                 if (Application.isPlaying) UnityEngine.Object.Destroy(texture);
                 else UnityEngine.Object.DestroyImmediate(texture);
             }
+        }
+
+        private sealed class AutoFocusState
+        {
+            public readonly float[] HitDistances = new float[9];
+            public float SmoothedDistance;
+            public bool Initialized;
         }
     }
 }

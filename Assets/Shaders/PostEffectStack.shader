@@ -25,6 +25,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
             float _Hue, _Saturation, _Value, _BlackLevel, _WhiteLevel, _Gamma;
             int _ShutterMode;
+            float _HandDrawnFrameRate;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float3 bloomSample(float2 uv)
@@ -56,6 +57,28 @@ Shader "Hidden/Aetherin/PostEffectStack"
             {
                 float3 p = abs(frac(c.xxx + float3(0.0, 0.6666667, 0.3333333)) * 6.0 - 3.0);
                 return c.z * lerp(float3(1.0, 1.0, 1.0), saturate(p - 1.0), c.y);
+            }
+
+            float luminanceAt(float2 uv)
+            {
+                float3 color = tex2D(_MainTex, saturate(uv)).rgb;
+                return dot(color, float3(0.2126, 0.7152, 0.0722));
+            }
+
+            float sobelEdge(float2 uv)
+            {
+                float2 texel = _MainTex_TexelSize.xy;
+                float topLeft = luminanceAt(uv + texel * float2(-1.0, 1.0));
+                float top = luminanceAt(uv + texel * float2(0.0, 1.0));
+                float topRight = luminanceAt(uv + texel * float2(1.0, 1.0));
+                float left = luminanceAt(uv + texel * float2(-1.0, 0.0));
+                float right = luminanceAt(uv + texel * float2(1.0, 0.0));
+                float bottomLeft = luminanceAt(uv + texel * float2(-1.0, -1.0));
+                float bottom = luminanceAt(uv + texel * float2(0.0, -1.0));
+                float bottomRight = luminanceAt(uv + texel * float2(1.0, -1.0));
+                float horizontal = topRight + 2.0 * right + bottomRight - topLeft - 2.0 * left - bottomLeft;
+                float vertical = bottomLeft + 2.0 * bottom + bottomRight - topLeft - 2.0 * top - topRight;
+                return length(float2(horizontal, vertical));
             }
 
             float4 frag(v2f i) : SV_Target
@@ -216,6 +239,35 @@ Shader "Hidden/Aetherin/PostEffectStack"
                         openMask = 1.0 - step(0.75 * (1.0 - close), distanceFromCenter);
                     }
                     fx.rgb = src.rgb * openMask;
+                }
+                else if (_EffectType == 18) // Hand-drawn ink and hatching
+                {
+                    float fps = max(1.0, _HandDrawnFrameRate);
+                    float quantizedTime = floor(_TimeValue * fps) / fps;
+                    float wiggle = max(0.0, _Secondary);
+                    float2 noiseUv = uv * 7.0 + quantizedTime * _Speed;
+                    float2 warp = float2(
+                        noise21(noiseUv) - 0.5,
+                        noise21(noiseUv + 31.7) - 0.5) * wiggle;
+                    float2 sketchUv = saturate(uv + warp);
+                    float sourceLuminance = luminanceAt(sketchUv);
+
+                    float edge = sobelEdge(sketchUv);
+                    float edgeInk = smoothstep(max(0.0001, _Amount), max(0.0001, _Amount) * 2.5, edge);
+
+                    float density = max(1.0, abs(_Scale));
+                    float aspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
+                    float2 hatchSpace = sketchUv * float2(density * aspect, density);
+                    float diagonalA = abs(frac(dot(hatchSpace, float2(0.7071, 0.7071))) - 0.5);
+                    float diagonalB = abs(frac(dot(hatchSpace, float2(0.7071, -0.7071))) - 0.5);
+                    float hatchA = 1.0 - smoothstep(0.36, 0.5, diagonalA);
+                    float hatchB = 1.0 - smoothstep(0.40, 0.5, diagonalB);
+                    float darkness = saturate((0.9 - sourceLuminance) / 0.7);
+                    float hatchInk = hatchA * darkness;
+                    hatchInk = max(hatchInk, hatchB * saturate((0.45 - sourceLuminance) / 0.35));
+
+                    float ink = saturate(max(edgeInk, hatchInk));
+                    fx = float4(1.0 - ink, 1.0 - ink, 1.0 - ink, src.a);
                 }
 
                 return lerp(src, fx, saturate(_Strength));

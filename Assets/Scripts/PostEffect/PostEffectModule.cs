@@ -23,6 +23,7 @@ namespace Aetherin
         BlockGlitch,
         HsvLevels,
         Shutter,
+        HandDrawn,
     }
 
     public enum ShutterMode
@@ -63,6 +64,12 @@ namespace Aetherin
         public MidiBinding DepthOfFieldToggleButton = new();
         public VolumeDepthOfFieldMode DepthOfFieldMode = VolumeDepthOfFieldMode.Bokeh;
         public FloatParameter FocusDistance = new(10f);
+        [Tooltip("画面を3x3に分けてRaycastし、被写体までの距離へ自動でフォーカスします")]
+        public bool AutoFocusEnabled;
+        [Tooltip("自動フォーカスでRaycastする最大距離")]
+        public FloatParameter AutoFocusMaxDistance = new(100f);
+        [Tooltip("自動フォーカスが目標距離へLerpする速さ")]
+        public FloatParameter AutoFocusLerpSpeed = new(6f);
         public FloatParameter Aperture = new(5.6f);
         public FloatParameter FocalLength = new(50f);
 
@@ -74,6 +81,8 @@ namespace Aetherin
             BloomScatter ??= new FloatParameter(0.5f);
             DepthOfFieldToggleButton ??= new MidiBinding();
             FocusDistance ??= new FloatParameter(10f);
+            AutoFocusMaxDistance ??= new FloatParameter(100f);
+            AutoFocusLerpSpeed ??= new FloatParameter(6f);
             Aperture ??= new FloatParameter(5.6f);
             FocalLength ??= new FloatParameter(50f);
         }
@@ -106,6 +115,7 @@ namespace Aetherin
         [Tooltip("HSV Levels: 入力の白点")] public FloatParameter WhiteLevel = new(1f);
         [Tooltip("HSV Levels: ガンマ")] public FloatParameter Gamma = new(1f);
         [Tooltip("Shutter: 閉じる方向")] public ShutterMode ShutterMode;
+        [Tooltip("Hand Drawn: 揺れを量子化するフレームレート")] public FloatParameter HandDrawnFrameRate = new(8f);
 
         public void EnsureInitialized()
         {
@@ -115,6 +125,7 @@ namespace Aetherin
             Saturation ??= new FloatParameter(1f); Value ??= new FloatParameter(1f);
             BlackLevel ??= new FloatParameter(0f); WhiteLevel ??= new FloatParameter(1f);
             Gamma ??= new FloatParameter(1f);
+            HandDrawnFrameRate ??= new FloatParameter(8f);
         }
     }
 
