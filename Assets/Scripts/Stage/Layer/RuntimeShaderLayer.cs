@@ -12,6 +12,7 @@ namespace Aetherin
     {
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int OpacityId = Shader.PropertyToID("_AetherinOpacity");
+        private static readonly int AlphaClipId = Shader.PropertyToID("_AlphaClip");
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -28,6 +29,7 @@ namespace Aetherin
         private Material _material;
         private ShaderRenderer _runtimeRenderer;
         private RenderTexture _runtimeTexture;
+        private RenderTexture _waveformTexture;
         private Vector2Int _runtimeResolution;
         private int _shaderCodeHash;
         private bool _isShaderCompiled;
@@ -87,7 +89,7 @@ namespace Aetherin
             Vector2Int resolution = GetResolution();
             EnsureRuntimeTexture(resolution);
             _runtimeRenderer.SetConstantBuffer(0, CreateConstantBuffer(context, resolution));
-            _runtimeRenderer.SetTexture(0, _audio?.WaveformTexture ?? Texture2D.blackTexture);
+            _runtimeRenderer.SetTexture(0, GetWaveformTexture());
             _runtimeRenderer.SetTexture(1, _audio?.SpectrumTexture ?? Texture2D.blackTexture);
         }
 
@@ -212,6 +214,7 @@ namespace Aetherin
         {
             if (_material == null) return;
             _material.SetFloat(OpacityId, Mathf.Clamp01(_params.Opacity.Evaluate(context)));
+            _material.SetFloat(AlphaClipId, _params.BlendMode == LayerBlendMode.Opaque ? 1f : 0f);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
         }
 
@@ -241,6 +244,37 @@ namespace Aetherin
             return texture != null ? new Vector2Int(texture.width, texture.height) : new Vector2Int(Screen.width, Screen.height);
         }
 
+        /// <summary>
+        /// UnityRuntimeShader converts Texture2D inputs to a default (UNorm) RenderTexture.
+        /// That conversion clamps the negative half of our RFloat waveform. Copying into an
+        /// RFloat RenderTexture first preserves the -1..1 sample values and also makes the
+        /// native plugin take its RenderTexture path directly.
+        /// </summary>
+        private Texture GetWaveformTexture()
+        {
+            Texture source = _audio?.WaveformTexture;
+            if (source == null) return Texture2D.blackTexture;
+            if (source is RenderTexture renderTexture) return renderTexture;
+
+            int width = Mathf.Max(1, source.width);
+            int height = Mathf.Max(1, source.height);
+            if (_waveformTexture == null || _waveformTexture.width != width || _waveformTexture.height != height)
+            {
+                DestroyResource(_waveformTexture);
+                _waveformTexture = new RenderTexture(width, height, 0, RenderTextureFormat.RFloat)
+                {
+                    name = $"{name} Runtime Shader Waveform",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.DontSave,
+                };
+                _waveformTexture.Create();
+            }
+
+            Graphics.Blit(source, _waveformTexture);
+            return _waveformTexture;
+        }
+
         private static float DivideByParentScale(float value, float parentScale) => Mathf.Abs(parentScale) > .0001f ? value / parentScale : value;
 
         private static Mesh CreateQuad()
@@ -258,6 +292,7 @@ namespace Aetherin
             DestroyResource(_material);
             DestroyResource(_mesh);
             DestroyResource(_runtimeTexture);
+            DestroyResource(_waveformTexture);
         }
 
         private static void DestroyResource(Object resource)
