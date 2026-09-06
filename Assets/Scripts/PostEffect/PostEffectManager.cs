@@ -106,7 +106,7 @@ namespace Aetherin
             _params ??= new PostEffectManagerParams();
             _params.CurrentVolume ??= new DeckVolumeEffects();
             _params.NextVolume ??= new DeckVolumeEffects();
-            UpdateNextVolumeToggleButtons();
+            UpdateNextToggleButtons();
             if (currentCamera == null || nextCamera == null) return;
 
             EnsureVolumeProfiles();
@@ -122,7 +122,7 @@ namespace Aetherin
             ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
         }
 
-        private void UpdateNextVolumeToggleButtons()
+        private void UpdateNextToggleButtons()
         {
             DeckVolumeEffects effects = _params.NextVolume;
             effects.EnsureInitialized();
@@ -135,6 +135,20 @@ namespace Aetherin
             effects.BloomToggleButton.SetLed(effects.BloomEnabled ? Color.yellow : Color.yellow * 0.15f);
             effects.DepthOfFieldToggleButton.SetLed(
                 effects.DepthOfFieldEnabled ? Color.cyan : Color.cyan * 0.15f);
+
+            if (_params.Next?.Decks == null) return;
+            foreach (PostEffectDeck deck in _params.Next.Decks)
+            {
+                if (deck == null) continue;
+                deck.EnsureInitialized();
+                if (deck.ControlMode == PostEffectControlMode.OutputPad)
+                {
+                    deck.OutputPad.SetLed(deck.OutputPad.IsNoteOn ? Color.white : Color.white * 0.15f);
+                    continue;
+                }
+                if (deck.ToggleButton.WasNoteOn) deck.Enabled = !deck.Enabled;
+                deck.ToggleButton.SetLed(deck.Enabled ? Color.white : Color.white * 0.15f);
+            }
         }
 
         /// <summary>
@@ -166,12 +180,7 @@ namespace Aetherin
             _next = new StackRuntime();
         }
 
-        private Texture Process(
-            Texture source,
-            PostEffectStack stack,
-            StackRuntime runtime,
-            in ModulationContext context,
-            bool outputOnly = false)
+        private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context, bool outputOnly = false)
         {
             if (source == null || _material == null || stack?.Decks == null)
                 return source;
@@ -189,8 +198,15 @@ namespace Aetherin
                 if (deck.Modules == null) continue;
 
                 bool isOutputPadDeck = deck.ControlMode == PostEffectControlMode.OutputPad;
-                if (outputOnly != isOutputPadDeck) continue;
-                if (outputOnly && deck.OutputPad?.IsNoteOn != true) continue;
+                if (outputOnly)
+                {
+                    if (!isOutputPadDeck || deck.OutputPad?.IsNoteOn != true) continue;
+                }
+                else if (isOutputPadDeck && (!context.AllowMidi || deck.OutputPad?.IsNoteOn != true))
+                {
+                    // Output PadはNextのプレビューにも同時に掛けるが、Currentには掛けない。
+                    continue;
+                }
 
                 float deckStrength = Mathf.Clamp01(deck.Strength?.Evaluate(context) ?? 1f);
                 if (!outputOnly)
@@ -427,9 +443,14 @@ namespace Aetherin
         {
             settings.EnsureInitialized();
             if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
-            bloom.active = settings.BloomEnabled;
+            // Keep the override active and control the effect with its intensity, as DoF does
+            // with DepthOfFieldMode. Toggling VolumeComponent.active causes the inherited
+            // Bloom state to win on some URP volume-stack updates.
+            bloom.active = true;
             bloom.intensity.overrideState = true;
-            bloom.intensity.value = Mathf.Max(0f, settings.BloomIntensity.Evaluate(context));
+            bloom.intensity.value = settings.BloomEnabled
+                ? Mathf.Max(0f, settings.BloomIntensity.Evaluate(context))
+                : 0f;
             bloom.threshold.overrideState = true;
             bloom.threshold.value = Mathf.Max(0f, settings.BloomThreshold.Evaluate(context));
             bloom.scatter.overrideState = true;
@@ -468,9 +489,8 @@ namespace Aetherin
                 for (int x = 0; x < 3; x++)
                 {
                     Ray ray = camera.ViewportPointToRay(new Vector3(x * 0.5f, y * 0.5f, 0f));
-                    if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, Physics.DefaultRaycastLayers,
-                            QueryTriggerInteraction.Ignore))
-                        state.HitDistances[hitCount++] = hit.distance;
+                    float distance = FindFocusDistance(ray, camera, maxDistance);
+                    if (distance >= 0f) state.HitDistances[hitCount++] = distance;
                 }
             }
 
@@ -492,10 +512,30 @@ namespace Aetherin
             return Mathf.Max(0.1f, state.SmoothedDistance);
         }
 
+        private static float FindFocusDistance(Ray ray, Camera camera, float maxDistance)
+        {
+            float nearestDistance = maxDistance + 1f;
+            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, Physics.DefaultRaycastLayers,
+                    QueryTriggerInteraction.Ignore))
+                nearestDistance = hit.distance;
+
+            // Stage layers are draw-only MeshRenderers and do not own physics colliders.
+            // Their world-space bounds are sufficient for selecting a practical focus depth.
+            int cameraMask = camera.cullingMask;
+            foreach (Renderer renderer in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
+            {
+                if (!renderer.enabled || renderer.forceRenderingOff ||
+                    (cameraMask & (1 << renderer.gameObject.layer)) == 0) continue;
+                if (renderer.bounds.IntersectRay(ray, out float distance) && distance < nearestDistance)
+                    nearestDistance = distance;
+            }
+
+            return nearestDistance <= maxDistance ? nearestDistance : -1f;
+        }
+
         private static float GetMedianDistance(float[] distances, int count)
         {
             Array.Sort(distances, 0, count);
-            return distances[0];
             int middle = count / 2;
             return count % 2 == 0
                 ? (distances[middle - 1] + distances[middle]) * 0.5f

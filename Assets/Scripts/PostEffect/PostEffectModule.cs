@@ -140,6 +140,8 @@ namespace Aetherin
         public PostEffectControlMode ControlMode;
         [Tooltip("このDeck全体の強度を0..1で操作するフェーダー")]
         public MidiCcBinding Fader = new();
+        [Tooltip("通常Deckの有効/無効を切り替えるMIDIパッド")]
+        public MidiBinding ToggleButton = new();
         [Tooltip("押している間だけ最終OutputへこのDeckを適用するPad")]
         public MidiBinding OutputPad = new();
         [HideInInspector] public float CurrentFaderValue = 1f;
@@ -149,6 +151,7 @@ namespace Aetherin
         {
             Strength ??= new FloatParameter(1f);
             Fader ??= new MidiCcBinding();
+            ToggleButton ??= new MidiBinding();
             OutputPad ??= new MidiBinding();
             Modules ??= new System.Collections.Generic.List<PostEffectModule>();
         }

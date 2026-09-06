@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
-using UnityEngine;
 
 namespace Aetherin
 {
@@ -16,22 +16,30 @@ namespace Aetherin
         private const double CriticalFlushIntervalSeconds = 0.5d;
 
         private static readonly Queue<string> Entries = new();
+        private static readonly object Sync = new();
         private static double _lastFlushTime;
         private static double _lastCriticalFlushTime;
+        private static string _logPath;
 
-        private static string LogPath => Path.Combine(Application.persistentDataPath, "AetherinMidiDiagnostics.log");
+        public static void Initialize(string persistentDataPath)
+        {
+            _logPath ??= Path.Combine(persistentDataPath, "AetherinMidiDiagnostics.log");
+        }
 
         public static void Record(string message)
         {
-            string entry = $"{DateTime.UtcNow:O}  {message}";
-            while (Entries.Count >= MaxEntries) Entries.Dequeue();
-            Entries.Enqueue(entry);
+            lock (Sync)
+            {
+                string entry = $"{DateTime.UtcNow:O}  {message}";
+                while (Entries.Count >= MaxEntries) Entries.Dequeue();
+                Entries.Enqueue(entry);
+            }
         }
 
         public static void RecordCritical(string message)
         {
             Record(message);
-            double now = Time.realtimeSinceStartupAsDouble;
+            double now = GetMonotonicSeconds();
             if (now - _lastCriticalFlushTime < CriticalFlushIntervalSeconds) return;
             _lastCriticalFlushTime = now;
             Flush();
@@ -39,22 +47,28 @@ namespace Aetherin
 
         public static void FlushIfDue()
         {
-            double now = Time.realtimeSinceStartupAsDouble;
+            double now = GetMonotonicSeconds();
             if (now - _lastFlushTime < FlushIntervalSeconds) return;
             Flush();
         }
 
         private static void Flush()
         {
-            _lastFlushTime = Time.realtimeSinceStartupAsDouble;
+            if (string.IsNullOrEmpty(_logPath)) return;
+            _lastFlushTime = GetMonotonicSeconds();
             try
             {
-                File.WriteAllLines(LogPath, Entries);
+                string[] snapshot;
+                lock (Sync) snapshot = Entries.ToArray();
+                File.WriteAllLines(_logPath, snapshot);
             }
-            catch (Exception exception)
+            catch
             {
-                Debug.LogWarning($"[MidiDiagnostics] Failed to write diagnostic log: {exception.Message}");
+                // 診断ログの失敗がMIDI処理を妨げないよう、ここではUnity APIへ報告しない。
             }
         }
+
+        private static double GetMonotonicSeconds() =>
+            (double)Stopwatch.GetTimestamp() / Stopwatch.Frequency;
     }
 }

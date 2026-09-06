@@ -76,7 +76,9 @@ namespace Aetherin
                 UI.Field("Control", () => deck.ControlMode, value => deck.ControlMode = value),
                 UI.DynamicElementIf(
                     () => deck.ControlMode == PostEffectControlMode.Fader,
-                    () => UI.Field("Fader (CC)", Binder.Create(deck.Fader, typeof(MidiCcBinding)))),
+                    () => UI.Column(
+                        UI.Field("Fader (CC)", Binder.Create(deck.Fader, typeof(MidiCcBinding))),
+                        UI.Field("Toggle Pad", Binder.Create(deck.ToggleButton, typeof(MidiBinding))))),
                 UI.DynamicElementIf(
                     () => deck.ControlMode == PostEffectControlMode.OutputPad,
                     () => UI.Field("Output Pad (Hold)", Binder.Create(deck.OutputPad, typeof(MidiBinding)))),
@@ -150,7 +152,6 @@ namespace Aetherin
                     break;
                 case PostEffectType.HorizontalFold:
                     yield return Param("Fold Amount", module.Amount);
-                    yield return Param("Folds", module.Scale);
                     break;
                 case PostEffectType.HashInvertBlocks:
                     yield return Param("Coverage", module.Amount);

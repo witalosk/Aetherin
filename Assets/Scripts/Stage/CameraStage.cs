@@ -9,6 +9,12 @@ using UnitySimpleContainer;
 
 namespace Aetherin
 {
+    public enum CameraStageBackgroundMode
+    {
+        Skybox,
+        SolidColor,
+    }
+
     /// <summary>
     /// カメラで撮ったシーンをそのまま出力するステージ
     /// カメラと被写体はこのオブジェクトの子に置く想定
@@ -38,10 +44,24 @@ namespace Aetherin
         [SerializeField] private ModelLayerLibrary _modelLibrary;
         [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
         [SerializeField] private FontAssetLibrary _fontAssetLibrary;
+        [SerializeField] private CameraStageBackgroundMode _backgroundMode;
+        [SerializeField] private PaletteColorSource _backgroundColor = PaletteColorSource.BackgroundColor1;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private bool _layersInitialized;
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
+
+        public CameraStageBackgroundMode BackgroundMode
+        {
+            get => _backgroundMode;
+            set => _backgroundMode = value;
+        }
+
+        public PaletteColorSource BackgroundColor
+        {
+            get => _backgroundColor;
+            set => _backgroundColor = value;
+        }
 
         [Inject]
         private void ConstructLayers(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
@@ -75,7 +95,16 @@ namespace Aetherin
 
         private void Update()
         {
-            _camera.backgroundColor = _deckStateProvider.GetState(Deck).Palette?.BackgroundColor1 ?? Color.black;
+            if (_camera != null)
+            {
+                bool skybox = _backgroundMode == CameraStageBackgroundMode.Skybox;
+                _camera.clearFlags = skybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
+                if (!skybox)
+                {
+                    ColorPalette palette = _deckStateProvider?.GetState(Deck).Palette;
+                    _camera.backgroundColor = PaletteColorParameter.Resolve(palette, _backgroundColor);
+                }
+            }
             UpdateCameraWork();
         }
 
@@ -186,6 +215,20 @@ namespace Aetherin
             var layerObject = new GameObject("Model Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
             var layer = layerObject.AddComponent<ModelLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            RefreshLayers();
+            return layer;
+        }
+
+        public LightLayer AddLightLayer(Transform parent = null)
+        {
+            var layerObject = new GameObject("Light Layer");
+            layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            layerObject.AddComponent<Light>();
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<LightLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
             RefreshLayers();
@@ -312,7 +355,7 @@ namespace Aetherin
         {
             Type = layer switch
             {
-                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model",
+                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", LightLayer => "light",
                 GpuParticleLayer => "gpu-particle", TextLayer => "text",
                 RuntimeShaderLayer => "runtime-shader", GroupLayer => "group", _ => string.Empty,
             },
@@ -341,7 +384,7 @@ namespace Aetherin
             StageLayer layer = savedLayer?.Type switch
             {
                 "shape" => AddShapeLayer(parent), "primitive3d" => AddPrimitive3DLayer(parent),
-                "model" => AddModelLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
+                "model" => AddModelLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
                 "text" => AddTextLayer(parent), "runtime-shader" => AddRuntimeShaderLayer(parent),
                 "group" => AddGroupLayer(parent), _ => null,
             };
@@ -357,6 +400,7 @@ namespace Aetherin
                     ShapeLayer => "Shape Layer",
                     Primitive3DLayer => "Primitive 3D Layer",
                     ModelLayer => "Model Layer",
+                    LightLayer => "Light Layer",
                     GpuParticleLayer => "GPU Particle Layer",
                     TextLayer => "Text Layer",
                     RuntimeShaderLayer => "Runtime Shader Layer", GroupLayer => "Group Layer",

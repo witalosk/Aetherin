@@ -8,33 +8,36 @@ namespace Aetherin
     {
         public const string DefaultShaderCode = @"cbuffer AetherinGlobals : register(b0)
 {
-    float4 AetherinTime;       // time, deltaTime, sin(time), cos(time)
-    float4 AetherinFrame;      // frame, timeScale, unscaledTime, unscaledDeltaTime
-    float4 AetherinResolution; // width, height, 1/width, 1/height
-    float4 AetherinAudio;      // volume, kick, snare/clap, audio trigger
-    float4 AetherinBeat;       // phase, count, beat in bar, beat trigger
-    float4 AetherinBar;        // phase, count, beats per bar, bar trigger
-    float4 AetherinUserFloat;  // UserFloat 0..3
-    float4 AetherinUserVector0;
-    float4 AetherinUserVector1;
-    float4 AetherinUserVector2;
-    float4 AetherinUserVector3;
+    float4 _Time;       // time, deltaTime, sin(time), cos(time)
+    float4 _Frame;      // frame, timeScale, unscaledTime, unscaledDeltaTime
+    float4 _Resolution; // width, height, 1/width, 1/height
+    float4 _Audio;      // volume, kick, snare/clap, audio trigger
+    float4 _Beat;       // phase, count, beat in bar, beat trigger
+    float4 _Bar;        // phase, count, beats per bar, bar trigger
+    float4 _BackgroundColor1;
+    float4 _BackgroundColor2;
+    float4 _AccentColor1;
+    float4 _AccentColor2;
+    float4 _SubAccentColor1;
+    float4 _SubAccentColor2;
+    float4 _UserFloat;  // UserFloat 0..3
+    float4 _UserVector0;
+    float4 _UserVector1;
 };
+
+Texture2D _WaveformTexture : register(t0);
+Texture2D _SpectrumTexture : register(t1);
+SamplerState _WaveformTextureSampler : register(s0);
+SamplerState _SpectrumTextureSampler : register(s1);
 
 float4 Frag(VsOutput input) : SV_TARGET
 {
-    float pulse = pow(1.0 - saturate(AetherinBeat.x), 3.0);
-    return float4(input.uv, 0.5 + 0.5 * sin(AetherinTime.x), 1.0) + pulse * 0.25;
+    float pulse = pow(1.0 - saturate(_Beat.x), 3.0);
+    pulse += _WaveformTexture.Sample(_WaveformTextureSampler, input.uv).r;
+    return float4(input.uv, 0.5 + 0.5 * sin(_Time.x), 1.0) + pulse * 0.25;
 }";
-
-        [NonSerialized] public Shader Shader;
-        public string ShaderName = "Aetherin/Runtime Shader Layer Example";
-        [TextArea(12, 40)] public string ShaderCode = DefaultShaderCode;
-
-        [NonSerialized] public Action CompileRequested;
-        [NonSerialized] public string CompileMessage = "Not compiled";
-        [NonSerialized] public bool LastCompileSucceeded;
-
+        
+        public bool ScreenSpace;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -47,13 +50,15 @@ float4 Frag(VsOutput input) : SV_TARGET
         public FloatParameter UserFloat3 = new(0f);
         public Vector3Parameter UserVector0 = new();
         public Vector3Parameter UserVector1 = new();
-        public Vector3Parameter UserVector2 = new();
-        public Vector3Parameter UserVector3 = new();
+        
+        [TextArea(12, 40)] public string ShaderCode = DefaultShaderCode;
+
+        [NonSerialized] public string CompileMessage = "Play Modeでコンパイルされます";
+        [NonSerialized] public bool LastCompileSucceeded;
 
         public void EnsureInitialized()
         {
             Opacity ??= new FloatParameter(1f);
-            ShaderName ??= string.Empty;
             ShaderCode ??= DefaultShaderCode;
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
@@ -66,8 +71,7 @@ float4 Frag(VsOutput input) : SV_TARGET
             UserFloat3 ??= new FloatParameter();
             UserVector0 ??= new Vector3Parameter();
             UserVector1 ??= new Vector3Parameter();
-            UserVector2 ??= new Vector3Parameter();
-            UserVector3 ??= new Vector3Parameter();
+            CompileMessage ??= string.Empty;
         }
     }
 }

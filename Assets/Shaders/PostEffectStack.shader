@@ -169,10 +169,11 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 }
                 else if (_EffectType == 11) // Horizontal fold
                 {
-                    float folds = max(1.0, round(abs(_Scale)));
-                    float foldedX = abs(frac(uv.x * folds) * 2.0 - 1.0);
-                    float2 foldedUv = float2(foldedX, uv.y);
-                    fx = tex2D(_MainTex, lerp(uv, foldedUv, saturate(_Amount)));
+                    float2 foldedUv = float2(
+                        (_Amount > 0.5 && uv.x > 0.5) ? 1.0 - uv.x : uv.x,
+                        (((_Amount > 0.25 && _Amount < 0.5) || _Amount > 0.75) && uv.y < 0.5) ? 1.0 - uv.y : uv.y
+                    );
+                    fx = tex2D(_MainTex, foldedUv);
                 }
                 else if (_EffectType == 12) // Hash-selected invert blocks
                 {
@@ -188,7 +189,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
                     float2 l = abs(frac(uv * grid) - 0.5); 
                     float width = lerp(0.002, 0.18, saturate(_Amount));
-                    float gridLine = step(0.5 - width, max(l.x, l.y));
+                    float gridLine = step(0.5 - width, max(l.x, l.y)); 
                     fx.rgb *= 1.0 - gridLine;
                 }
                 else if (_EffectType == 14) // Noise
@@ -267,7 +268,8 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     hatchInk = max(hatchInk, hatchB * saturate((0.45 - sourceLuminance) / 0.35));
 
                     float ink = saturate(max(edgeInk, hatchInk));
-                    fx = float4(1.0 - ink, 1.0 - ink, 1.0 - ink, src.a);
+                    float3 sourceColor = tex2D(_MainTex, sketchUv).rgb;
+                    fx = float4(sourceColor * (1.0 - ink), src.a);
                 }
                 else if (_EffectType == 19) // Light leak
                 {

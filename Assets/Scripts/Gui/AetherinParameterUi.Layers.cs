@@ -173,13 +173,11 @@ namespace Aetherin
             return UI.Column(
                 UI.Tabs(
                     ("Shader", UI.Column(
-                        UI.Field("Name", () => p.ShaderName, value => p.ShaderName = value),
                         UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
                             .SetMinHeight(320f),
-                        UI.Row(
-                            UI.Button("Compile", () => p.CompileRequested?.Invoke()).SetWidth(100f),
-                            UI.Label(() => p.CompileMessage).SetFlexGrow(1f)))),
+                        UI.Label(() => p.CompileMessage).SetFlexGrow(1f))),
                     ("Transform", UI.Column(
+                        UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
                         Param("Size", p.Size),
                         Param("Position", p.Position),
                         Param("Rotation", p.Rotation),
@@ -194,9 +192,7 @@ namespace Aetherin
                         Param("Float 2", p.UserFloat2),
                         Param("Float 3", p.UserFloat3),
                         Param("Vector 0", p.UserVector0),
-                        Param("Vector 1", p.UserVector1),
-                        Param("Vector 2", p.UserVector2),
-                        Param("Vector 3", p.UserVector3)))));
+                        Param("Vector 1", p.UserVector1)))));
         }
 
         #endregion

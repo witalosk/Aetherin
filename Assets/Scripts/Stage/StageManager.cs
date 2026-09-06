@@ -12,6 +12,7 @@ namespace Aetherin
     {
         public MidiCcBinding CrossFader = new(ApcMiniMk2.MasterFaderCc);
         public MidiBinding ImmediateModeButton = new();
+        public MidiBinding BackgroundToggleButton = new();
         public List<MidiBinding> StageSelectButtons = new();
         public List<MidiBinding> LayerToggleButtons = new();
         public List<MidiBinding> CameraWorkDeckButtons = new();
@@ -318,6 +319,7 @@ namespace Aetherin
 
             UpdateStageSelect();
             UpdateStageActivity();
+            UpdateBackgroundToggleButton();
             UpdateLayerToggleButtons();
             UpdateRandomLayerButtons();
             UpdateCameraWorkButtons();
@@ -380,7 +382,13 @@ namespace Aetherin
             for (int i = 0; i < count; i++)
             {
                 var button = _params.StageSelectButtons[i];
-                if (button.WasNoteOn) _params.NextStageIndex = i;
+                if (button.WasNoteOn && _params.NextStageIndex != i)
+                {
+                    _params.NextStageIndex = i;
+                    // MIDI選択とStage編集UIの選択対象を常に一致させる。
+                    _selectedStageUiIndex = i;
+                    _deckRevision++;
+                }
 
                 var ledColor = StageLedColor * 0.15f;
                 if (i == _params.NextStageIndex) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
@@ -393,6 +401,21 @@ namespace Aetherin
         /// Binding自体をレイヤーへ持たせず、選択中Nextステージのレイヤーリスト位置へ対応させる。
         /// レイヤーを並び替えた場合、Padの対象も新しいインデックスへ追従する。
         /// </summary>
+        private void UpdateBackgroundToggleButton()
+        {
+            _params.BackgroundToggleButton ??= new MidiBinding();
+            CameraStage stage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            if (stage != null && _params.BackgroundToggleButton.WasNoteOn)
+            {
+                stage.BackgroundMode = stage.BackgroundMode == CameraStageBackgroundMode.Skybox
+                    ? CameraStageBackgroundMode.SolidColor
+                    : CameraStageBackgroundMode.Skybox;
+            }
+
+            bool skybox = stage == null || stage.BackgroundMode == CameraStageBackgroundMode.Skybox;
+            _params.BackgroundToggleButton.SetLed(skybox ? Color.blue : Color.white);
+        }
+
         private void UpdateLayerToggleButtons()
         {
             _params.LayerToggleButtons ??= new List<MidiBinding>();
@@ -642,6 +665,8 @@ namespace Aetherin
                     StageName = GetStageDisplayName(_stages[i], i),
                     RuntimeCreated = _runtimeStageIds.Contains(stage.StageId),
                     StageIndex = i,
+                    BackgroundMode = stage.BackgroundMode,
+                    BackgroundColor = stage.BackgroundColor,
                     Layers = stage.CaptureLayers(),
                     CameraWorkDecks = stage.CaptureCameraWorkDecks(),
                 });
@@ -688,11 +713,15 @@ namespace Aetherin
                 {
                     nextStage.RestoreLayers(savedStage.Layers);
                     nextStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
+                    nextStage.BackgroundMode = savedStage.BackgroundMode;
+                    nextStage.BackgroundColor = savedStage.BackgroundColor;
                 }
                 if (_currentStages[stageIndex] is CameraStage currentStage)
                 {
                     currentStage.RestoreLayers(savedStage.Layers);
                     currentStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
+                    currentStage.BackgroundMode = savedStage.BackgroundMode;
+                    currentStage.BackgroundColor = savedStage.BackgroundColor;
                 }
             }
 
@@ -776,8 +805,16 @@ namespace Aetherin
             var stageNames = _stages
                 .Select(GetStageDisplayName)
                 .ToList();
+            CameraStage selectedCameraStage = GetCameraStage(_nextStages, _params.NextStageIndex);
 
             return UI.Column(
+                selectedCameraStage == null
+                    ? UI.Label("Background: CameraStageを選択してください")
+                    : UI.Row(
+                        UI.Field("Background", () => selectedCameraStage.BackgroundMode, value => selectedCameraStage.BackgroundMode = value),
+                        UI.Field("Toggle Pad", Binder.Create(_params.BackgroundToggleButton, typeof(MidiBinding))),
+                        UI.DynamicElementIf(() => selectedCameraStage.BackgroundMode == CameraStageBackgroundMode.SolidColor,
+                            () => UI.Field("Color", () => selectedCameraStage.BackgroundColor, value => selectedCameraStage.BackgroundColor = value))),
                 UI.Row(
                     UI.Button("Add New Stage", () => AddCameraStage()),
                     stageNames.Count == 0
@@ -913,6 +950,7 @@ namespace Aetherin
                     UI.Button("+ Shape", () => cameraStage.AddShapeLayer()),
                     UI.Button("+ 3D", () => cameraStage.AddPrimitive3DLayer()),
                     UI.Button("+ Model", () => cameraStage.AddModelLayer()),
+                    UI.Button("+ Light", () => cameraStage.AddLightLayer()),
                     UI.Button("+ Group", () => cameraStage.AddGroupLayer()),
                     UI.Button("+ Particles", () => cameraStage.AddGpuParticleLayer()),
                     UI.Button("+ Text", () => cameraStage.AddTextLayer()),
@@ -940,6 +978,7 @@ namespace Aetherin
                             UI.Button("+ Shape", () => stage.AddShapeLayer(group.transform)),
                             UI.Button("+ 3D", () => stage.AddPrimitive3DLayer(group.transform)),
                             UI.Button("+ Model", () => stage.AddModelLayer(group.transform)),
+                            UI.Button("+ Light", () => stage.AddLightLayer(group.transform)),
                             UI.Button("+ GPU", () => stage.AddGpuParticleLayer(group.transform)),
                             UI.Button("+ Text", () => stage.AddTextLayer(group.transform)),
                             UI.Button("+ Group", () => stage.AddGroupLayer(group.transform))),
@@ -1093,6 +1132,8 @@ namespace Aetherin
         public string StageName;
         public bool RuntimeCreated;
         public int StageIndex;
+        public CameraStageBackgroundMode BackgroundMode;
+        public PaletteColorSource BackgroundColor = PaletteColorSource.BackgroundColor1;
         public List<CameraStageLayerSaveData> Layers = new();
         public List<CameraWorkDeck> CameraWorkDecks = new();
     }

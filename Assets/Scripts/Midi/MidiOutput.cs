@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using RosettaUI;
 using RtMidi;
 using UnityEngine;
@@ -31,17 +33,28 @@ namespace Aetherin
         [SerializeField]
         private MidiOutputParams _params = new();
 
+        // RtMidiのOpen/Send/DisposeはすべてWorkerだけで実行する。
+        // Windows MIDIドライバがブロックしてもUnityメインスレッドを止めないため。
         private MidiOut _midiOut;
-        private bool _isOpen;
+        private volatile bool _isOpen;
         private string _openedPortName;
-        private float _nextReconnectTime;
         private string _lastError;
 
         private readonly List<string> _portNames = new();
+        private readonly object _stateLock = new();
+        private readonly ConcurrentQueue<byte[]> _sendQueue = new();
+        private readonly AutoResetEvent _workerWakeSignal = new(false);
+        private Thread _worker;
+        private volatile bool _stopWorker;
+        private string _portNameFilter;
+        private int _reconnectIntervalMilliseconds;
+        private long _nextReconnectTicks;
 
         // モニタ表示用
         private string _lastSentMessage;
         private int _sentMessageCount;
+
+        private void Awake() => MidiDiagnostics.Initialize(Application.persistentDataPath);
 
         #region IMidiOutput
 
@@ -74,21 +87,11 @@ namespace Aetherin
 
         public void SendRaw(ReadOnlySpan<byte> message)
         {
-            if (!_isOpen || message.IsEmpty) return;
+            if (message.IsEmpty || _worker == null) return;
 
-            MidiDiagnostics.RecordCritical($"MIDI output begin ({message.Length} bytes)");
-            int result = _midiOut.SendMessage(message);
-            MidiDiagnostics.Record($"MIDI output complete ({message.Length} bytes, result={result})");
-            if (result < 0)
-            {
-                // 送信に失敗した場合はデバイスが外れたものとして再接続待ちに戻す
-                _lastError = _midiOut.IsOk ? "SendMessage failed" : _midiOut.Error;
-                Disconnect();
-                return;
-            }
-
-            _sentMessageCount++;
-            _lastSentMessage = ToHexString(message);
+            _sendQueue.Enqueue(message.ToArray());
+            while (_sendQueue.Count > 512) _sendQueue.TryDequeue(out _);
+            _workerWakeSignal.Set();
         }
 
         #endregion
@@ -97,29 +100,42 @@ namespace Aetherin
 
         private void OnEnable()
         {
-            TryConnect();
-        }
-
-        private void Update()
-        {
-            if (_isOpen || Time.unscaledTime < _nextReconnectTime) return;
-
-            TryConnect();
+            _portNameFilter = _params.PortNameFilter ?? string.Empty;
+            _reconnectIntervalMilliseconds = Mathf.RoundToInt(Mathf.Max(0.5f, _params.ReconnectInterval) * 1000f);
+            _stopWorker = false;
+            _worker = new Thread(WorkerLoop) { IsBackground = true, Name = "Aetherin MIDI Output" };
+            _worker.Start();
         }
 
         private void OnDisable()
         {
-            if (_isOpen && _params.ClearLedsOnDisable) this.ClearAllLeds();
-
-            Disconnect();
+            _stopWorker = true;
+            _workerWakeSignal.Set();
+            // ネイティブ送信が詰まっていてもJoinでUnityを待たせない。
+            _worker?.Join(100);
+            _worker = null;
+            while (_sendQueue.TryDequeue(out _)) { }
         }
 
-        private void TryConnect()
+        private void WorkerLoop()
         {
-            _nextReconnectTime = Time.unscaledTime + Mathf.Max(0.5f, _params.ReconnectInterval);
+            while (!_stopWorker)
+            {
+                if (!_isOpen) TryConnectWorker();
+                if (_isOpen) SendQueuedMessagesWorker();
+                _workerWakeSignal.WaitOne(50);
+            }
+            DisconnectWorker();
+        }
+
+        private void TryConnectWorker()
+        {
+            long now = DateTime.UtcNow.Ticks;
+            if (now < _nextReconnectTicks) return;
+            _nextReconnectTicks = now + _reconnectIntervalMilliseconds * TimeSpan.TicksPerMillisecond;
 
             // ポート一覧を取り直すためハンドルごと作り直す
-            Disconnect();
+            DisconnectWorker();
 
             try
             {
@@ -127,16 +143,16 @@ namespace Aetherin
                 if (_midiOut.IsInvalid)
                 {
                     _lastError = "MIDI出力の初期化に失敗しました";
-                    Disconnect();
+                    DisconnectWorker();
                     return;
                 }
 
-                RefreshPortNames();
+                RefreshPortNamesWorker();
 
-                int index = FindPortIndex();
+                int index = FindPortIndexWorker();
                 if (index < 0)
                 {
-                    _lastError = $"出力ポートが見つかりません ({_params.PortNameFilter})";
+                    _lastError = $"出力ポートが見つかりません ({_portNameFilter})";
                     return;
                 }
 
@@ -147,21 +163,40 @@ namespace Aetherin
                     return;
                 }
 
-                _openedPortName = _portNames[index];
+                lock (_stateLock) _openedPortName = _portNames[index];
                 _isOpen = true;
                 _lastError = null;
             }
             catch (Exception e)
             {
                 _lastError = e.Message;
-                Disconnect();
+                DisconnectWorker();
             }
         }
 
-        private void Disconnect()
+        private void SendQueuedMessagesWorker()
+        {
+            while (_sendQueue.TryDequeue(out byte[] message))
+            {
+                MidiDiagnostics.RecordCritical($"MIDI output begin ({message.Length} bytes)");
+                int result = _midiOut.SendMessage(message);
+                MidiDiagnostics.Record($"MIDI output complete ({message.Length} bytes, result={result})");
+                if (result < 0)
+                {
+                    _lastError = _midiOut.IsOk ? "SendMessage failed" : _midiOut.Error;
+                    DisconnectWorker();
+                    return;
+                }
+
+                Interlocked.Increment(ref _sentMessageCount);
+                _lastSentMessage = ToHexString(message);
+            }
+        }
+
+        private void DisconnectWorker()
         {
             _isOpen = false;
-            _openedPortName = null;
+            lock (_stateLock) _openedPortName = null;
 
             if (_midiOut == null) return;
 
@@ -169,31 +204,34 @@ namespace Aetherin
             _midiOut = null;
         }
 
-        private void RefreshPortNames()
+        private void RefreshPortNamesWorker()
         {
-            _portNames.Clear();
+            lock (_stateLock) _portNames.Clear();
             if (_midiOut == null) return;
 
             for (int i = 0; i < _midiOut.PortCount; i++)
             {
-                _portNames.Add(_midiOut.GetPortName(i));
+                lock (_stateLock) _portNames.Add(_midiOut.GetPortName(i));
             }
         }
 
-        private int FindPortIndex()
+        private int FindPortIndexWorker()
         {
-            if (string.IsNullOrEmpty(_params.PortNameFilter)) return _portNames.Count > 0 ? 0 : -1;
-
-            for (int i = 0; i < _portNames.Count; i++)
+            lock (_stateLock)
             {
-                if (_portNames[i] != null &&
-                    _portNames[i].IndexOf(_params.PortNameFilter, StringComparison.OrdinalIgnoreCase) >= 0)
-                {
-                    return i;
-                }
-            }
+                if (string.IsNullOrEmpty(_portNameFilter)) return _portNames.Count > 0 ? 0 : -1;
 
-            return -1;
+                for (int i = 0; i < _portNames.Count; i++)
+                {
+                    if (_portNames[i] != null &&
+                        _portNames[i].IndexOf(_portNameFilter, StringComparison.OrdinalIgnoreCase) >= 0)
+                    {
+                        return i;
+                    }
+                }
+
+                return -1;
+            }
         }
 
         private static string ToHexString(ReadOnlySpan<byte> message)
@@ -201,7 +239,7 @@ namespace Aetherin
             const int maxLength = 8;
             var builder = new System.Text.StringBuilder();
 
-            int count = Mathf.Min(message.Length, maxLength);
+            int count = Math.Min(message.Length, maxLength);
             for (int i = 0; i < count; i++)
             {
                 if (i > 0) builder.Append(' ');
@@ -226,7 +264,7 @@ namespace Aetherin
                 UI.Label(() => $"Sent : {_sentMessageCount} ({_lastSentMessage})"),
                 UI.Fold("Ports",
                     UI.DynamicElementOnStatusChanged(
-                        readStatus: () => _portNames.Count,
+                        readStatus: () => GetPortNamesSnapshot().Length,
                         build: _ => UI.Column(CreatePortNameElements()))
                 ),
                 UI.Row(
@@ -238,17 +276,23 @@ namespace Aetherin
 
         private IEnumerable<Element> CreatePortNameElements()
         {
-            if (_portNames.Count == 0)
+            string[] portNames = GetPortNamesSnapshot();
+            if (portNames.Length == 0)
             {
                 yield return UI.Label("(no output port)");
                 yield break;
             }
 
-            for (int i = 0; i < _portNames.Count; i++)
+            for (int i = 0; i < portNames.Length; i++)
             {
                 int index = i;
-                yield return UI.Label(() => $"{index} : {_portNames[index]}");
+                yield return UI.Label(() => $"{index} : {portNames[index]}");
             }
+        }
+
+        private string[] GetPortNamesSnapshot()
+        {
+            lock (_stateLock) return _portNames.ToArray();
         }
 
         /// <summary>
