@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using RosettaUI;
@@ -25,6 +26,7 @@ namespace Aetherin
         public int NextStageIndex; 
         public Vector3 NextStageOffset = new(0f, 1000f, 0f);
         [Range(0.9f, 1f)] public float SwapThreshold = 0.99f;
+        [Min(1)] public int NextRebuildFrameInterval = 3;
     }
 
     /// <summary>
@@ -44,6 +46,7 @@ namespace Aetherin
         public string SaveId => "CameraStageLayers";
 
         public event Action NextPromoted;
+        public bool IsPreparingNext => _isPreparingNext;
 
         /// <summary> MIDIコンやUIからの変更はこちらに書き込まれる </summary>
         public DeckState NextState { get; private set; } = new();
@@ -88,6 +91,7 @@ namespace Aetherin
         private Vector3 _currentSlotOffset;
         private Vector3 _nextSlotOffset;
         private bool _isFaderFlipped;
+        private bool _isPreparingNext;
 
         /// <summary> デッキを作り直すたびに増える。UIが参照先の作り直しを検知するために使う </summary>
         private int _deckRevision;
@@ -170,6 +174,8 @@ namespace Aetherin
 
         public CameraStage AddCameraStage(string stageName = "Camera Stage", string stageId = null)
         {
+            if (_isPreparingNext) return null;
+
             _stages ??= new List<StageBase>();
             string resolvedName = string.IsNullOrWhiteSpace(stageName) ? "Camera Stage" : stageName.Trim();
             var templateObject = new GameObject(resolvedName);
@@ -201,6 +207,8 @@ namespace Aetherin
 
         public CameraStage DuplicateCameraStage(string stageId)
         {
+            if (_isPreparingNext) return null;
+
             int index = FindStageIndex(stageId);
             if (index < 0 || _nextStages == null || _nextStages[index] is not CameraStage source) return null;
 
@@ -222,6 +230,8 @@ namespace Aetherin
 
         public bool RemoveCameraStage(string stageId)
         {
+            if (_isPreparingNext) return false;
+
             int index = FindStageIndex(stageId);
             if (index < 0 || _stages[index] is not CameraStage) return false;
 
@@ -244,6 +254,8 @@ namespace Aetherin
 
         public bool RenameCameraStage(string stageId, string stageName)
         {
+            if (_isPreparingNext) return false;
+
             int index = FindStageIndex(stageId);
             if (index < 0 || _stages[index] is not CameraStage || string.IsNullOrWhiteSpace(stageName)) return false;
             string resolvedName = stageName.Trim();
@@ -299,12 +311,32 @@ namespace Aetherin
         /// クローンはシーン起動時のInjectに含まれないため、コンテナ経由でInstantiateして注入する
         /// positionDeltaはCameraStageなどシーン上に実体を持つステージが互いに映り込まないためのずらし
         /// </summary>
-        private StageBase CloneStage(StageBase source, StageDeck deck, Vector3 positionDelta, string baseName)
+        private StageBase CloneStage(
+            StageBase source,
+            StageDeck deck,
+            Vector3 positionDelta,
+            string baseName,
+            bool active = true)
         {
-            var clone = _container.Instantiate(source.gameObject, source.transform.parent, true);
+            // ModelLayerのruntime生成モデルはpoolで管理するため、Stageの子として複製しない。
+            ModelLayer[] modelLayers = source.GetComponentsInChildren<ModelLayer>(true);
+            var detachedModels = new GameObject[modelLayers.Length];
+            for (int i = 0; i < modelLayers.Length; i++)
+                detachedModels[i] = modelLayers[i].DetachModelForStageClone();
+
+            GameObject clone;
+            try
+            {
+                clone = _container.Instantiate(source.gameObject, source.transform.parent, true);
+            }
+            finally
+            {
+                for (int i = 0; i < modelLayers.Length; i++)
+                    modelLayers[i].RestoreModelAfterStageClone(detachedModels[i]);
+            }
             clone.name = $"{baseName} ({deck})";
             clone.transform.position = source.transform.position + positionDelta;
-            clone.SetActive(true);
+            clone.SetActive(active);
 
             var stage = clone.GetComponent<StageBase>();
             stage.Deck = deck;
@@ -316,17 +348,22 @@ namespace Aetherin
         {
             if (_crossFadeMaterial == null || OutputTexture == null || _currentStages == null) return;
 
-            if (_params.ImmediateModeButton.WasNoteOn) SetImmediateMode(!IsImmediateMode);
+            if (!_isPreparingNext && _params.ImmediateModeButton.WasNoteOn)
+                SetImmediateMode(!IsImmediateMode);
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
 
-            UpdateStageSelect();
+            if (!_isPreparingNext)
+            {
+                UpdateStageSelect();
+                UpdateBackgroundToggleButton();
+                UpdateLayerToggleButtons();
+                UpdateRandomLayerButtons();
+                UpdateCameraWorkButtons();
+            }
             UpdateStageActivity();
-            UpdateBackgroundToggleButton();
-            UpdateLayerToggleButtons();
-            UpdateRandomLayerButtons();
-            UpdateCameraWorkButtons();
 
-            if (!IsImmediateMode && CrossFade >= _params.SwapThreshold) SwapDecks();
+            if (!_isPreparingNext && !IsImmediateMode && CrossFade >= _params.SwapThreshold)
+                SwapDecks();
 
             _postEffectManager.ApplyDeckVolumes(
                 GetCameraStage(_currentStages, _params.CurrentStageIndex)?.StageCamera,
@@ -575,6 +612,7 @@ namespace Aetherin
         /// </summary>
         public void SetImmediateMode(bool enabled)
         {
+            if (_isPreparingNext) return;
             if (IsImmediateMode == enabled) return;
 
             IsImmediateMode = enabled;
@@ -586,6 +624,8 @@ namespace Aetherin
         /// </summary>
         private void SwapDecks()
         {
+            if (_isPreparingNext) return;
+
             MidiDiagnostics.RecordCritical("Stage swap begin");
             // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
             _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
@@ -607,40 +647,87 @@ namespace Aetherin
                 stage.gameObject.name = $"{_stages[i].name} ({StageDeck.Current})";
             }
 
-            // 引退した旧Currentは破棄し、Nextは昇格したCurrentのコピーとして作り直す
-            // (いま出ている絵から続きを操作できるようにする)
+            // 引退した旧Currentはすぐ非アクティブ化する。
+            // 破棄と新Nextの再構築は複数フレームへ分散する。
             foreach (var stage in retiredStages)
             {
                 if (stage == null) continue;
-
-                // Destroyはフレーム末まで遅延するため、先に無効化して
-                // 同じ位置へ作る新Nextと一時的に二重描画されるのを防ぐ。
                 stage.gameObject.SetActive(false);
-                Destroy(stage.gameObject);
             }
 
             _nextStages = new List<StageBase>(_currentStages.Count);
             for (int i = 0; i < _currentStages.Count; i++)
-            {
-                var source = _currentStages[i];
-                StageBase next = source == null
-                    ? null
-                    : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[i].name);
-                if (next is CameraStage nextCamera)
-                {
-                    int channel = source is CameraStage sourceCamera && sourceCamera.CinemachineChannelIndex >= 0
-                        ? sourceCamera.CinemachineChannelIndex ^ 1
-                        : i * 2;
-                    nextCamera.ConfigureCinemachineChannel(channel);
-                }
-                _nextStages.Add(next);
-            }
+                _nextStages.Add(null);
 
+            int selectedIndex = Mathf.Clamp(_params.NextStageIndex, 0, Mathf.Max(0, _currentStages.Count - 1));
             UpdateStageActivity();
+            _isPreparingNext = true;
             NextPromoted?.Invoke();
 
             _deckRevision++;
+            StartCoroutine(RebuildRemainingNextDeck(retiredStages, selectedIndex));
+        }
+
+        private IEnumerator RebuildRemainingNextDeck(IReadOnlyList<StageBase> retiredStages, int selectedIndex)
+        {
+            // swapフレームではInstantiateしない。選択中Stageを最優先で遅延生成する。
+            if (_currentStages.Count > 0)
+            {
+                yield return WaitForNextRebuildInterval();
+                BuildNextStage(selectedIndex, true);
+                UpdateStageActivity();
+                _deckRevision++;
+
+                // InstantiateとDestroyも同じフレームに重ねない。
+                yield return WaitForNextRebuildInterval();
+                DestroyRetiredStage(retiredStages, selectedIndex);
+            }
+
+            for (int i = 0; i < _currentStages.Count; i++)
+            {
+                if (i == selectedIndex) continue;
+
+                yield return WaitForNextRebuildInterval();
+                BuildNextStage(i, false);
+
+                yield return WaitForNextRebuildInterval();
+                DestroyRetiredStage(retiredStages, i);
+            }
+
+            _isPreparingNext = false;
+            _deckRevision++;
             MidiDiagnostics.Record("Stage swap complete");
+        }
+
+        private IEnumerator WaitForNextRebuildInterval()
+        {
+            int frameCount = Mathf.Max(1, _params.NextRebuildFrameInterval);
+            for (int i = 0; i < frameCount; i++) yield return null;
+        }
+
+        private void BuildNextStage(int index, bool active)
+        {
+            if (index < 0 || index >= _currentStages.Count) return;
+
+            StageBase source = _currentStages[index];
+            StageBase next = source == null
+                ? null
+                : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[index].name, active);
+            if (next is CameraStage nextCamera)
+            {
+                int channel = source is CameraStage sourceCamera && sourceCamera.CinemachineChannelIndex >= 0
+                    ? sourceCamera.CinemachineChannelIndex ^ 1
+                    : index * 2;
+                nextCamera.ConfigureCinemachineChannel(channel);
+            }
+            _nextStages[index] = next;
+        }
+
+        private static void DestroyRetiredStage(IReadOnlyList<StageBase> retiredStages, int index)
+        {
+            if (retiredStages == null || index < 0 || index >= retiredStages.Count) return;
+            StageBase retired = retiredStages[index];
+            if (retired != null) Destroy(retired.gameObject);
         }
 
         private static Texture GetStageTexture(List<StageBase> stages, int index)
@@ -826,7 +913,7 @@ namespace Aetherin
                                 stageNames),
                             UI.Dropdown("Next",
                                 () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
-                                value => _params.NextStageIndex = value,
+                                value => { if (!_isPreparingNext) _params.NextStageIndex = value; },
                                 stageNames)
                         )
                 ),
@@ -1112,6 +1199,7 @@ namespace Aetherin
                     UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
                     UI.WindowLauncher("Inspector", _inspectorWindow)
                 ),
+                UI.DynamicElementIf(() => _isPreparingNext, () => UI.Label("Preparing Next...")),
                 UI.DynamicElementOnStatusChanged(() => _deckRevision, _ => CreateStageManagementElement()),
                 UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE MODE</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
             );

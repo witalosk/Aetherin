@@ -137,6 +137,8 @@ namespace Aetherin
 
         private void UpdateNextToggleButtons()
         {
+            if (_deckStateProvider.IsPreparingNext) return;
+
             DeckVolumeEffects effects = _params.NextVolume;
             effects.EnsureInitialized();
 

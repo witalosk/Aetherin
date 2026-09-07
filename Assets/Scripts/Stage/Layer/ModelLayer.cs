@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnitySimpleContainer;
 
@@ -8,6 +9,10 @@ namespace Aetherin
     [DisallowMultipleComponent]
     public sealed class ModelLayer : StageLayer
     {
+        private const int MaxPooledModelsPerSource = 8;
+        private static readonly Dictionary<GameObject, Stack<PooledModel>> ModelPool = new();
+        private static Transform _poolRoot;
+
         private static readonly int ColorAId = Shader.PropertyToID("_ColorA");
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int GradientId = Shader.PropertyToID("_UseGradient");
@@ -33,6 +38,7 @@ namespace Aetherin
         private IBeatManager _beat;
         private IDeckStateProvider _deckState;
         private GameObject _modelInstance;
+        private GameObject _loadedSource;
         private string _loadedKey;
         private readonly List<Renderer> _surfaceRenderers = new();
         private readonly List<Renderer> _wireRenderers = new();
@@ -126,6 +132,18 @@ namespace Aetherin
             GameObject source = _cameraStage != null ? _cameraStage.ResolveModel(key) : null;
             if (source == null) return;
 
+            _loadedSource = source;
+            if (TryRentModel(source, out PooledModel pooled))
+            {
+                _modelInstance = pooled.Instance;
+                _surfaceRenderers.AddRange(pooled.SurfaceRenderers);
+                _wireRenderers.AddRange(pooled.WireRenderers);
+                _materials.AddRange(pooled.Materials);
+                _wireMeshes.AddRange(pooled.WireMeshes);
+                AttachModelInstance(key, source);
+                return;
+            }
+
             _modelInstance = Instantiate(source, transform, false);
             _modelInstance.name = $"Model ({key})";
             foreach (var renderer in _modelInstance.GetComponentsInChildren<Renderer>(true))
@@ -138,6 +156,33 @@ namespace Aetherin
                 _materials.Add(material);
                 CreateWireRenderer(renderer);
             }
+        }
+
+        private void AttachModelInstance(string key, GameObject source)
+        {
+            _modelInstance.transform.SetParent(transform, false);
+            _modelInstance.transform.localPosition = source.transform.localPosition;
+            _modelInstance.transform.localRotation = source.transform.localRotation;
+            _modelInstance.transform.localScale = source.transform.localScale;
+            _modelInstance.name = $"Model ({key})";
+            ResetModelRuntime(_modelInstance);
+            _modelInstance.SetActive(true);
+        }
+
+        /// <summary>
+        /// Stage複製時にruntimeモデルまで子として複製されるのを防ぐため、一時的に階層外へ退避する。
+        /// </summary>
+        internal GameObject DetachModelForStageClone()
+        {
+            if (_modelInstance == null) return null;
+            _modelInstance.transform.SetParent(GetPoolRoot(), true);
+            return _modelInstance;
+        }
+
+        internal void RestoreModelAfterStageClone(GameObject instance)
+        {
+            if (instance == null || instance != _modelInstance) return;
+            instance.transform.SetParent(transform, false);
         }
 
         // StageManagerはStage全体をInstantiateしてSwap後のNextを作る。
@@ -305,17 +350,123 @@ namespace Aetherin
 
         private void ClearModel()
         {
-            if (_modelInstance != null) DestroyRuntimeObject(_modelInstance);
-            foreach (var material in _materials) DestroyRuntimeObject(material);
-            foreach (var mesh in _wireMeshes) DestroyRuntimeObject(mesh);
+            if (_modelInstance != null && Application.isPlaying && _loadedSource != null)
+            {
+                ReturnModel(_loadedSource, new PooledModel(
+                    _modelInstance,
+                    _surfaceRenderers.ToArray(),
+                    _wireRenderers.ToArray(),
+                    _materials.ToArray(),
+                    _wireMeshes.ToArray()));
+            }
+            else
+            {
+                if (_modelInstance != null) DestroyRuntimeObject(_modelInstance);
+                foreach (var material in _materials) DestroyRuntimeObject(material);
+                foreach (var mesh in _wireMeshes) DestroyRuntimeObject(mesh);
+            }
             _modelInstance = null;
+            _loadedSource = null;
             _materials.Clear();
             _wireMeshes.Clear();
             _surfaceRenderers.Clear();
             _wireRenderers.Clear();
         }
 
+        private void OnDisable()
+        {
+            if (Application.isPlaying) ClearModel();
+        }
+
         private void OnDestroy() => ClearModel();
+
+        private static bool TryRentModel(GameObject source, out PooledModel pooled)
+        {
+            if (ModelPool.TryGetValue(source, out Stack<PooledModel> models))
+            {
+                while (models.Count > 0)
+                {
+                    pooled = models.Pop();
+                    if (pooled.Instance != null) return true;
+                }
+            }
+
+            pooled = default;
+            return false;
+        }
+
+        private static void ReturnModel(GameObject source, PooledModel pooled)
+        {
+            pooled.Instance.SetActive(false);
+            pooled.Instance.transform.SetParent(GetPoolRoot(), false);
+
+            if (!ModelPool.TryGetValue(source, out Stack<PooledModel> models))
+            {
+                models = new Stack<PooledModel>();
+                ModelPool.Add(source, models);
+            }
+
+            if (models.Count < MaxPooledModelsPerSource)
+                models.Push(pooled);
+            else
+                DestroyPooledModel(pooled);
+        }
+
+        private static Transform GetPoolRoot()
+        {
+            if (_poolRoot != null) return _poolRoot;
+
+            var root = new GameObject("Model Layer Pool")
+            {
+                hideFlags = HideFlags.HideAndDontSave,
+            };
+            DontDestroyOnLoad(root);
+            _poolRoot = root.transform;
+            return _poolRoot;
+        }
+
+        private static void ResetModelRuntime(GameObject instance)
+        {
+            foreach (Animator animator in instance.GetComponentsInChildren<Animator>(true))
+            {
+                animator.Rebind();
+                animator.Update(0f);
+            }
+
+            foreach (ParticleSystem particles in instance.GetComponentsInChildren<ParticleSystem>(true))
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        private static void DestroyPooledModel(PooledModel pooled)
+        {
+            if (pooled.Instance != null) DestroyRuntimeObject(pooled.Instance);
+            foreach (Material material in pooled.Materials) DestroyRuntimeObject(material);
+            foreach (Mesh mesh in pooled.WireMeshes) DestroyRuntimeObject(mesh);
+        }
+
+        private readonly struct PooledModel
+        {
+            public readonly GameObject Instance;
+            public readonly Renderer[] SurfaceRenderers;
+            public readonly Renderer[] WireRenderers;
+            public readonly Material[] Materials;
+            public readonly Mesh[] WireMeshes;
+
+            public PooledModel(
+                GameObject instance,
+                Renderer[] surfaceRenderers,
+                Renderer[] wireRenderers,
+                Material[] materials,
+                Mesh[] wireMeshes)
+            {
+                Instance = instance;
+                SurfaceRenderers = surfaceRenderers;
+                WireRenderers = wireRenderers;
+                Materials = materials;
+                WireMeshes = wireMeshes;
+            }
+        }
+
         private static void DestroyRuntimeObject(Object value)
         {
             if (value == null) return;

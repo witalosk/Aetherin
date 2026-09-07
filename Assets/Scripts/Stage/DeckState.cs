@@ -16,6 +16,8 @@ namespace Aetherin
     {
         event Action NextPromoted;
 
+        bool IsPreparingNext { get; }
+
         DeckState GetState(StageDeck deck);
 
         /// <summary> MIDIコンやUIからの変更はこちらに書き込む </summary>

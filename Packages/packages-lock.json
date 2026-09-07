@@ -257,7 +257,7 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "296b9904a295cbfa4d85c4ac5e509e59bf2cf768"
+      "hash": "239dfd8bb4662ae7be52274a54795fb39d937313"
     },
     "com.witalosk.unity_runtime_shader": {
       "version": "https://github.com/witalosk/UnityRuntimeShader.git?path=Packages/com.witalosk.unity_runtime_shader",

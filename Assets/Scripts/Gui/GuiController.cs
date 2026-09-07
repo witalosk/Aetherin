@@ -47,7 +47,7 @@ namespace Aetherin
                     _saveManager.CreateElement(null),
                     UI.Tabs(tabs)
                 )
-            ).SetWidth(300f));
+            ).SetWidth(300f).SetClosable(false));
         }
 
         private static Element CreateLauncher(IUiTarget uiTarget)
@@ -56,7 +56,7 @@ namespace Aetherin
                 UI.Window(uiTarget.gameObject.name, UI.Column(
                     UI.Field("Params", Binder.Create(uiTarget.Params, uiTarget.Params.GetType())).SetOpenFlag(!uiTarget.FoldParams),
                     uiTarget.AdditiveUi()
-                )).SetClosable(false)
+                ))
             );
         }
 

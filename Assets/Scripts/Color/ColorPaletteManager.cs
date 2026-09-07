@@ -171,7 +171,7 @@ namespace Aetherin
 
         private void Update()
         {
-            if (_deckStateProvider == null) return;
+            if (_deckStateProvider == null || _deckStateProvider.IsPreparingNext) return;
 
             foreach (var pair in _params.PaletteBindings)
             {
