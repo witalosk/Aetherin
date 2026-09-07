@@ -177,10 +177,13 @@ MonoBehaviour:
       _noteNumber: 6
     DoubleBpmButton:
       _noteNumber: 7
+    StopButton:
+      _noteNumber: -1
     MainColor: {r: 0.35, g: 0.85, b: 1, a: 1}
     SubColor: {r: 1, g: 0.65, b: 0.25, a: 1}
     BeatToggleColor: {r: 0.75, g: 0.3, b: 1, a: 1}
     BpmButtonColor: {r: 0.25, g: 1, b: 0.55, a: 1}
+    StopColor: {r: 1, g: 0.25, b: 0.3, a: 1}
     FlashSharpness: 3
     IdleBrightness: 0.08
     BrightnessSteps: 12
@@ -754,7 +757,7 @@ GameObject:
   - component: {fileID: 754430060}
   - component: {fileID: 754430061}
   m_Layer: 0
-  m_Name: Stages
+  m_Name: StageManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1776,6 +1779,59 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2138134442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1953477466
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1953477468}
+  - component: {fileID: 1953477467}
+  m_Layer: 0
+  m_Name: Counter
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1953477467
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1953477466}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5d0386e38e7af9b44bb962b4f01c1a5c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.Counter
+  _params:
+    IncrementPad:
+      _noteNumber: -1
+    ResetPad:
+      _noteNumber: -1
+    IncrementColor: {r: 0.3, g: 0.9, b: 1, a: 1}
+    ResetColor: {r: 1, g: 0.3, b: 0.35, a: 1}
+    AnimationSpeed: 5
+    IdleBrightness: 0.08
+--- !u!4 &1953477468
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1953477466}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1994971892
 GameObject:
   m_ObjectHideFlags: 0
@@ -1814,6 +1870,8 @@ MonoBehaviour:
     Model: {fileID: 8135322930247272611, guid: 2c82d0b418410284e8205b75542f5cd3, type: 3}
   - Key: walking-person
     Model: {fileID: 2869347680299580818, guid: e8abb4a9a02c22c46bab317756cac17e, type: 3}
+  - Key: rose
+    Model: {fileID: 1957659748175502907, guid: ab399a1a1b6989341b26e745c6d386bd, type: 3}
 --- !u!4 &1994971894
 Transform:
   m_ObjectHideFlags: 0
@@ -2183,5 +2241,6 @@ SceneRoots:
   - {fileID: 2100000001}
   - {fileID: 76371272}
   - {fileID: 1994971894}
+  - {fileID: 1953477468}
   - {fileID: 934651080}
   - {fileID: 754430060}

@@ -187,6 +187,32 @@ namespace Aetherin
                         () => modulator.BeatPulseSharpness,
                         value => modulator.BeatPulseSharpness = value);
 
+                case FloatModulationSource.Counter:
+                    return UI.Column(
+                        UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
+                            value => modulator.BeatPulseSharpness = value),
+                        UI.Field("Mode", () => modulator.CounterValueMode,
+                            value => modulator.CounterValueMode = value),
+                        UI.DynamicElementIf(
+                            () => modulator.CounterValueMode is CounterValueMode.Clamp or CounterValueMode.PingPong,
+                            () => UI.Row(
+                                UI.Field("Min", () => modulator.CounterMin,
+                                    value => modulator.CounterMin = value).SetFlexGrow(1f),
+                                UI.Field("Max", () => modulator.CounterMax,
+                                    value => modulator.CounterMax = value).SetFlexGrow(1f)
+                            )),
+                        UI.DynamicElementIf(
+                            () => modulator.CounterValueMode == CounterValueMode.RepeatModX,
+                            () => UI.Field("Repeat (mod x)", () => modulator.CounterRepeatMod,
+                                value => modulator.CounterRepeatMod = Math.Max(0.001f, value))));
+
+                case FloatModulationSource.CounterPulse:
+                    return UI.Column(
+                        UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
+                            value => modulator.BeatPulseSharpness = value),
+                        UI.Field("Duration", () => modulator.CounterPulseDuration,
+                            value => modulator.CounterPulseDuration = Math.Max(0.001f, value)));
+
                 case FloatModulationSource.MidiCc:
                     return UI.Field("Fader", Binder.Create(modulator.Midi, typeof(MidiCcBinding)));
 

@@ -25,10 +25,14 @@ namespace Aetherin
         [Tooltip("BPMを2倍にするPad")]
         public MidiBinding DoubleBpmButton = new(7);
 
+        [Tooltip("Beatを停止するPad")]
+        public MidiBinding StopButton = new();
+
         public Color MainColor = new(0.35f, 0.85f, 1f);
         public Color SubColor = new(1f, 0.65f, 0.25f);
         public Color BeatToggleColor = new(0.75f, 0.3f, 1f);
         public Color BpmButtonColor = new(0.25f, 1f, 0.55f);
+        public Color StopColor = new(1f, 0.25f, 0.3f);
 
         [Tooltip("光の減衰の鋭さ。大きいほど拍の頭で短く光る")]
         [Range(0.5f, 8f)]
@@ -71,6 +75,7 @@ namespace Aetherin
 
             if (_params.MainTapButton.WasNoteOn) _beat.TapMain();
             if (_params.SubTapButton.WasNoteOn) _beat.TapSub();
+            if (_params.StopButton.WasNoteOn) _beat.Stop();
 
             UpdateBpmButtons();
 
@@ -79,6 +84,7 @@ namespace Aetherin
             // 主拍のボタンは小節の位相、サブ拍のボタンは拍の位相に合わせて光らせる
             _params.MainTapButton.SetLed(_params.MainColor * GetBrightness(_beat.BarPhase));
             _params.SubTapButton.SetLed(_params.SubColor * GetBrightness(_beat.BeatPhase));
+            _params.StopButton.SetLed(_params.StopColor * (_beat.IsRunning ? 0.2f : 1f));
         }
 
         private void UpdateBpmButtons()

@@ -49,15 +49,20 @@ namespace Aetherin
         private readonly AutoFocusState _nextAutoFocus = new();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
+        private ICounter _counter;
         // 0はVolume、1以降はNextのDeckインデックス + 1。
         private int _selectedEditorItem;
         private int _editorRevision;
 
         [Inject]
-        public void Construct(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
+        public void Construct(
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager,
+            ICounter counter)
         {
             _audioFeatureProvider = audioFeatureProvider;
             _beatManager = beatManager;
+            _counter = counter;
         }
 
         private void Awake()
@@ -69,7 +74,7 @@ namespace Aetherin
         public Texture ProcessCurrent(Texture source)
         {
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
             return Process(source, _params.Current, _current, context);
@@ -78,7 +83,7 @@ namespace Aetherin
         public Texture ProcessNext(Texture source) 
         {
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
             return Process(source, _params.Next, _next, context);
@@ -91,7 +96,7 @@ namespace Aetherin
         public Texture ProcessOutput(Texture source)
         {
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
             return Process(source, _params.Next, _output, context, true);
@@ -113,9 +118,9 @@ namespace Aetherin
             if (_currentVolumeProfile == null || _nextVolumeProfile == null) return;
 
             var currentContext = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
             var nextContext = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
             ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentCamera, currentContext, _currentAutoFocus);
             ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextCamera, nextContext, _nextAutoFocus);
             ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");

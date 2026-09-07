@@ -17,6 +17,8 @@ namespace Aetherin
         BarAccumulator,
         InputVolume,
         Beat2And4,
+        Counter,
+        CounterPulse,
     }
 
     public enum FloatModulationOperation
@@ -50,6 +52,14 @@ namespace Aetherin
         PingPong,
     }
 
+    public enum CounterValueMode
+    {
+        Raw,
+        Clamp,
+        PingPong,
+        RepeatModX,
+    }
+
     public enum AccumulatorTransitionMode
     {
         Instant,
@@ -63,6 +73,7 @@ namespace Aetherin
         public readonly double Time;
         public readonly IAudioFeatureProvider Audio;
         public readonly IBeatManager Beat;
+        public readonly ICounter Counter;
         public readonly bool AllowMidi;
         public readonly float AnimationPhaseOffset;
 
@@ -71,17 +82,19 @@ namespace Aetherin
             IAudioFeatureProvider audio,
             IBeatManager beat,
             bool allowMidi,
-            float animationPhaseOffset = 0f)
+            float animationPhaseOffset = 0f,
+            ICounter counter = null)
         {
             Time = time;
             Audio = audio;
             Beat = beat;
+            Counter = counter;
             AllowMidi = allowMidi;
             AnimationPhaseOffset = animationPhaseOffset;
         }
 
         public ModulationContext WithAnimationPhaseOffset(float offset) =>
-            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset);
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter);
     }
 
     [Serializable]
@@ -106,9 +119,15 @@ namespace Aetherin
         public LfoWaveform LfoWaveform;
         public bool LfoUnipolar;
 
-        [Tooltip("Beat / Barの頭からの減衰の鋭さ。1で線形、大きいほど短いパルスになります")]
+        [Tooltip("Beat / Barはパルスの減衰、Counterは値のカーブを調整します。1で線形です")]
         [Min(0.01f)]
         public float BeatPulseSharpness = 3f;
+
+        public CounterValueMode CounterValueMode;
+        public float CounterMin;
+        public float CounterMax = 1f;
+        [Min(0.001f)] public float CounterRepeatMod = 4f;
+        [Min(0.001f)] public float CounterPulseDuration = 0.5f;
 
         public MidiCcBinding Midi = new();
 
@@ -155,6 +174,9 @@ namespace Aetherin
                 FloatModulationSource.SnareClap => context.Audio?.SnareClap ?? 0f,
                 FloatModulationSource.InputVolume => context.Audio?.InputVolume ?? 0f,
                 FloatModulationSource.MidiCc => Midi?.GetValue() ?? 0f,
+                FloatModulationSource.Counter => EvaluateCounter(context.Counter ?? Counter.Active),
+                FloatModulationSource.CounterPulse => EvaluateCounterPulse(
+                    context.Counter ?? Counter.Active, context.Time),
                 _ => 0f,
             };
 
@@ -301,6 +323,33 @@ namespace Aetherin
             // BeatInBarは0始まりなので、1と3がそれぞれ2拍目・4拍目。
             if (beat.BeatInBar is not (1 or 3)) return 0f;
             return EvaluateBeatPulse(beat, false, phaseOffset);
+        }
+
+        private float EvaluateCounter(ICounter counter)
+        {
+            float value = counter?.AnimatedValue ?? 0f;
+            float min = Mathf.Min(CounterMin, CounterMax);
+            float max = Mathf.Max(CounterMin, CounterMax);
+            float range = max - min;
+
+            value = CounterValueMode switch
+            {
+                CounterValueMode.Clamp => Mathf.Clamp(value, min, max),
+                CounterValueMode.PingPong when range > Mathf.Epsilon => min + Mathf.PingPong(value - min, range),
+                CounterValueMode.RepeatModX => Mathf.Repeat(value, Mathf.Max(0.001f, CounterRepeatMod)),
+                _ => value,
+            };
+
+            return Mathf.Pow(Mathf.Max(0f, value), Mathf.Max(0.01f, BeatPulseSharpness));
+        }
+
+        private float EvaluateCounterPulse(ICounter counter, double time)
+        {
+            if (counter == null || double.IsNegativeInfinity(counter.LastIncrementTime)) return 0f;
+
+            float phase = Mathf.Max(0f, (float)(time - counter.LastIncrementTime)) /
+                Mathf.Max(0.001f, CounterPulseDuration);
+            return Mathf.Pow(1f - Mathf.Clamp01(phase), Mathf.Max(0.01f, BeatPulseSharpness));
         }
 
         private float EvaluateLfo(double time, float phaseOffset)
