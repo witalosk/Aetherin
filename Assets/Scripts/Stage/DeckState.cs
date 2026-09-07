@@ -1,3 +1,5 @@
+using System;
+
 namespace Aetherin
 {
     /// <summary>
@@ -17,6 +19,8 @@ namespace Aetherin
 
     public interface IDeckStateProvider
     {
+        event Action NextPromoted;
+
         DeckState GetState(StageDeck deck);
 
         /// <summary> MIDIコンやUIからの変更はこちらに書き込む </summary>

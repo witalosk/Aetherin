@@ -43,6 +43,8 @@ namespace Aetherin
         public string Category => UiCategory.Main;
         public string SaveId => "CameraStageLayers";
 
+        public event Action NextPromoted;
+
         /// <summary> MIDIコンやUIからの変更はこちらに書き込まれる </summary>
         public DeckState NextState { get; private set; } = new();
 
@@ -636,8 +638,8 @@ namespace Aetherin
 
             // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
             _currentState.CopyFrom(NextState);
-            _postEffectManager.PromoteNextToCurrent();
             UpdateStageActivity();
+            NextPromoted?.Invoke();
 
             _deckRevision++;
             MidiDiagnostics.Record("Stage swap complete");
