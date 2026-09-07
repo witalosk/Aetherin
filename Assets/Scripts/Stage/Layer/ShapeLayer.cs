@@ -25,6 +25,10 @@ namespace Aetherin
         private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
         private static readonly int[] PaletteColorIds = CreatePaletteColorIds();
         private static readonly int ShapeMatrixId = Shader.PropertyToID("_ShapeMatrix");
+        private static readonly int ShapeNormalMatrixId = Shader.PropertyToID("_ShapeNormalMatrix");
+        private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
+        private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
+        private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
 
         [SerializeField] private ShapeLayerParams _params = new();
         [SerializeField] private Shader _fillShader;
@@ -38,6 +42,8 @@ namespace Aetherin
         private Vector3 _evaluatedRotation;
         private float _evaluatedStrokeWidth;
         private float _evaluatedOpacity;
+        private float _evaluatedMetallic;
+        private float _evaluatedSmoothness;
         private Vector3 _evaluatedPosition;
         private Vector3 _evaluatedScale;
         private Vector3 _evaluatedAnchor;
@@ -158,6 +164,8 @@ namespace Aetherin
             _params.StrokeTrim.End ??= new FloatParameter(1f);
             _params.StrokeTrim.Offset ??= new FloatParameter(0f);
             _params.FillColor ??= new PaletteColorParameter();
+            _params.Metallic ??= new FloatParameter(0f);
+            _params.Smoothness ??= new FloatParameter(0.5f);
             _params.FillColor.EnsureInitialized();
             _params.StrokeColor ??= new PaletteColorParameter { Color = PaletteColorSource.AccentColor2 };
             _params.StrokeColor.EnsureInitialized();
@@ -207,7 +215,7 @@ namespace Aetherin
             _strokeMaterial = CreateMaterial(shader, "Stroke");
             _meshRenderer.sharedMaterials = new[] { _fillMaterial, _strokeMaterial };
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            _meshRenderer.receiveShadows = false;
+            _meshRenderer.receiveShadows = true;
         }
 
         private Material CreateMaterial(Shader shader, string role)
@@ -256,6 +264,9 @@ namespace Aetherin
 
             _fillMaterial.SetMatrix(ShapeMatrixId, shapeMatrix);
             _strokeMaterial.SetMatrix(ShapeMatrixId, shapeMatrix);
+            Matrix4x4 normalMatrix = shapeMatrix.inverse.transpose;
+            _fillMaterial.SetMatrix(ShapeNormalMatrixId, normalMatrix);
+            _strokeMaterial.SetMatrix(ShapeNormalMatrixId, normalMatrix);
             ApplyTransformedBounds(shapeMatrix);
         }
 
@@ -285,8 +296,17 @@ namespace Aetherin
 
             ApplyColor(_fillMaterial, _evaluatedFillColor);
             ApplyColor(_strokeMaterial, _evaluatedStrokeColor);
+            ApplyMaterial(_fillMaterial);
+            ApplyMaterial(_strokeMaterial);
             LayerMaterialUtility.ApplyBlendMode(_fillMaterial, _params.BlendMode);
             LayerMaterialUtility.ApplyBlendMode(_strokeMaterial, _params.BlendMode);
+        }
+
+        private void ApplyMaterial(Material material)
+        {
+            material.SetFloat(MaterialModeId, (float)_params.MaterialMode);
+            material.SetFloat(MetallicId, _evaluatedMetallic);
+            material.SetFloat(SmoothnessId, _evaluatedSmoothness);
         }
 
         private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)
@@ -348,6 +368,8 @@ namespace Aetherin
             _evaluatedTrimOffset = _params.StrokeTrim?.Offset?.Evaluate(context) ?? 0f;
             _evaluatedStrokeWidth = Mathf.Max(0f, _params.StrokeWidth?.Evaluate(context) ?? 0f);
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
+            _evaluatedMetallic = Mathf.Clamp01(_params.Metallic?.Evaluate(context) ?? 0f);
+            _evaluatedSmoothness = Mathf.Clamp01(_params.Smoothness?.Evaluate(context) ?? 0.5f);
 
             var palette = Application.isPlaying && _deckStateProvider != null
                 ? _deckStateProvider.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette

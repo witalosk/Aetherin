@@ -149,8 +149,10 @@ namespace Aetherin
             {
                 int offset = i * 3;
                 triangles[offset] = 0;
-                triangles[offset + 1] = i + 1;
-                triangles[offset + 2] = i + 2;
+                // Outward-facing winding. The volume shader culls front faces so
+                // the remaining back face represents the ray's cone exit point.
+                triangles[offset + 1] = i + 2;
+                triangles[offset + 2] = i + 1;
             }
             var mesh = new Mesh { name = "Volumetric Spot Cone", hideFlags = HideFlags.DontSave };
             mesh.vertices = vertices;

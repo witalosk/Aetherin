@@ -11,6 +11,12 @@ namespace Aetherin
         Star,
     }
 
+    public enum ShapeLayerMaterialMode
+    {
+        Standard,
+        Lit,
+    }
+
     [Serializable]
     public class StrokeTrimParams
     {
@@ -43,6 +49,10 @@ namespace Aetherin
         public int EllipseSegments = 64;
 
         public PaletteColorParameter FillColor = new();
+
+        public ShapeLayerMaterialMode MaterialMode;
+        [Range(0f, 1f)] public FloatParameter Metallic = new(0f);
+        [Range(0f, 1f)] public FloatParameter Smoothness = new(0.5f);
 
         public bool FillEnabled = true;
         public bool StrokeEnabled;

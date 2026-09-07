@@ -33,8 +33,14 @@ Shader "Aetherin/Shape Fill"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
             struct Attributes
             {
@@ -47,6 +53,8 @@ Shader "Aetherin/Shape Fill"
                 float4 positionCS : SV_POSITION;
                 half4 color : COLOR;
                 float2 shapePositionXY : TEXCOORD0;
+                float3 positionWS : TEXCOORD1;
+                float3 normalWS : TEXCOORD2;
             };
 
             CBUFFER_START(UnityPerMaterial)
@@ -63,6 +71,10 @@ Shader "Aetherin/Shape Fill"
                 half4 _PaletteColor4;
                 half4 _PaletteColor5;
                 float4x4 _ShapeMatrix;
+                float4x4 _ShapeNormalMatrix;
+                float _MaterialMode;
+                float _Metallic;
+                float _Smoothness;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
@@ -72,6 +84,9 @@ Shader "Aetherin/Shape Fill"
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.color = input.color;
                 output.shapePositionXY = shapePosition.xy;
+                output.positionWS = TransformObjectToWorld(shapePosition);
+                float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, float3(0.0, 0.0, 1.0)));
+                output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
             }
 
@@ -108,7 +123,27 @@ Shader "Aetherin/Shape Fill"
                 }
 
                 color.a *= input.color.a;
-                return color;
+
+                InputData inputData = (InputData)0;
+                inputData.positionWS = input.positionWS;
+                inputData.positionCS = input.positionCS;
+                inputData.normalWS = NormalizeNormalPerPixel(input.normalWS);
+                inputData.viewDirectionWS = GetWorldSpaceNormalizeViewDir(input.positionWS);
+                inputData.shadowCoord = TransformWorldToShadowCoord(input.positionWS);
+                inputData.vertexLighting = VertexLighting(input.positionWS, inputData.normalWS);
+                inputData.bakedGI = SampleSH(inputData.normalWS);
+                inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                inputData.shadowMask = half4(1, 1, 1, 1);
+
+                SurfaceData surfaceData = (SurfaceData)0;
+                bool detailedLit = _MaterialMode > 0.5;
+                surfaceData.albedo = color.rgb;
+                surfaceData.metallic = detailedLit ? saturate(_Metallic) : 0;
+                surfaceData.smoothness = detailedLit ? saturate(_Smoothness) : 0.2;
+                surfaceData.normalTS = half3(0, 0, 1);
+                surfaceData.occlusion = 1;
+                surfaceData.alpha = color.a;
+                return UniversalFragmentPBR(inputData, surfaceData);
             }
             ENDHLSL
         }
@@ -146,6 +181,7 @@ Shader "Aetherin/Shape Fill"
 
             CBUFFER_START(UnityPerMaterial)
                 float4x4 _ShapeMatrix;
+                float4x4 _ShapeNormalMatrix;
             CBUFFER_END
 
             Varyings DepthNormalsVert(Attributes input)
@@ -153,8 +189,8 @@ Shader "Aetherin/Shape Fill"
                 Varyings output;
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
                 output.positionCS = TransformObjectToHClip(shapePosition);
-                // ShapeLayer geometry lies in the XY plane and is wound toward +Z.
-                output.normalWS = TransformObjectToWorldNormal(float3(0.0, 0.0, 1.0));
+                float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, float3(0.0, 0.0, 1.0)));
+                output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
             }
 

@@ -36,6 +36,8 @@ Shader "Aetherin/Primitive 3D Unlit"
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
@@ -161,7 +163,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                     color = lerp(_BaseColor, _ColorB, t);
                 }
 
-                if (_MaterialMode > 1.5)
+                if (_MaterialMode < 0.5 || _MaterialMode > 1.5)
                 {
                     InputData inputData = (InputData)0;
                     inputData.positionWS = input.positionWS;
@@ -178,8 +180,9 @@ Shader "Aetherin/Primitive 3D Unlit"
                     SurfaceData surfaceData = (SurfaceData)0;
                     surfaceData.albedo = color.rgb;
                     surfaceData.specular = half3(0, 0, 0);
-                    surfaceData.metallic = saturate(_Metallic);
-                    surfaceData.smoothness = saturate(_Smoothness);
+                    bool detailedLit = _MaterialMode > 1.5;
+                    surfaceData.metallic = detailedLit ? saturate(_Metallic) : 0;
+                    surfaceData.smoothness = detailedLit ? saturate(_Smoothness) : 0.2;
                     surfaceData.normalTS = half3(0, 0, 1);
                     surfaceData.emission = half3(0, 0, 0);
                     surfaceData.occlusion = 1;

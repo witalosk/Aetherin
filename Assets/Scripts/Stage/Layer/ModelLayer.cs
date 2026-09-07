@@ -161,12 +161,15 @@ namespace Aetherin
         private void AttachModelInstance(string key, GameObject source)
         {
             _modelInstance.transform.SetParent(transform, false);
-            _modelInstance.transform.localPosition = source.transform.localPosition;
-            _modelInstance.transform.localRotation = source.transform.localRotation;
-            _modelInstance.transform.localScale = source.transform.localScale;
             _modelInstance.name = $"Model ({key})";
             ResetModelRuntime(_modelInstance);
             _modelInstance.SetActive(true);
+
+            // Animator.Rebind/UpdateやOnEnableがroot Transformをクリップの初期姿勢へ戻す場合が
+            // あるため、再アクティブ化した後でPrefab基準のlocal Transformを復元する。
+            _modelInstance.transform.localPosition = source.transform.localPosition;
+            _modelInstance.transform.localRotation = source.transform.localRotation;
+            _modelInstance.transform.localScale = source.transform.localScale;
         }
 
         /// <summary>
@@ -182,7 +185,8 @@ namespace Aetherin
         internal void RestoreModelAfterStageClone(GameObject instance)
         {
             if (instance == null || instance != _modelInstance) return;
-            instance.transform.SetParent(transform, false);
+            // 退避時と同じくworldPositionStaysを有効にし、元のlocal Transformへ戻す。
+            instance.transform.SetParent(transform, true);
         }
 
         // StageManagerはStage全体をInstantiateしてSwap後のNextを作る。
@@ -325,7 +329,7 @@ namespace Aetherin
                     material.SetFloat(GlassDistortionId, Mathf.Max(0f, _params.GlassDistortion.Evaluate(context)));
                     material.SetFloat(GlassDistortionScaleId, Mathf.Max(0.01f, _params.GlassDistortionScale.Evaluate(context)));
                     LayerMaterialUtility.ApplyBlendMode(material, glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
-                    renderers[i].receiveShadows = lit;
+                    renderers[i].receiveShadows = !glass;
                 }
                 else LayerMaterialUtility.ApplyBlendMode(material, _params.MaterialMode == ModelLayerMaterialMode.Glass ? LayerBlendMode.Transparent : _params.BlendMode);
             }
