@@ -636,8 +636,6 @@ namespace Aetherin
                 _nextStages.Add(next);
             }
 
-            // 見えていたNextの状態をCurrentに引き継ぎ、スワップで見た目が変わらないようにする
-            _currentState.CopyFrom(NextState);
             UpdateStageActivity();
             NextPromoted?.Invoke();
 

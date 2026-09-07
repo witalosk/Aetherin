@@ -118,8 +118,7 @@ namespace Aetherin
     }
     
     /// <summary>
-    /// パレットの定義とMIDIパッドによる選択だけを担当するマネージャ
-    /// 選択結果はNext側のDeckStateに書き込むだけで、Current / Nextの二重管理はStageManagerに閉じている
+    /// パレットの定義、MIDIパッドによる選択、Current / Next間の昇格を担当するマネージャ
     /// </summary>
     public class ColorPaletteManager : MonoBehaviour, ISaveAndUiTarget
     {
@@ -150,10 +149,24 @@ namespace Aetherin
 
         private void Start()
         {
-            if (_deckStateProvider == null || _params.PaletteBindings.Count == 0) return;
+            if (_deckStateProvider == null) return;
+
+            _deckStateProvider.NextPromoted += PromoteNextToCurrent;
+            if (_params.PaletteBindings.Count == 0) return;
 
             _deckStateProvider.GetState(StageDeck.Current).Palette = _params.PaletteBindings[0].Palette;
             _deckStateProvider.NextState.Palette = _params.PaletteBindings[0].Palette;
+        }
+
+        private void PromoteNextToCurrent()
+        {
+            _deckStateProvider.GetState(StageDeck.Current).Palette = _deckStateProvider.NextState.Palette;
+        }
+
+        private void OnDestroy()
+        {
+            if (_deckStateProvider != null)
+                _deckStateProvider.NextPromoted -= PromoteNextToCurrent;
         }
 
         private void Update()
