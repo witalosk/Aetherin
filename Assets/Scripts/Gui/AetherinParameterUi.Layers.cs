@@ -75,6 +75,7 @@ namespace Aetherin
                         Param("Anchor", p.Anchor))),
                     ("Style", UI.Column(
                         Param("Opacity", p.Opacity),
+                        Param("Intensity", p.Intensity),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                         UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
                         UI.DynamicElementIf(() => p.MaterialMode == ShapeLayerMaterialMode.Lit,

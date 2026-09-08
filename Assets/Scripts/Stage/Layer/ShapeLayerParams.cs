@@ -51,6 +51,8 @@ namespace Aetherin
         public int EllipseSegments = 64;
 
         public PaletteColorParameter FillColor = new();
+        [Tooltip("Fill と Stroke の色に共通して掛ける強度。1を超えるとHDRとして扱われる")]
+        public FloatParameter Intensity = new(1f);
 
         public ShapeLayerMaterialMode MaterialMode;
         [Range(0f, 1f)] public FloatParameter Metallic = new(0f);

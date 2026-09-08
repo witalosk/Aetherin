@@ -137,6 +137,12 @@ namespace Aetherin
         public ElapsedTimeCurve ElapsedTimeCurve;
         [Tooltip("Power は指数、Logarithm は底。Logarithm は log(1 + t) を使用します")]
         [Min(0.001f)] public float ElapsedTimeCurveValue = 2f;
+        [Tooltip("EveryBar と AfterNEvents は Beat Manager のイベントを基準に経過時間を0へ戻します")]
+        public AccumulatorResetMode ElapsedTimeReset;
+        [Min(1)] public int ElapsedTimeResetAfterEvents = 4;
+        public AccumulatorLimitMode ElapsedTimeLimit;
+        public float ElapsedTimeMin;
+        public float ElapsedTimeMax = 1f;
 
         [Tooltip("Beat / Barはパルスの減衰、Counterは値のカーブを調整します。1で線形です")]
         [Min(0.01f)]
@@ -168,6 +174,13 @@ namespace Aetherin
         [NonSerialized] private float _accumulatorTransitionFrom;
         [NonSerialized] private float _accumulatorTransitionTo;
         [NonSerialized] private double _accumulatorTransitionStartTime;
+        [NonSerialized] private bool _elapsedTimeResetInitialized;
+        [NonSerialized] private double _elapsedTimeResetStart;
+        [NonSerialized] private double _lastElapsedTime;
+        [NonSerialized] private long _lastElapsedTimeBeatEventId;
+        [NonSerialized] private long _lastElapsedTimeBarEventId;
+        [NonSerialized] private int _elapsedTimeResetEventCount;
+        [NonSerialized] private bool _elapsedTimeWasStopped;
 
         public bool IsAvailable(in ModulationContext context) =>
             Source != FloatModulationSource.MidiCc || context.AllowMidi;
@@ -204,12 +217,94 @@ namespace Aetherin
 
         private float EvaluateElapsedTime(in ModulationContext context)
         {
-            float time = Mathf.Max(0f, (float)context.ElapsedTime + context.AnimationPhaseOffset);
+            float time = EvaluateElapsedTimeReset(context) + context.AnimationPhaseOffset;
+            time = ApplyElapsedTimeLimit(Mathf.Max(0f, time));
             return ElapsedTimeCurve switch
             {
                 ElapsedTimeCurve.Power => Mathf.Pow(time, Mathf.Max(0.001f, ElapsedTimeCurveValue)),
                 ElapsedTimeCurve.Logarithm => Mathf.Log(1f + time, Mathf.Max(1.001f, ElapsedTimeCurveValue)),
                 _ => time,
+            };
+        }
+
+        private float EvaluateElapsedTimeReset(in ModulationContext context)
+        {
+            double elapsedTime = Mathf.Max(0f, (float)context.ElapsedTime);
+            if (ElapsedTimeReset == AccumulatorResetMode.Never)
+                return (float)elapsedTime;
+
+            IBeatManager beat = context.Beat;
+            if (!_elapsedTimeResetInitialized || elapsedTime < _lastElapsedTime)
+            {
+                _elapsedTimeResetInitialized = true;
+                _elapsedTimeResetStart = 0d;
+                _elapsedTimeResetEventCount = 0;
+                _elapsedTimeWasStopped = beat != null && !beat.IsRunning;
+                SynchronizeElapsedTimeEventIds(beat);
+            }
+
+            if (ElapsedTimeReset == AccumulatorResetMode.OnStop)
+            {
+                bool stopped = beat != null && !beat.IsRunning;
+                if (stopped && !_elapsedTimeWasStopped)
+                    ResetElapsedTime(elapsedTime, beat);
+                _elapsedTimeWasStopped = stopped;
+            }
+            else if (beat != null)
+            {
+                if (ElapsedTimeReset == AccumulatorResetMode.EveryBar &&
+                    beat.BarEventId != _lastElapsedTimeBarEventId)
+                {
+                    ResetElapsedTime(elapsedTime, beat);
+                }
+                else if (ElapsedTimeReset == AccumulatorResetMode.AfterNEvents)
+                {
+                    long eventDelta = beat.BeatEventId - _lastElapsedTimeBeatEventId;
+                    if (eventDelta < 0)
+                    {
+                        ResetElapsedTime(elapsedTime, beat);
+                    }
+                    else
+                    {
+                        _elapsedTimeResetEventCount += (int)Math.Min(eventDelta, int.MaxValue);
+                        if (_elapsedTimeResetEventCount >= Mathf.Max(1, ElapsedTimeResetAfterEvents))
+                            ResetElapsedTime(elapsedTime, beat);
+                        else
+                            SynchronizeElapsedTimeEventIds(beat);
+                    }
+                }
+            }
+
+            _lastElapsedTime = elapsedTime;
+            return Mathf.Max(0f, (float)(elapsedTime - _elapsedTimeResetStart));
+        }
+
+        private void ResetElapsedTime(double elapsedTime, IBeatManager beat)
+        {
+            _elapsedTimeResetStart = elapsedTime;
+            _elapsedTimeResetEventCount = 0;
+            SynchronizeElapsedTimeEventIds(beat);
+        }
+
+        private void SynchronizeElapsedTimeEventIds(IBeatManager beat)
+        {
+            if (beat == null) return;
+            _lastElapsedTimeBeatEventId = beat.BeatEventId;
+            _lastElapsedTimeBarEventId = beat.BarEventId;
+        }
+
+        private float ApplyElapsedTimeLimit(float value)
+        {
+            float min = Mathf.Min(ElapsedTimeMin, ElapsedTimeMax);
+            float max = Mathf.Max(ElapsedTimeMin, ElapsedTimeMax);
+            float range = max - min;
+
+            return ElapsedTimeLimit switch
+            {
+                AccumulatorLimitMode.Clamp => Mathf.Clamp(value, min, max),
+                AccumulatorLimitMode.Wrap when range > Mathf.Epsilon => min + Mathf.Repeat(value - min, range),
+                AccumulatorLimitMode.PingPong when range > Mathf.Epsilon => min + Mathf.PingPong(value - min, range),
+                _ => value,
             };
         }
 

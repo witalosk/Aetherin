@@ -49,6 +49,7 @@ namespace Aetherin
         private Vector3 _evaluatedRotation;
         private float _evaluatedStrokeWidth;
         private float _evaluatedOpacity;
+        private float _evaluatedIntensity = 1f;
         private float _evaluatedMetallic;
         private float _evaluatedSmoothness;
         private float _evaluatedVertexNoiseAmount;
@@ -175,6 +176,7 @@ namespace Aetherin
             _params.StrokeTrim.End ??= new FloatParameter(1f);
             _params.StrokeTrim.Offset ??= new FloatParameter(0f);
             _params.FillColor ??= new PaletteColorParameter();
+            _params.Intensity ??= new FloatParameter(1f);
             _params.Metallic ??= new FloatParameter(0f);
             _params.Smoothness ??= new FloatParameter(0.5f);
             _params.VertexNoise ??= new VertexNoiseParams();
@@ -288,20 +290,20 @@ namespace Aetherin
         {
             Vector3 center = _geometryBounds.center;
             Vector3 extents = _geometryBounds.extents;
-            Vector3 first = matrix.MultiplyPoint3x4(center + new Vector3(-extents.x, -extents.y, 0f));
-            Vector3 min = first;
-            Vector3 max = first;
+            Vector3 min = new(float.PositiveInfinity, float.PositiveInfinity, float.PositiveInfinity);
+            Vector3 max = new(float.NegativeInfinity, float.NegativeInfinity, float.NegativeInfinity);
 
-            Encapsulate(matrix.MultiplyPoint3x4(center + new Vector3(extents.x, -extents.y, 0f)), ref min, ref max);
-            Encapsulate(matrix.MultiplyPoint3x4(center + new Vector3(-extents.x, extents.y, 0f)), ref min, ref max);
-            Encapsulate(matrix.MultiplyPoint3x4(center + new Vector3(extents.x, extents.y, 0f)), ref min, ref max);
+            for (int x = -1; x <= 1; x += 2)
+            for (int y = -1; y <= 1; y += 2)
+            for (int z = -1; z <= 1; z += 2)
+            {
+                Vector3 point = center + Vector3.Scale(extents, new Vector3(x, y, z));
+                point = matrix.MultiplyPoint3x4(point);
+                min = Vector3.Min(min, point);
+                max = Vector3.Max(max, point);
+            }
+
             _mesh.bounds = new Bounds((min + max) * 0.5f, max - min);
-        }
-
-        private static void Encapsulate(Vector3 point, ref Vector3 min, ref Vector3 max)
-        {
-            min = Vector3.Min(min, point);
-            max = Vector3.Max(max, point); 
         }
 
         private void ApplyAppearance()
@@ -335,6 +337,7 @@ namespace Aetherin
         private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)
         {
             Color colorA = evaluated.ColorA;
+            colorA = ApplyIntensity(colorA);
             if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
                 colorA.a *= _evaluatedOpacity;
             material.SetColor(BaseColorId, colorA);
@@ -345,7 +348,7 @@ namespace Aetherin
             {
                 material.SetFloat(PaletteRandomSeedId, evaluated.RandomSeed);
                 for (int i = 0; i < PaletteColorIds.Length; i++)
-                    material.SetColor(PaletteColorIds[i], evaluated.PaletteColors[i]);
+                    material.SetColor(PaletteColorIds[i], ApplyIntensity(evaluated.PaletteColors[i]));
                 return;
             }
 
@@ -353,6 +356,7 @@ namespace Aetherin
                 PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes)) return;
 
             Color colorB = evaluated.ColorB;
+            colorB = ApplyIntensity(colorB);
             if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
                 colorB.a *= _evaluatedOpacity;
             material.SetColor(ColorBId, colorB);
@@ -360,6 +364,14 @@ namespace Aetherin
             float radians = evaluated.AngleDegrees * Mathf.Deg2Rad;
             material.SetVector(GradientParamsId,
                 new Vector4(Mathf.Cos(radians), Mathf.Sin(radians), evaluated.Offset, evaluated.Scale));
+        }
+
+        private Color ApplyIntensity(Color color)
+        {
+            color.r *= _evaluatedIntensity;
+            color.g *= _evaluatedIntensity;
+            color.b *= _evaluatedIntensity;
+            return color;
         }
 
         private static int[] CreatePaletteColorIds()
@@ -392,6 +404,7 @@ namespace Aetherin
             _evaluatedTrimOffset = _params.StrokeTrim?.Offset?.Evaluate(context) ?? 0f;
             _evaluatedStrokeWidth = Mathf.Max(0f, _params.StrokeWidth?.Evaluate(context) ?? 0f);
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
+            _evaluatedIntensity = Mathf.Max(0f, _params.Intensity?.Evaluate(context) ?? 1f);
             _evaluatedMetallic = Mathf.Clamp01(_params.Metallic?.Evaluate(context) ?? 0f);
             _evaluatedSmoothness = Mathf.Clamp01(_params.Smoothness?.Evaluate(context) ?? 0.5f);
             _evaluatedVertexNoiseAmount = Mathf.Max(0f, _params.VertexNoise?.Amount?.Evaluate(context) ?? 0f);

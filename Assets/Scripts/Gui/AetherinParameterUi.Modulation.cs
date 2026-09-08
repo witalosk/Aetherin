@@ -209,7 +209,23 @@ namespace Aetherin
                             () => UI.Field(
                                 modulator.ElapsedTimeCurve == ElapsedTimeCurve.Power ? "Exponent" : "Log Base",
                                 () => modulator.ElapsedTimeCurveValue,
-                                value => modulator.ElapsedTimeCurveValue = Math.Max(0.001f, value))));
+                                value => modulator.ElapsedTimeCurveValue = Math.Max(0.001f, value))),
+                        UI.Field("Reset", () => modulator.ElapsedTimeReset,
+                            value => modulator.ElapsedTimeReset = value),
+                        UI.DynamicElementIf(
+                            () => modulator.ElapsedTimeReset == AccumulatorResetMode.AfterNEvents,
+                            () => UI.Field("Reset After Beats", () => modulator.ElapsedTimeResetAfterEvents,
+                                value => modulator.ElapsedTimeResetAfterEvents = Math.Max(1, value))),
+                        UI.Field("Limit", () => modulator.ElapsedTimeLimit,
+                            value => modulator.ElapsedTimeLimit = value),
+                        UI.DynamicElementIf(
+                            () => modulator.ElapsedTimeLimit != AccumulatorLimitMode.None,
+                            () => UI.Row(
+                                UI.Field("Min", () => modulator.ElapsedTimeMin,
+                                    value => modulator.ElapsedTimeMin = value).SetFlexGrow(1f),
+                                UI.Field("Max", () => modulator.ElapsedTimeMax,
+                                    value => modulator.ElapsedTimeMax = value).SetFlexGrow(1f)
+                            )));
 
                 case FloatModulationSource.Beat:
                 case FloatModulationSource.Beat2And4:
