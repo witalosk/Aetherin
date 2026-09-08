@@ -16,6 +16,8 @@ CBUFFER_START(_ShaderVariablesScreenSpaceReflection)
     int         _SsrPad1_;
     float4x4    _CameraViewProjMatrix;
     float4x4    _InvCameraViewProjMatrix;
+    float4      _SsrScreenSize;
+    float4      _SsrCameraPositionWS;
     // float4      _ColorPyramidUvScaleAndLimitPrevFrame;
 CBUFFER_END
 

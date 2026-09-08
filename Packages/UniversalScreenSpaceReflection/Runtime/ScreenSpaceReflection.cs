@@ -148,9 +148,10 @@ namespace UniversalScreenSpaceReflection
             private int m_TracingKernel;
             private int m_ReprojectionKernel;
             private int m_CopyColorKernel;
+            private int m_DownsampleColorKernel;
 
             private ProfilingSampler m_ProfilingSampler = new ProfilingSampler("ScreenSpaceReflection");
-            private static readonly float[] s_ColorPyramidSizeFactor = new float[] { 1.0f, 0.5f, 0.25f, 0.25f };
+            private const int MaxColorPyramidMipCount = 11;
 
             private static bool ValidatePass(PassData data, bool useRenderGraph = false)
             {
@@ -276,8 +277,10 @@ namespace UniversalScreenSpaceReflection
                 depthPyramidDesc.sRGB = false;
                 RenderingUtils.ReAllocateIfNeeded(ref m_DepthPyramidHandle, depthPyramidDesc, name:"CameraDepthBufferMipChain");
 
-                var colorPyramidSizeFactor = s_ColorPyramidSizeFactor[(int)UniversalRenderPipeline.asset.opaqueDownsampling];
-                var colorPyramidDesc = new RenderTextureDescriptor((int)(desc.width * colorPyramidSizeFactor), (int)(desc.height * colorPyramidSizeFactor), desc.colorFormat, 0, 11);
+                int colorMipCount = Mathf.Min(MaxColorPyramidMipCount,
+                    CoreUtils.GetMipCount(Mathf.Max(desc.width, desc.height)));
+                var colorPyramidDesc = new RenderTextureDescriptor(
+                    desc.width, desc.height, desc.colorFormat, 0, colorMipCount);
                 colorPyramidDesc.enableRandomWrite = true;
                 colorPyramidDesc.useMipMap = true;
                 colorPyramidDesc.autoGenerateMips = false;
@@ -427,6 +430,11 @@ namespace UniversalScreenSpaceReflection
                 var jitterMatrix = projMatrix * camera.nonJitteredProjectionMatrix.inverse;
                 cb._CameraViewProjMatrix = jitterMatrix * GL.GetGPUProjectionMatrix(projMatrix, true) * viewMatrix;
                 cb._InvCameraViewProjMatrix = cb._CameraViewProjMatrix.inverse;
+                Vector2Int viewportSize = mipChainInfo.mipLevelSizes[0];
+                cb._SsrScreenSize = new Vector4(viewportSize.x, viewportSize.y,
+                    1f / Mathf.Max(1, viewportSize.x), 1f / Mathf.Max(1, viewportSize.y));
+                Vector3 cameraPosition = camera.transform.position;
+                cb._SsrCameraPositionWS = new Vector4(cameraPosition.x, cameraPosition.y, cameraPosition.z, 1f);
             }
 
 
@@ -506,8 +514,10 @@ namespace UniversalScreenSpaceReflection
                     var depthPyramidHandle = UniversalRenderer.CreateRenderGraphTexture(renderGraph, depthPyramidDesc, "CameraDepthBufferMipChain", false);
                     builder.UseTexture(depthPyramidHandle, AccessFlags.ReadWrite);
 
-                    var colorPyramidSizeFactor = s_ColorPyramidSizeFactor[(int)UniversalRenderPipeline.asset.opaqueDownsampling];
-                    var colorPyramidDesc = new RenderTextureDescriptor((int)(desc.width * colorPyramidSizeFactor), (int)(desc.height * colorPyramidSizeFactor), desc.colorFormat, 0, 11);
+                    int colorMipCount = Mathf.Min(MaxColorPyramidMipCount,
+                        CoreUtils.GetMipCount(Mathf.Max(desc.width, desc.height)));
+                    var colorPyramidDesc = new RenderTextureDescriptor(
+                        desc.width, desc.height, desc.colorFormat, 0, colorMipCount);
                     var colorPyramidTextureDesc = new TextureDesc(colorPyramidDesc);
                     colorPyramidTextureDesc.enableRandomWrite = true;
                     colorPyramidTextureDesc.useMipMap = true;
@@ -531,12 +541,16 @@ namespace UniversalScreenSpaceReflection
                     m_TracingKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsTracing");
                     m_ReprojectionKernel = m_ScreenSpaceReflectionsCS.FindKernel("ScreenSpaceReflectionsReprojection");
                     m_CopyColorKernel = m_ScreenSpaceReflectionsCS.FindKernel("CopyColorTarget");
+                    m_DownsampleColorKernel = m_ScreenSpaceReflectionsCS.FindKernel("DownsampleColorTarget");
 
                     passData.cb = new ShaderVariablesScreenSpaceReflection();
                     passData.mipInfo = m_DepthBufferMipChainInfo;
-                    UpdateSSRConstantBuffer(cameraData.camera, m_Settings, ref passData.cb, colorPyramidDesc.mipCount, passData.mipInfo, cameraData.GetViewMatrix(), cameraData.GetProjectionMatrix());
+                    UpdateSSRConstantBuffer(cameraData.camera, m_Settings, ref passData.cb, colorMipCount,
+                        passData.mipInfo, cameraData.GetViewMatrix(), cameraData.GetProjectionMatrix());
                     passData.renderingMode = m_RenderingMode;
                     passData.cameraColorTargetHandle = resourceData.cameraColor;
+                    passData.cameraDepthTexture = resourceData.cameraDepthTexture;
+                    passData.cameraNormalsTexture = resourceData.cameraNormalsTexture;
                     passData.depthTexture = depthPyramidHandle;
                     passData.colorTexture = colorPyramidHandle;
                     passData.hitPointsTexture = hitPointsHandle;
@@ -545,6 +559,7 @@ namespace UniversalScreenSpaceReflection
                     passData.tracingKernel = m_TracingKernel;
                     passData.reprojectionKernel = m_ReprojectionKernel;
                     passData.copyColorKernel = m_CopyColorKernel;
+                    passData.downsampleColorKernel = m_DownsampleColorKernel;
                     passData.depthVolumeDepth = depthPyramidDesc.volumeDepth;
                     var cameraTargetDescriptor = passData.cameraColorTargetHandle.GetDescriptor(renderGraph);
                     passData.viewportSize = new Vector2Int(cameraTargetDescriptor.width, cameraTargetDescriptor.height);
@@ -591,7 +606,8 @@ namespace UniversalScreenSpaceReflection
 
                 using (new ProfilingScope(cmd, new ProfilingSampler("Depth Pyramid")))
                 {
-                    data.mipGenerator.RenderMinDepthPyramid(cmd, data.depthTexture, data.mipInfo, data.depthVolumeDepth, false);
+                    data.mipGenerator.RenderMinDepthPyramid(cmd, data.cameraDepthTexture, data.depthTexture,
+                        data.mipInfo, data.depthVolumeDepth, false);
                 }
 
                 var deferredKeyword = new LocalKeyword(cs, "SSR_DEFERRED");
@@ -608,6 +624,7 @@ namespace UniversalScreenSpaceReflection
 
                     cmd.SetComputeTextureParam(cs, data.tracingKernel, "_DepthPyramidTexture", data.depthTexture);
                     cmd.SetComputeTextureParam(cs, data.tracingKernel, "_SsrHitPointTexture", data.hitPointsTexture);
+                    cmd.SetComputeTextureParam(cs, data.tracingKernel, ShaderIDs._CameraNormalsTexture, data.cameraNormalsTexture);
 
                     // BufferHandle has implicit operator GraphicsBuffer that resolves through
                     // RenderGraphResourceRegistry at execute time, so SetComputeBufferParam
@@ -635,14 +652,33 @@ namespace UniversalScreenSpaceReflection
                     cmd.SetComputeBufferParam(cs, data.copyColorKernel, ShaderIDs._DepthPyramidMipLevelOffsets, data.offsetBufferHandle);
                     cmd.DispatchCompute(cs, data.copyColorKernel, SSRUtils.DivRoundUp(data.viewportSize.x, 8), SSRUtils.DivRoundUp(data.viewportSize.y, 8), 1);
 
-                    RenderTexture rt = data.colorTexture;
-                    rt.GenerateMips();
+                    // Generate every mip in the same camera command stream. Calling
+                    // RenderTexture.GenerateMips() here executes immediately, before the
+                    // recorded CopyColorTarget dispatch, and can reuse another camera's old data.
+                    int sourceWidth = data.viewportSize.x;
+                    int sourceHeight = data.viewportSize.y;
+                    for (int mip = 1; mip <= data.cb._SsrColorPyramidMaxMip; mip++)
+                    {
+                        int destinationWidth = Mathf.Max(1, (sourceWidth + 1) >> 1);
+                        int destinationHeight = Mathf.Max(1, (sourceHeight + 1) >> 1);
+                        cmd.SetComputeIntParams(cs, ShaderIDs._ColorPyramidSourceSize,
+                            sourceWidth, sourceHeight, 0, 0);
+                        cmd.SetComputeTextureParam(cs, data.downsampleColorKernel,
+                            ShaderIDs._ColorPyramidSource, data.colorTexture, mip - 1);
+                        cmd.SetComputeTextureParam(cs, data.downsampleColorKernel,
+                            ShaderIDs._ColorPyramidDestination, data.colorTexture, mip);
+                        cmd.DispatchCompute(cs, data.downsampleColorKernel,
+                            SSRUtils.DivRoundUp(destinationWidth, 8), SSRUtils.DivRoundUp(destinationHeight, 8), 1);
+                        sourceWidth = destinationWidth;
+                        sourceHeight = destinationHeight;
+                    }
 
                     // Bind resources
                     cmd.SetComputeTextureParam(cs, data.reprojectionKernel, ShaderIDs._DepthPyramidTexture, data.depthTexture);
                     cmd.SetComputeTextureParam(cs, data.reprojectionKernel, ShaderIDs._ColorPyramidTexture, data.colorTexture);
                     cmd.SetComputeTextureParam(cs, data.reprojectionKernel, ShaderIDs._SsrHitPointTexture, data.hitPointsTexture);
                     cmd.SetComputeTextureParam(cs, data.reprojectionKernel, ShaderIDs._SSRAccumTexture, data.lightingTexture);
+                    cmd.SetComputeTextureParam(cs, data.reprojectionKernel, ShaderIDs._CameraNormalsTexture, data.cameraNormalsTexture);
 
                     cmd.SetComputeBufferParam(cs, data.reprojectionKernel, ShaderIDs._DepthPyramidMipLevelOffsets, data.offsetBufferHandle);
 
@@ -659,6 +695,8 @@ namespace UniversalScreenSpaceReflection
                 public RenderingMode renderingMode;
                 public ComputeShader computeShader;
                 public TextureHandle cameraColorTargetHandle;
+                public TextureHandle cameraDepthTexture;
+                public TextureHandle cameraNormalsTexture;
                 public TextureHandle depthTexture;
                 public TextureHandle colorTexture;
                 public TextureHandle hitPointsTexture;
@@ -670,6 +708,7 @@ namespace UniversalScreenSpaceReflection
                 public int tracingKernel;
                 public int reprojectionKernel;
                 public int copyColorKernel;
+                public int downsampleColorKernel;
                 public int depthVolumeDepth;
                 public Vector2Int viewportSize;
                 public Material resolveMat;

@@ -78,7 +78,8 @@ namespace UniversalScreenSpaceReflection
 
 #if UNITY_6000_0_OR_NEWER
         #region RenderGraph
-        public void RenderMinDepthPyramid(ComputeCommandBuffer cmd, TextureHandle texture, SSRUtils.PackedMipChainInfo info, int volumeDepth, bool mip1AlreadyComputed)
+        public void RenderMinDepthPyramid(ComputeCommandBuffer cmd, TextureHandle sourceDepth, TextureHandle texture,
+            SSRUtils.PackedMipChainInfo info, int volumeDepth, bool mip1AlreadyComputed)
         {
             SSRUtils.CheckRTCreated(texture);
 
@@ -90,6 +91,7 @@ namespace UniversalScreenSpaceReflection
                 Vector2Int dstSize = info.mipLevelSizes[0];
                 cmd.SetComputeIntParams(cs, ShaderIDs._SrcOffsetAndLimit, m_SrcOffset);
                 cmd.SetComputeIntParams(cs, ShaderIDs._DstOffset, m_DstOffset);
+                cmd.SetComputeTextureParam(cs, kernel, ShaderIDs._CameraDepthTexture, sourceDepth);
                 cmd.SetComputeTextureParam(cs, kernel, ShaderIDs._DepthMipChain, texture);
 
                 cmd.DispatchCompute(cs, kernel, SSRUtils.DivRoundUp(dstSize.x, 8), SSRUtils.DivRoundUp(dstSize.y, 8), volumeDepth);

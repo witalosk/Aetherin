@@ -29,6 +29,9 @@ namespace Aetherin
     /// </summary>
     public partial class CameraStage : StageBase
     {
+        private const string CurrentRenderingLayerName = "StageCurrent";
+        private const string NextRenderingLayerName = "StageNext";
+
         public override IReadOnlyList<StageLayer> Layers
         {
             get
@@ -68,6 +71,43 @@ namespace Aetherin
         {
             get => _backgroundColor;
             set => _backgroundColor = value;
+        }
+
+        /// <summary>
+        /// Current / Nextごとに描画LayerとCameraのcullingMaskを分け、
+        /// Color・Depth・DepthNormals（SSR入力）が別デッキを参照しないようにする。
+        /// Stage生成・昇格時だけ呼ばれ、毎フレームの階層走査は行わない。
+        /// </summary>
+        internal void ConfigureDeckRenderingIsolation()
+        {
+            int layer = GetDeckRenderingLayer();
+            if (layer < 0)
+            {
+                Debug.LogError($"CameraStage rendering layer is missing: " +
+                               $"{(Deck == StageDeck.Current ? CurrentRenderingLayerName : NextRenderingLayerName)}", this);
+                return;
+            }
+
+            SetLayerRecursively(transform, layer);
+            Camera camera = StageCamera;
+            if (camera != null) camera.cullingMask = 1 << layer;
+        }
+
+        /// <summary>このStage内で新規生成・プール復帰した部分木に、所属デッキのLayerを一度だけ設定する。</summary>
+        internal void ApplyDeckRenderingLayer(GameObject root)
+        {
+            if (root == null) return;
+            int layer = GetDeckRenderingLayer();
+            if (layer >= 0) SetLayerRecursively(root.transform, layer);
+        }
+
+        private int GetDeckRenderingLayer() => LayerMask.NameToLayer(
+            Deck == StageDeck.Current ? CurrentRenderingLayerName : NextRenderingLayerName);
+
+        private static void SetLayerRecursively(Transform root, int layer)
+        {
+            root.gameObject.layer = layer;
+            for (int i = 0; i < root.childCount; i++) SetLayerRecursively(root.GetChild(i), layer);
         }
 
         /// <summary>Litシェーダーが使用する環境反射の種類とSolidColor値を返す。</summary>
@@ -151,6 +191,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Shape Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
             var layer = layerObject.AddComponent<ShapeLayer>();
@@ -164,6 +205,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Primitive 3D Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
             var layer = layerObject.AddComponent<Primitive3DLayer>();
@@ -231,6 +273,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Model Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             var layer = layerObject.AddComponent<ModelLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
@@ -242,6 +285,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Light Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             layerObject.AddComponent<Light>();
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
@@ -256,6 +300,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("GPU Particle Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             var layer = layerObject.AddComponent<GpuParticleLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
@@ -267,6 +312,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Text Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             layerObject.AddComponent<MeshRenderer>();
             layerObject.AddComponent<TMPro.TextMeshPro>();
             var layer = layerObject.AddComponent<TextLayer>();
@@ -280,6 +326,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Runtime Shader Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
             var layer = layerObject.AddComponent<RuntimeShaderLayer>();
@@ -293,6 +340,7 @@ namespace Aetherin
         {
             var layerObject = new GameObject("Group Layer");
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
             var layer = layerObject.AddComponent<GroupLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);

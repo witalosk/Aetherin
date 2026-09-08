@@ -127,6 +127,7 @@ namespace Aetherin
 
             var cameraObject = new GameObject("Runtime Cinemachine Camera");
             cameraObject.transform.SetParent(transform, false);
+            ApplyDeckRenderingLayer(cameraObject);
             _cinemachineCamera = cameraObject.AddComponent<CinemachineCamera>();
             _cinemachineCamera.Priority = 100;
             _cinemachineCamera.enabled = false;

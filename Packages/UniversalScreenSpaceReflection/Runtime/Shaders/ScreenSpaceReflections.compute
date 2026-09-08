@@ -8,6 +8,7 @@
 #pragma kernel ScreenSpaceReflectionsTracing                                                SSR_TRACE
 #pragma kernel ScreenSpaceReflectionsReprojection                                           SSR_REPROJECT
 #pragma kernel CopyColorTarget                                                              SSR_COPYCOLOR
+#pragma kernel DownsampleColorTarget                                                        SSR_DOWNSAMPLECOLOR
 
 #pragma multi_compile_local _ USE_MOTION_VECTOR   // TODO: enabled this if URP > 16.0 or exclude for performance.
 #pragma multi_compile_local _ SSR_DEFERRED
@@ -57,8 +58,12 @@ SAMPLER(s_trilinear_clamp_sampler);
        TEXTURE2D_X(        _SsrHitPointTexture);
     RW_TEXTURE2D_X(float4, _SSRAccumTexture);
 #elif defined(SSR_COPYCOLOR)
-        TEXTURE2D_X(       _CameraOpaqueTexture);
+        TEXTURE2D_X(       _CameraColorTexture);
     RW_TEXTURE2D_X(float4, _CopiedColorPyramidTexture);
+#elif defined(SSR_DOWNSAMPLECOLOR)
+        TEXTURE2D_X(       _ColorPyramidSource);
+    RW_TEXTURE2D_X(float4, _ColorPyramidDestination);
+    uint4 _ColorPyramidSourceSize;
 #endif
 
     StructuredBuffer<int2>  _DepthPyramidMipLevelOffsets;
@@ -116,9 +121,9 @@ void ScreenSpaceReflectionsTracing(uint3 groupId          : SV_GroupID,
 
     float  deviceDepth = LOAD_TEXTURE2D_X(_DepthPyramidTexture, positionSS).r;
 
-    float2 positionNDC = positionSS * _ScreenSize.zw + (0.5 * _ScreenSize.zw); // Should we precompute the half-texel bias? We seem to use it a lot.
+    float2 positionNDC = positionSS * _SsrScreenSize.zw + (0.5 * _SsrScreenSize.zw); // Should we precompute the half-texel bias? We seem to use it a lot.
     float3 positionWS = ComputeWorldSpacePosition(positionNDC, deviceDepth, _InvCameraViewProjMatrix); // Jittered
-    float3 V = GetWorldSpaceNormalizeViewDir(positionWS);
+    float3 V = SafeNormalize(_SsrCameraPositionWS.xyz - positionWS);
 
     float3 N;
     float perceptualRoughness;
@@ -126,7 +131,7 @@ void ScreenSpaceReflectionsTracing(uint3 groupId          : SV_GroupID,
 
     float3 R = reflect(-V, N);
 
-    float3 camPosWS = GetCurrentViewPosition();
+    float3 camPosWS = _SsrCameraPositionWS.xyz;
 
     // Apply normal bias with the magnitude dependent on the distance from the camera.
     // Unfortunately, we only have access to the shading normal, which is less than ideal...
@@ -144,7 +149,7 @@ void ScreenSpaceReflectionsTracing(uint3 groupId          : SV_GroupID,
 
     float3 reflPosWS  = positionWS + R;
     float3 reflPosNDC = ComputeNormalizedDeviceCoordinatesWithZ(reflPosWS, _CameraViewProjMatrix); // Jittered
-    float3 reflPosSS  = float3(reflPosNDC.xy * _ScreenSize.xy, reflPosNDC.z);
+    float3 reflPosSS  = float3(reflPosNDC.xy * _SsrScreenSize.xy, reflPosNDC.z);
     float3 rayDir     = reflPosSS - rayOrigin;
     float3 rcpRayDir  = rcp(rayDir);
     int2   rayStep    = int2(rcpRayDir.x >= 0 ? 1 : 0,
@@ -177,8 +182,8 @@ void ScreenSpaceReflectionsTracing(uint3 groupId          : SV_GroupID,
         const float halfTexel = 0.5;
 
         float3 bounds;
-        bounds.x = (rcpRayDir.x >= 0) ? _ScreenSize.x - halfTexel : halfTexel;
-        bounds.y = (rcpRayDir.y >= 0) ? _ScreenSize.y - halfTexel : halfTexel;
+        bounds.x = (rcpRayDir.x >= 0) ? _SsrScreenSize.x - halfTexel : halfTexel;
+        bounds.y = (rcpRayDir.y >= 0) ? _SsrScreenSize.y - halfTexel : halfTexel;
         // If we do not want to intersect the skybox, it is more efficient to not trace too far.
         float maxDepth = (_SsrReflectsSky != 0) ? -0.00000024 : 0.00000024; // 2^-22
         bounds.z = (rcpRayDir.z >= 0) ? 1 : maxDepth;
@@ -294,7 +299,7 @@ void ScreenSpaceReflectionsTracing(uint3 groupId          : SV_GroupID,
         // Note that we are using 'rayPos' from the penultimate iteration, rather than
         // recompute it using the last value of 't', which would result in an overshoot.
         // It also needs to be precisely at the center of the pixel to avoid artifacts.
-        float2 hitPositionNDC = floor(rayPos.xy) * _ScreenSize.zw + (0.5 * _ScreenSize.zw); // Should we precompute the half-texel bias? We seem to use it a lot.
+        float2 hitPositionNDC = floor(rayPos.xy) * _SsrScreenSize.zw + (0.5 * _SsrScreenSize.zw); // Should we precompute the half-texel bias? We seem to use it a lot.
         _SsrHitPointTexture[COORD_TEXTURE2D_X(positionSS)] = hitPositionNDC.xy;
     }
 
@@ -339,7 +344,7 @@ void ScreenSpaceReflectionsReprojection(uint3 dispatchThreadId : SV_DispatchThre
 
     // TODO: this texture is sparse (mostly black). Can we avoid reading every texel? How about using Hi-S?
     float2 motionVectorNDC;
-    DecodeMotionVector(SAMPLE_TEXTURE2D_X_LOD(_CameraMotionVectorsTexture, s_linear_clamp_sampler, min(hitPositionNDC, 1.0f - 0.5f * _ScreenSize.zw) * _RTHandleScale.xy, 0), motionVectorNDC);
+    DecodeMotionVector(SAMPLE_TEXTURE2D_X_LOD(_CameraMotionVectorsTexture, s_linear_clamp_sampler, min(hitPositionNDC, 1.0f - 0.5f * _SsrScreenSize.zw) * _RTHandleScale.xy, 0), motionVectorNDC);
     float2 prevFrameNDC = hitPositionNDC - motionVectorNDC;
     #undef _RTHandleScale
 #else
@@ -384,7 +389,25 @@ void ScreenSpaceReflectionsReprojection(uint3 dispatchThreadId : SV_DispatchThre
 void CopyColorTarget(uint3 dispatchThreadId : SV_DispatchThreadID)
 {
     uint2 positionSS = dispatchThreadId.xy;
-    _CopiedColorPyramidTexture[COORD_TEXTURE2D_X(positionSS)] = LOAD_TEXTURE2D_X(_CameraOpaqueTexture, positionSS);
+    _CopiedColorPyramidTexture[COORD_TEXTURE2D_X(positionSS)] = LOAD_TEXTURE2D_X(_CameraColorTexture, positionSS);
+}
+
+#elif defined(SSR_DOWNSAMPLECOLOR)
+
+[numthreads(8, 8, 1)]
+void DownsampleColorTarget(uint3 dispatchThreadId : SV_DispatchThreadID)
+{
+    uint2 destination = dispatchThreadId.xy;
+    uint2 destinationSize = max(uint2(1, 1), (_ColorPyramidSourceSize.xy + 1) >> 1);
+    if (any(destination >= destinationSize)) return;
+
+    uint2 source = destination << 1;
+    uint2 sourceLimit = _ColorPyramidSourceSize.xy - 1;
+    float4 color = LOAD_TEXTURE2D_X(_ColorPyramidSource, min(source + uint2(0, 0), sourceLimit));
+    color += LOAD_TEXTURE2D_X(_ColorPyramidSource, min(source + uint2(1, 0), sourceLimit));
+    color += LOAD_TEXTURE2D_X(_ColorPyramidSource, min(source + uint2(0, 1), sourceLimit));
+    color += LOAD_TEXTURE2D_X(_ColorPyramidSource, min(source + uint2(1, 1), sourceLimit));
+    _ColorPyramidDestination[COORD_TEXTURE2D_X(destination)] = color * 0.25;
 }
 
 #endif

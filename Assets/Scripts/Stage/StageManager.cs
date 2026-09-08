@@ -341,6 +341,7 @@ namespace Aetherin
 
             var stage = clone.GetComponent<StageBase>();
             stage.Deck = deck;
+            if (stage is CameraStage cameraStage) cameraStage.ConfigureDeckRenderingIsolation();
             return stage;
         }
 
@@ -646,6 +647,7 @@ namespace Aetherin
 
                 stage.Deck = StageDeck.Current;
                 stage.gameObject.name = $"{_stages[i].name} ({StageDeck.Current})";
+                if (stage is CameraStage cameraStage) cameraStage.ConfigureDeckRenderingIsolation();
             }
 
             // 引退した旧Currentはすぐ非アクティブ化する。

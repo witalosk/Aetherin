@@ -3782,7 +3782,7 @@
           },
           {
             "StageId": "e97665bd31904d87925bd5cee92b35b6",
-            "StageName": "Camera Stage",
+            "StageName": "TunnelStage",
             "RuntimeCreated": true,
             "StageIndex": 5,
             "BackgroundMode": 1,

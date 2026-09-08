@@ -21,6 +21,8 @@ namespace UniversalScreenSpaceReflection
 
         public Matrix4x4 _CameraViewProjMatrix;
         public Matrix4x4 _InvCameraViewProjMatrix;
+        public Vector4 _SsrScreenSize;
+        public Vector4 _SsrCameraPositionWS;
         // public Vector4 _ColorPyramidUvScaleAndLimitPrevFrame;
     }
 }

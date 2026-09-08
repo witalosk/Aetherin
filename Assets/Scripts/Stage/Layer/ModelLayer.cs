@@ -148,6 +148,7 @@ namespace Aetherin
 
             _modelInstance = Instantiate(source, transform, false);
             _modelInstance.name = $"Model ({key})";
+            _cameraStage?.ApplyDeckRenderingLayer(_modelInstance);
             foreach (var renderer in _modelInstance.GetComponentsInChildren<Renderer>(true))
             {
                 if (renderer is not MeshRenderer && renderer is not SkinnedMeshRenderer) continue;
@@ -164,6 +165,7 @@ namespace Aetherin
         {
             _modelInstance.transform.SetParent(transform, false);
             _modelInstance.name = $"Model ({key})";
+            _cameraStage?.ApplyDeckRenderingLayer(_modelInstance);
             ResetModelRuntime(_modelInstance);
             _modelInstance.SetActive(true);
 
@@ -229,6 +231,7 @@ namespace Aetherin
 
             var wireObject = new GameObject($"{sourceRenderer.name} Wire");
             wireObject.transform.SetParent(sourceRenderer.transform, false);
+            _cameraStage?.ApplyDeckRenderingLayer(wireObject);
             var filter = wireObject.AddComponent<MeshFilter>();
             var wireRenderer = wireObject.AddComponent<MeshRenderer>();
             var wireMesh = BuildWireMesh(sourceMesh);
