@@ -38,6 +38,8 @@ float4 Frag(VsOutput input) : SV_TARGET
 }";
         
         public bool ScreenSpace;
+        [Tooltip("Runtime Texture の解像度。幅・高さは Size × Pixel Per Unit で決まります")]
+        [Min(1f)] public float PixelPerUnit = 125f;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -55,6 +57,9 @@ float4 Frag(VsOutput input) : SV_TARGET
 
         [NonSerialized] public string CompileMessage = "Play Modeでコンパイルされます";
         [NonSerialized] public bool LastCompileSucceeded;
+        [NonSerialized] public int TextureRebuildRevision;
+
+        public void RequestTextureRebuild() => TextureRebuildRevision++;
 
         public void EnsureInitialized()
         {

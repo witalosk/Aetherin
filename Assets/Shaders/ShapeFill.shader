@@ -41,6 +41,7 @@ Shader "Aetherin/Shape Fill"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Includes/AetherinNoise.hlsl"
 
             struct Attributes
             {
@@ -75,17 +76,33 @@ Shader "Aetherin/Shape Fill"
                 float _MaterialMode;
                 float _Metallic;
                 float _Smoothness;
+                float _VertexNoiseEnabled;
+                float _VertexNoiseType;
+                float4 _VertexNoiseParams;
+                float4 _VertexNoiseOffset;
+                float _VertexNoiseDirection;
             CBUFFER_END
 
             Varyings Vert(Attributes input)
             {
                 Varyings output;
+                float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, float3(0.0, 0.0, 1.0)));
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                if (_VertexNoiseEnabled > 0.5)
+                {
+                    float3 samplePosition = input.positionOS.xyz * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
+                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
+                        _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
+                    float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
+                        normalize(TransformWorldToObjectDir(worldAxis));
+                    shapePosition += direction * displacement;
+                }
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.color = input.color;
                 output.shapePositionXY = shapePosition.xy;
                 output.positionWS = TransformObjectToWorld(shapePosition);
-                float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, float3(0.0, 0.0, 1.0)));
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
             }
@@ -116,9 +133,26 @@ Shader "Aetherin/Shape Fill"
 
                 else if (_UseGradient > 0.5)
                 {
-                    // シェイプ空間で、向きベクトルへの射影を0-1に正規化して混ぜる
-                    float projection = dot(input.shapePositionXY, _GradientParams.xy) - _GradientParams.z;
-                    float t = saturate(projection / _GradientParams.w + 0.5);
+                    float t;
+                    if (_UseGradient < 1.5)
+                    {
+                        // シェイプ空間で、向きベクトルへの射影を0-1に正規化して混ぜる
+                        float projection = dot(input.shapePositionXY, _GradientParams.xy) - _GradientParams.z;
+                        t = saturate(projection / _GradientParams.w + 0.5);
+                    }
+                    else
+                    {
+                        float2 rotated = float2(
+                            dot(input.shapePositionXY, _GradientParams.xy),
+                            dot(input.shapePositionXY, float2(-_GradientParams.y, _GradientParams.x)));
+                        float2 patternUv = rotated / max(0.0001, _GradientParams.w) + _GradientParams.z;
+                        if (_UseGradient < 5.5) // Check
+                            t = fmod(floor(patternUv.x) + floor(patternUv.y), 2.0);
+                        else if (_UseGradient < 6.5) // Dots
+                            t = step(length(frac(patternUv) - 0.5), 0.28);
+                        else // Diagonal Stripes
+                            t = step(0.5, frac(patternUv.x + patternUv.y));
+                    }
                     color = lerp(_BaseColor, _ColorB, t);
                 }
 
@@ -167,6 +201,7 @@ Shader "Aetherin/Shape Fill"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+            #include "Includes/AetherinNoise.hlsl"
 
             struct Attributes
             {
@@ -182,14 +217,30 @@ Shader "Aetherin/Shape Fill"
             CBUFFER_START(UnityPerMaterial)
                 float4x4 _ShapeMatrix;
                 float4x4 _ShapeNormalMatrix;
+                float _VertexNoiseEnabled;
+                float _VertexNoiseType;
+                float4 _VertexNoiseParams;
+                float4 _VertexNoiseOffset;
+                float _VertexNoiseDirection;
             CBUFFER_END
 
             Varyings DepthNormalsVert(Attributes input)
             {
                 Varyings output;
-                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
-                output.positionCS = TransformObjectToHClip(shapePosition);
                 float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, float3(0.0, 0.0, 1.0)));
+                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                if (_VertexNoiseEnabled > 0.5)
+                {
+                    float3 samplePosition = input.positionOS.xyz * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
+                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
+                        _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
+                    float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
+                        normalize(TransformWorldToObjectDir(worldAxis));
+                    shapePosition += direction * displacement;
+                }
+                output.positionCS = TransformObjectToHClip(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
             }

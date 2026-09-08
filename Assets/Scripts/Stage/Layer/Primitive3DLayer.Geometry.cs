@@ -35,6 +35,9 @@ namespace Aetherin
                 case Primitive3DType.Cylinder:
                     BuildCylinder();
                     break;
+                case Primitive3DType.Plane:
+                    BuildPlane();
+                    break;
             }
 
             BuildWireframe();
@@ -286,6 +289,27 @@ namespace Aetherin
                 AddIndexedTriangleOutward(nextBottom, top, nextTop);
                 AddIndexedTriangleOutward(bottomCenter, bottom, nextBottom);
                 AddIndexedTriangleOutward(topCenter, nextTop, top);
+            }
+        }
+
+        private void BuildPlane()
+        {
+            int segments = Mathf.Max(1, _params.PlaneSegments);
+            for (int y = 0; y <= segments; y++)
+            for (int x = 0; x <= segments; x++)
+            {
+                _vertices.Add(new Vector3(x / (float)segments - 0.5f, y / (float)segments - 0.5f, 0f));
+                _uvs.Add(new Vector2(x / (float)segments, y / (float)segments));
+            }
+            for (int y = 0; y < segments; y++)
+            for (int x = 0; x < segments; x++)
+            {
+                int a = y * (segments + 1) + x;
+                int b = a + 1;
+                int c = a + segments + 2;
+                int d = a + segments + 1;
+                _triangles.Add(a); _triangles.Add(b); _triangles.Add(c);
+                _triangles.Add(a); _triangles.Add(c); _triangles.Add(d);
             }
         }
 

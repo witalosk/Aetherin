@@ -18,7 +18,10 @@ namespace Aetherin
             bool strokeClosed = !_params.StrokeTrim.Enabled || Mathf.Abs(trimSpan) >= 0.999999f;
             BuildStrokePath(strokeClosed);
 
-            int fillVertexCount = edgeCount + 1;
+            int fillRings = _params.VertexNoise?.Enabled == true
+                ? Mathf.Clamp(_params.VertexNoiseTessellation, 1, 32)
+                : 1;
+            int fillVertexCount = 1 + edgeCount * fillRings;
             int strokeSegmentCount = strokeClosed ? _strokePath.Count : Mathf.Max(0, _strokePath.Count - 1);
 
             _vertices.Clear();
@@ -30,15 +33,27 @@ namespace Aetherin
                 _params.StrokeEnabled && _evaluatedStrokeWidth > 0f ? strokeSegmentCount * 6 : 0);
 
             _vertices.Add(Vector3.zero);
-            for (int i = 0; i < edgeCount; i++)
+            for (int ring = 1; ring <= fillRings; ring++)
             {
-                _vertices.Add(_boundary[i]);
-
-                if (_params.FillEnabled)
+                float radius = ring / (float)fillRings;
+                for (int i = 0; i < edgeCount; i++)
                 {
-                    _fillTriangles.Add(0);
-                    _fillTriangles.Add(i + 1);
-                    _fillTriangles.Add((i + 1) % edgeCount + 1);
+                    _vertices.Add(_boundary[i] * radius);
+                    if (!_params.FillEnabled) continue;
+
+                    int current = 1 + (ring - 1) * edgeCount + i;
+                    int next = 1 + (ring - 1) * edgeCount + (i + 1) % edgeCount;
+                    if (ring == 1)
+                    {
+                        _fillTriangles.Add(0); _fillTriangles.Add(current); _fillTriangles.Add(next);
+                    }
+                    else
+                    {
+                        int inner = current - edgeCount;
+                        int innerNext = next - edgeCount;
+                        _fillTriangles.Add(inner); _fillTriangles.Add(current); _fillTriangles.Add(innerNext);
+                        _fillTriangles.Add(innerNext); _fillTriangles.Add(current); _fillTriangles.Add(next);
+                    }
                 }
             }
 

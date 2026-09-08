@@ -45,6 +45,9 @@ namespace Aetherin
                 case Primitive3DType.Cylinder:
                     BuildCylinderWireframe(radius);
                     break;
+                case Primitive3DType.Plane:
+                    BuildPlaneWireframe(radius);
+                    break;
             }
         }
 
@@ -156,6 +159,16 @@ namespace Aetherin
                     if (edges.Add(key)) AddWireEdge(vertices[a], vertices[b], radius);
                 }
             }
+        }
+
+        private void BuildPlaneWireframe(float radius)
+        {
+            Vector3 a = new(-0.5f, -0.5f, 0f);
+            Vector3 b = new(0.5f, -0.5f, 0f);
+            Vector3 c = new(0.5f, 0.5f, 0f);
+            Vector3 d = new(-0.5f, 0.5f, 0f);
+            AddWireEdge(a, b, radius); AddWireEdge(b, c, radius);
+            AddWireEdge(c, d, radius); AddWireEdge(d, a, radius);
         }
 
         private void AddWireEdge(Vector3 a, Vector3 b, float radius)

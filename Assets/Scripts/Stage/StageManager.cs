@@ -102,6 +102,7 @@ namespace Aetherin
         private DynamicElement _inspectorElement;
         private WindowElement _inspectorWindow;
         private int _selectedStageUiIndex;
+        private CameraStageLayerSaveData _layerClipboard;
 
         private readonly DeckState _currentState = new();
 
@@ -1095,7 +1096,16 @@ namespace Aetherin
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(32f),
                 insideGroup ? UI.Button("Out", () => stage.MoveLayerOutOfGroup(layer)).SetWidth(38f) : null,
+                UI.Button("Copy", () => _layerClipboard = stage.CopyLayer(layer)).SetWidth(48f),
+                UI.Button("Paste", () => PasteLayer(stage, layer)).SetWidth(52f),
                 UI.Button("Delete", () => RemoveLayer(stage, layer)));
+        }
+
+        private void PasteLayer(CameraStage stage, StageLayer referenceLayer)
+        {
+            if (_layerClipboard == null || stage == null || referenceLayer == null) return;
+            StageLayer pasted = stage.PasteLayer(_layerClipboard, referenceLayer.transform.parent, referenceLayer.Order);
+            if (pasted != null) InspectLayer(stage, pasted);
         }
 
         private void InspectLayer(CameraStage stage, StageLayer layer)

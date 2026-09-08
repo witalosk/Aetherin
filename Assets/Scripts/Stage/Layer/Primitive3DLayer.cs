@@ -37,6 +37,11 @@ namespace Aetherin
         private static readonly int UsePaletteRandomId = Shader.PropertyToID("_UsePaletteRandom");
         private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
         private static readonly int[] PaletteColorIds = CreatePaletteColorIds();
+        private static readonly int VertexNoiseEnabledId = Shader.PropertyToID("_VertexNoiseEnabled");
+        private static readonly int VertexNoiseTypeId = Shader.PropertyToID("_VertexNoiseType");
+        private static readonly int VertexNoiseParamsId = Shader.PropertyToID("_VertexNoiseParams");
+        private static readonly int VertexNoiseOffsetId = Shader.PropertyToID("_VertexNoiseOffset");
+        private static readonly int VertexNoiseDirectionId = Shader.PropertyToID("_VertexNoiseDirection");
 
         [SerializeField] private Primitive3DLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -74,6 +79,7 @@ namespace Aetherin
         private float _evaluatedAlpha = 1f;
         private float _evaluatedUvScale = 1f;
         private float _evaluatedUvOffset;
+        private float _evaluatedPatternAngle = 45f;
         private Vector3 _evaluatedLightDirection = Vector3.up;
         private float _evaluatedToonThreshold = 0.5f;
         private float _evaluatedMetallic;
@@ -85,6 +91,10 @@ namespace Aetherin
         private float _evaluatedGlassChromaticAberration = 0.002f;
         private float _evaluatedGlassDistortion = 0.003f;
         private float _evaluatedGlassDistortionScale = 12f;
+        private float _evaluatedVertexNoiseAmount;
+        private float _evaluatedVertexNoiseFrequency = 1f;
+        private float _evaluatedVertexNoiseSpeed = 1f;
+        private Vector3 _evaluatedVertexNoiseOffset;
         private EvaluatedRepeater _evaluatedRepeater;
         private Color _evaluatedColorA = Color.white;
         private Color _evaluatedColorB = Color.white;
@@ -194,6 +204,7 @@ namespace Aetherin
             _params.WireAlpha ??= new FloatParameter(1f);
             _params.UvScale ??= new FloatParameter(1f);
             _params.UvOffset ??= new FloatParameter(0f);
+            _params.PatternAngle ??= new FloatParameter(45f);
             _params.LightDirection ??= new Vector3Parameter(new Vector3(0.3f, 0.8f, -0.5f));
             _params.ToonThreshold ??= new FloatParameter(0.5f);
             _params.Metallic ??= new FloatParameter(0f);
@@ -205,6 +216,8 @@ namespace Aetherin
             _params.GlassChromaticAberration ??= new FloatParameter(0.002f);
             _params.GlassDistortion ??= new FloatParameter(0.003f);
             _params.GlassDistortionScale ??= new FloatParameter(12f);
+            _params.VertexNoise ??= new VertexNoiseParams();
+            _params.VertexNoise.EnsureInitialized();
             _params.Repeater ??= new RepeaterParams();
             _params.Repeater.EnsureInitialized(MaxRepeaterCopies);
         }
@@ -347,6 +360,7 @@ namespace Aetherin
             _evaluatedWireWidth = Mathf.Max(0.0001f, _params.WireWidth?.Evaluate(context) ?? 0.015f);
             _evaluatedUvScale = _params.UvScale?.Evaluate(context) ?? 1f;
             _evaluatedUvOffset = _params.UvOffset?.Evaluate(context) ?? 0f;
+            _evaluatedPatternAngle = _params.PatternAngle?.Evaluate(context) ?? 45f;
             _evaluatedLightDirection = _params.LightDirection?.Evaluate(context) ?? Vector3.up;
             if (_evaluatedLightDirection.sqrMagnitude < 0.000001f) _evaluatedLightDirection = Vector3.up;
             _evaluatedLightDirection.Normalize();
@@ -362,6 +376,10 @@ namespace Aetherin
             _evaluatedGlassDistortion = Mathf.Max(0f, _params.GlassDistortion?.Evaluate(context) ?? 0.003f);
             _evaluatedGlassDistortionScale = Mathf.Max(0.01f,
                 _params.GlassDistortionScale?.Evaluate(context) ?? 12f);
+            _evaluatedVertexNoiseAmount = Mathf.Max(0f, _params.VertexNoise?.Amount?.Evaluate(context) ?? 0f);
+            _evaluatedVertexNoiseFrequency = Mathf.Max(0.001f, _params.VertexNoise?.Frequency?.Evaluate(context) ?? 1f);
+            _evaluatedVertexNoiseSpeed = _params.VertexNoise?.Speed?.Evaluate(context) ?? 1f;
+            _evaluatedVertexNoiseOffset = _params.VertexNoise?.Offset?.Evaluate(context) ?? Vector3.zero;
             _evaluatedRepeater = EvaluatedRepeater.Evaluate(_params.Repeater, context, MaxRepeaterCopies);
 
             ColorPalette palette = Application.isPlaying && _deckStateProvider != null
@@ -395,7 +413,9 @@ namespace Aetherin
             _material.SetColor(BaseColorId, _evaluatedColorA);
             _material.SetColor(ColorBId, _evaluatedColorB);
             _material.SetFloat(ColorModeId, (float)_params.ColorMode);
-            _material.SetVector(UvParamsId, new Vector4(_evaluatedUvScale, _evaluatedUvOffset, 0f, 0f));
+            float patternRadians = _evaluatedPatternAngle * Mathf.Deg2Rad;
+            _material.SetVector(UvParamsId, new Vector4(_evaluatedUvScale, _evaluatedUvOffset,
+                Mathf.Cos(patternRadians), Mathf.Sin(patternRadians)));
             _material.SetVector(LightDirectionId, _evaluatedLightDirection);
             _material.SetFloat(ToonThresholdId, _evaluatedToonThreshold);
             _material.SetFloat(MetallicId, _evaluatedMetallic);
@@ -416,6 +436,7 @@ namespace Aetherin
             _material.SetFloat(GlassChromaticAberrationId, _evaluatedGlassChromaticAberration);
             _material.SetFloat(GlassDistortionId, _evaluatedGlassDistortion);
             _material.SetFloat(GlassDistortionScaleId, _evaluatedGlassDistortionScale);
+            ApplyVertexNoise(_material);
             ApplyRandomPalette();
 
             Vector3 rotation = new(
@@ -449,6 +470,7 @@ namespace Aetherin
             _wireMaterial.SetFloat(UsePaletteRandomId, 0f);
             _wireMaterial.SetMatrix(ShapeMatrixId, matrix);
             _wireMaterial.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
+            ApplyVertexNoise(_wireMaterial);
 
             if (_wireMesh == null) return;
             Bounds bounds = _wireGeometryBounds;
@@ -465,6 +487,18 @@ namespace Aetherin
                 max = Vector3.Max(max, point);
             }
             _wireMesh.bounds = new Bounds((min + max) * 0.5f, max - min);
+        }
+
+        private void ApplyVertexNoise(Material material)
+        {
+            bool enabled = _params.VertexNoise?.Enabled == true && _evaluatedVertexNoiseAmount > 0f;
+            material.SetFloat(VertexNoiseEnabledId, enabled ? 1f : 0f);
+            material.SetFloat(VertexNoiseTypeId, (float)(_params.VertexNoise?.Type ?? VertexNoiseType.Simplex));
+            material.SetVector(VertexNoiseParamsId, new Vector4(_evaluatedVertexNoiseAmount,
+                _evaluatedVertexNoiseFrequency, _evaluatedVertexNoiseSpeed, Time.time));
+            material.SetVector(VertexNoiseOffsetId, _evaluatedVertexNoiseOffset);
+            material.SetFloat(VertexNoiseDirectionId,
+                (float)(_params.VertexNoise?.Direction ?? VertexNoiseDisplacementDirection.Normal));
         }
 
         protected override void ApplyCustomLayerState(bool visible, int order)
@@ -529,6 +563,8 @@ namespace Aetherin
                     hash = hash * 31 + _params.RadialSegments;
                 if (_params.Primitive == Primitive3DType.Icosphere)
                     hash = hash * 31 + _params.IcosphereSubdivisions;
+                if (_params.Primitive == Primitive3DType.Plane)
+                    hash = hash * 31 + _params.PlaneSegments;
                 if (_params.Primitive == Primitive3DType.RoundedBox)
                 {
                     hash = hash * 31 + _params.CornerSegments;

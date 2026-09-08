@@ -20,6 +20,9 @@ namespace Aetherin
         PaletteRandom,
         AccentRandom,
         SubAccentRandom,
+        Check,
+        Dots,
+        DiagonalStripes,
     }
 
     /// <summary>
@@ -107,6 +110,7 @@ namespace Aetherin
         public float Offset;
         public float Scale;
         public bool IsPaletteRandom;
+        public PaletteColorMode PatternMode;
         public PaletteColorMode RandomMode;
         public int RandomSeed;
         public Color[] PaletteColors;
@@ -129,7 +133,8 @@ namespace Aetherin
                     parameter.Mode == PaletteColorMode.Single ? parameter.Color : parameter.GradientColorA),
                 intensity, alpha);
 
-            if (parameter.Mode != PaletteColorMode.Gradient)
+            if (parameter.Mode != PaletteColorMode.Gradient &&
+                parameter.Mode is not (PaletteColorMode.Check or PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes))
             {
                 if (parameter.Mode is PaletteColorMode.PaletteRandom or
                     PaletteColorMode.AccentRandom or PaletteColorMode.SubAccentRandom)
@@ -152,7 +157,8 @@ namespace Aetherin
             {
                 ColorA = colorA,
                 ColorB = ToOutputColor(PaletteColorParameter.Resolve(palette, parameter.GradientColorB), intensity, alpha),
-                IsGradient = true,
+                IsGradient = parameter.Mode == PaletteColorMode.Gradient,
+                PatternMode = parameter.Mode,
                 AngleDegrees = parameter.GradientAngle?.Evaluate(context) ?? 0f,
                 Offset = parameter.GradientOffset?.Evaluate(context) ?? 0f,
                 Scale = Mathf.Max(0.0001f, parameter.GradientScale?.Evaluate(context) ?? 2f),

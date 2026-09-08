@@ -351,6 +351,27 @@ namespace Aetherin
                 .ToList();
         }
 
+        public CameraStageLayerSaveData CopyLayer(StageLayer layer)
+        {
+            if (layer == null || layer.GetComponentInParent<CameraStage>() != this) return null;
+            return JsonUtility.FromJson<CameraStageLayerSaveData>(JsonUtility.ToJson(CaptureLayer(layer)));
+        }
+
+        public StageLayer PasteLayer(CameraStageLayerSaveData clipboard, Transform parent, int orderAfter)
+        {
+            if (clipboard == null) return null;
+            parent ??= transform;
+            StageLayer pasted = RestoreLayer(clipboard, parent);
+            if (pasted == null) return null;
+            pasted.gameObject.name += " Copy";
+            foreach (StageLayer sibling in parent.GetComponentsInChildren<StageLayer>(true)
+                         .Where(item => item != null && item.transform.parent == parent && item != pasted && item.Order > orderAfter))
+                sibling.Order++;
+            pasted.Order = orderAfter + 1;
+            RefreshLayers();
+            return pasted;
+        }
+
         private static CameraStageLayerSaveData CaptureLayer(StageLayer layer) => new()
         {
             Type = layer switch

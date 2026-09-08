@@ -21,7 +21,8 @@ namespace Aetherin
                     readStatus: () => parameter.Mode,
                     build: mode => mode == PaletteColorMode.Single
                         ? UI.Field(null, () => parameter.Color, value => parameter.Color = value).SetFlexGrow(1f)
-                        : mode == PaletteColorMode.Gradient ? UI.Row(
+                        : mode is PaletteColorMode.Gradient or PaletteColorMode.Check or
+                              PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes ? UI.Row(
                             UI.Field(null, () => parameter.GradientColorA,
                                 value => parameter.GradientColorA = value).SetFlexGrow(1f),
                             UI.Field(null, () => parameter.GradientColorB,
@@ -33,7 +34,8 @@ namespace Aetherin
                             UI.Column(
                                 Param("Intensity", parameter.Intensity),
                                 Param("Alpha", parameter.Alpha),
-                                UI.DynamicElementIf(() => parameter.Mode == PaletteColorMode.Gradient,
+                                UI.DynamicElementIf(() => parameter.Mode is PaletteColorMode.Gradient or
+                                    PaletteColorMode.Check or PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes,
                                     () => UI.Column(
                                         Param("Angle", parameter.GradientAngle),
                                         Param("Offset", parameter.GradientOffset),
@@ -84,6 +86,11 @@ namespace Aetherin
                             Param("Stroke Width", p.StrokeWidth),
                             Param("Stroke Color", p.StrokeColor),
                             Param("Stroke Trim", p.StrokeTrim))))),
+                    ("Vertex Noise", UI.Column(
+                        Param("Vertex Noise", p.VertexNoise),
+                        UI.DynamicElementIf(() => p.VertexNoise?.Enabled == true,
+                            () => UI.Field("Tessellation", () => p.VertexNoiseTessellation,
+                                value => p.VertexNoiseTessellation = Math.Max(1, Math.Min(32, value)))))),
                     ("Repeater", Param("Repeater", p.Repeater)))
             );
         }
@@ -182,6 +189,10 @@ namespace Aetherin
                         Param("Rotation", p.Rotation),
                         Param("Scale", p.Scale),
                         Param("Anchor", p.Anchor))),
+                    ("Texture", UI.Column(
+                        UI.Field("Pixel Per Unit", () => p.PixelPerUnit,
+                            value => p.PixelPerUnit = Math.Max(1f, value)),
+                        UI.Button("Rebuild Texture", p.RequestTextureRebuild))),
                     ("Shader", UI.ScrollViewVertical(500f,
                         UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
                             .SetMinHeight(320f),
@@ -221,6 +232,10 @@ namespace Aetherin
                             () => p.Primitive == Primitive3DType.Icosphere,
                             () => UI.Field("Subdivisions", () => p.IcosphereSubdivisions,
                                 value => p.IcosphereSubdivisions = Math.Max(0, Math.Min(5, value)))),
+                        UI.DynamicElementIf(
+                            () => p.Primitive == Primitive3DType.Plane,
+                            () => UI.Field("Plane Segments", () => p.PlaneSegments,
+                                value => p.PlaneSegments = Math.Max(1, value))),
                         Param("Size", p.Size),
                         UI.DynamicElementIf(
                             () => p.Primitive == Primitive3DType.RoundedBox,
@@ -253,6 +268,7 @@ namespace Aetherin
                                 Param("Wire Width", p.WireWidth),
                                 Param("Wire Intensity", p.WireColorIntensity),
                                 Param("Wire Alpha", p.WireAlpha))))),
+                    ("Vertex Noise", Param("Vertex Noise", p.VertexNoise)),
                     ("Repeater", Param("Repeater", p.Repeater)))
             );
         }
@@ -272,6 +288,11 @@ namespace Aetherin
             UI.DynamicElementIf(
                 () => p.ColorMode == Primitive3DColorMode.UvLerp,
                 () => UI.Column(Param("UV Scale", p.UvScale), Param("UV Offset", p.UvOffset))),
+            UI.DynamicElementIf(
+                () => p.ColorMode is Primitive3DColorMode.Check or Primitive3DColorMode.Dots or
+                      Primitive3DColorMode.DiagonalStripes,
+                () => UI.Column(Param("Pattern Scale", p.UvScale), Param("Pattern Offset", p.UvOffset),
+                    Param("Pattern Angle", p.PatternAngle))),
             UI.DynamicElementIf(
                 () => p.ColorMode is Primitive3DColorMode.ShadedLerp or Primitive3DColorMode.ToonTwoTone,
                 () => Param("Light Direction", p.LightDirection)),
@@ -296,6 +317,22 @@ namespace Aetherin
             CreateStandardMaterialElement(p),
             Param("Metallic", p.Metallic),
             Param("Smoothness", p.Smoothness));
+
+        private static Element CreateVertexNoiseElement(LabelElement label, IBinder<VertexNoiseParams> binder)
+        {
+            VertexNoiseParams noise = binder.Get();
+            if (noise == null) return UI.Label("-");
+            noise.EnsureInitialized();
+            return UI.Column(
+                UI.Toggle(label ?? (LabelElement)"Vertex Noise", () => noise.Enabled, value => noise.Enabled = value),
+                UI.DynamicElementIf(() => noise.Enabled, () => UI.Column(
+                    UI.Field("Type", () => noise.Type, value => noise.Type = value),
+                    UI.Field("Direction", () => noise.Direction, value => noise.Direction = value),
+                    Param("Amount", noise.Amount),
+                    Param("Frequency", noise.Frequency),
+                    Param("Speed", noise.Speed),
+                    Param("Offset", noise.Offset))));
+        }
 
         #endregion
     }

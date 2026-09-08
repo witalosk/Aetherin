@@ -34,6 +34,7 @@ namespace Aetherin
         private int _shaderCodeHash;
         private bool _isShaderCompiled;
         private bool _compileAttempted;
+        private int _appliedTextureRebuildRevision = int.MinValue;
 
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
@@ -86,9 +87,13 @@ namespace Aetherin
             CompileIfNeeded();
             if (!_isShaderCompiled) return;
 
-            Vector2Int resolution = GetResolution();
-            EnsureRuntimeTexture(resolution);
-            _runtimeRenderer.SetConstantBuffer(0, CreateConstantBuffer(context, resolution));
+            if (_runtimeTexture == null || _appliedTextureRebuildRevision != _params.TextureRebuildRevision)
+            {
+                EnsureRuntimeTexture(GetRequestedResolution(context));
+                _appliedTextureRebuildRevision = _params.TextureRebuildRevision;
+            }
+            if (_runtimeTexture == null) return;
+            _runtimeRenderer.SetConstantBuffer(0, CreateConstantBuffer(context, _runtimeResolution));
             _runtimeRenderer.SetTexture(0, GetWaveformTexture());
             _runtimeRenderer.SetTexture(1, _audio?.SpectrumTexture ?? Texture2D.blackTexture);
         }
@@ -238,10 +243,13 @@ namespace Aetherin
             };
         }
 
-        private Vector2Int GetResolution()
+        private Vector2Int GetRequestedResolution(in ModulationContext context)
         {
-            RenderTexture texture = _stage?.OutputTexture;
-            return texture != null ? new Vector2Int(texture.width, texture.height) : new Vector2Int(Screen.width, Screen.height);
+            Vector2 size = _params.Size?.Evaluate(context) ?? Vector2.one;
+            float pixelsPerUnit = Mathf.Max(1f, _params.PixelPerUnit);
+            return new Vector2Int(
+                Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(size.x) * pixelsPerUnit)),
+                Mathf.Max(1, Mathf.RoundToInt(Mathf.Abs(size.y) * pixelsPerUnit)));
         }
 
         /// <summary>

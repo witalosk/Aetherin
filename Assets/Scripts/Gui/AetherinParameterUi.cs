@@ -23,6 +23,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<FloatModulator>(CreateModulatorElement);
             UICustom.RegisterElementCreationFunc<PaletteColorParameter>(CreatePaletteColorElement);
             UICustom.RegisterElementCreationFunc<StrokeTrimParams>(CreateStrokeTrimElement);
+            UICustom.RegisterElementCreationFunc<VertexNoiseParams>(CreateVertexNoiseElement);
             UICustom.RegisterElementCreationFunc<RepeaterParams>(CreateRepeaterElement);
             UICustom.RegisterElementCreationFunc<ShapeLayerParams>(CreateShapeLayerParamsElement);
             UICustom.RegisterElementCreationFunc<Primitive3DLayerParams>(CreatePrimitive3DLayerParamsElement);

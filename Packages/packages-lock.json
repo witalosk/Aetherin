@@ -294,11 +294,10 @@
       "hash": "fa01d988d41ec3f8ec9d0820e98e4598a90f8733"
     },
     "ga.fuquna.rosettaui": {
-      "version": "2.0.1",
+      "version": "file:RosettaUI",
       "depth": 0,
-      "source": "registry",
-      "dependencies": {},
-      "url": "https://registry.npmjs.com"
+      "source": "embedded",
+      "dependencies": {}
     },
     "io.github.hatayama.uloopmcp": {
       "version": "https://github.com/hatayama/unity-cli-loop.git?path=/Packages/src",

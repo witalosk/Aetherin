@@ -42,6 +42,7 @@ Shader "Aetherin/Primitive 3D Unlit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
+            #include "Includes/AetherinNoise.hlsl"
 
             struct Attributes
             {
@@ -82,6 +83,11 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float _GlassChromaticAberration;
                 float _GlassDistortion;
                 float _GlassDistortionScale;
+                float _VertexNoiseEnabled;
+                float _VertexNoiseType;
+                float4 _VertexNoiseParams;
+                float4 _VertexNoiseOffset;
+                float _VertexNoiseDirection;
                 half4 _PaletteColor0;
                 half4 _PaletteColor1;
                 half4 _PaletteColor2;
@@ -93,9 +99,20 @@ Shader "Aetherin/Primitive 3D Unlit"
             Varyings Vert(Attributes input)
             {
                 Varyings output;
-                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
-                output.positionCS = TransformObjectToHClip(shapePosition);
                 float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, input.normalOS));
+                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                if (_VertexNoiseEnabled > 0.5)
+                {
+                    float3 samplePosition = input.positionOS * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
+                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
+                        _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
+                    float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
+                        normalize(TransformWorldToObjectDir(worldAxis));
+                    shapePosition += direction * displacement;
+                }
+                output.positionCS = TransformObjectToHClip(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 output.uv = input.uv;
                 output.color = input.color;
@@ -155,6 +172,21 @@ Shader "Aetherin/Primitive 3D Unlit"
                 {
                     float t = saturate(input.uv.x * _UvParams.x + _UvParams.y);
                     color = lerp(_BaseColor, _ColorB, t);
+                }
+                else if (_UsePaletteRandom <= 0.5 && _ColorMode > 4.5)
+                {
+                    float2 rotatedUv = float2(
+                        dot(input.uv, _UvParams.zw),
+                        dot(input.uv, float2(-_UvParams.w, _UvParams.z)));
+                    float2 patternUv = rotatedUv * max(0.001, _UvParams.x) + _UvParams.y;
+                    float pattern = 0.0;
+                    if (_ColorMode < 5.5) // Check
+                        pattern = fmod(floor(patternUv.x) + floor(patternUv.y), 2.0);
+                    else if (_ColorMode < 6.5) // Dots
+                        pattern = step(length(frac(patternUv) - 0.5), 0.28);
+                    else // Diagonal Stripes
+                        pattern = step(0.5, frac(patternUv.x + patternUv.y));
+                    color = lerp(_BaseColor, _ColorB, pattern);
                 }
                 else if (_UsePaletteRandom <= 0.5 && _ColorMode > 1.5)
                 {
@@ -216,6 +248,7 @@ Shader "Aetherin/Primitive 3D Unlit"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
+            #include "Includes/AetherinNoise.hlsl"
 
             struct DepthNormalsAttributes
             {
@@ -234,14 +267,30 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4x4 _ShapeNormalMatrix;
                 float _MaterialMode;
                 float _Smoothness;
+                float _VertexNoiseEnabled;
+                float _VertexNoiseType;
+                float4 _VertexNoiseParams;
+                float4 _VertexNoiseOffset;
+                float _VertexNoiseDirection;
             CBUFFER_END
 
             DepthNormalsVaryings DepthNormalsVert(DepthNormalsAttributes input)
             {
                 DepthNormalsVaryings output;
-                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
-                output.positionCS = TransformObjectToHClip(shapePosition);
                 float3 shapeNormal = normalize(mul((float3x3)_ShapeNormalMatrix, input.normalOS));
+                float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
+                if (_VertexNoiseEnabled > 0.5)
+                {
+                    float3 samplePosition = input.positionOS * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
+                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
+                        _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
+                    float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
+                        normalize(TransformWorldToObjectDir(worldAxis));
+                    shapePosition += direction * displacement;
+                }
+                output.positionCS = TransformObjectToHClip(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
             }

@@ -40,6 +40,8 @@ namespace Aetherin
         public Vector3Parameter Scale = new(Vector3.one);
         public Vector3Parameter Anchor = new();
         public Vector2Parameter Size = new(new Vector2(2f, 2f));
+        public VertexNoiseParams VertexNoise = new();
+        [Range(1, 32)] public int VertexNoiseTessellation = 8;
 
         public IntParameter Points = new(5);
 

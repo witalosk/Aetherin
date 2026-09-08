@@ -29,6 +29,11 @@ namespace Aetherin
         private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
+        private static readonly int VertexNoiseEnabledId = Shader.PropertyToID("_VertexNoiseEnabled");
+        private static readonly int VertexNoiseTypeId = Shader.PropertyToID("_VertexNoiseType");
+        private static readonly int VertexNoiseParamsId = Shader.PropertyToID("_VertexNoiseParams");
+        private static readonly int VertexNoiseOffsetId = Shader.PropertyToID("_VertexNoiseOffset");
+        private static readonly int VertexNoiseDirectionId = Shader.PropertyToID("_VertexNoiseDirection");
 
         [SerializeField] private ShapeLayerParams _params = new();
         [SerializeField] private Shader _fillShader;
@@ -44,6 +49,10 @@ namespace Aetherin
         private float _evaluatedOpacity;
         private float _evaluatedMetallic;
         private float _evaluatedSmoothness;
+        private float _evaluatedVertexNoiseAmount;
+        private float _evaluatedVertexNoiseFrequency = 1f;
+        private float _evaluatedVertexNoiseSpeed = 1f;
+        private Vector3 _evaluatedVertexNoiseOffset;
         private Vector3 _evaluatedPosition;
         private Vector3 _evaluatedScale;
         private Vector3 _evaluatedAnchor;
@@ -166,6 +175,8 @@ namespace Aetherin
             _params.FillColor ??= new PaletteColorParameter();
             _params.Metallic ??= new FloatParameter(0f);
             _params.Smoothness ??= new FloatParameter(0.5f);
+            _params.VertexNoise ??= new VertexNoiseParams();
+            _params.VertexNoise.EnsureInitialized();
             _params.FillColor.EnsureInitialized();
             _params.StrokeColor ??= new PaletteColorParameter { Color = PaletteColorSource.AccentColor2 };
             _params.StrokeColor.EnsureInitialized();
@@ -177,6 +188,7 @@ namespace Aetherin
             _params.Size.BaseValue.y = Mathf.Max(0f, _params.Size.BaseValue.y);
             _params.InnerRadius.BaseValue = Mathf.Clamp01(_params.InnerRadius.BaseValue);
             _params.StrokeWidth.BaseValue = Mathf.Max(0f, _params.StrokeWidth.BaseValue);
+            _params.VertexNoiseTessellation = Mathf.Clamp(_params.VertexNoiseTessellation, 1, 32);
 
             base.OnValidate();
             if (!isActiveAndEnabled) return;
@@ -307,6 +319,14 @@ namespace Aetherin
             material.SetFloat(MaterialModeId, (float)_params.MaterialMode);
             material.SetFloat(MetallicId, _evaluatedMetallic);
             material.SetFloat(SmoothnessId, _evaluatedSmoothness);
+            bool enabled = _params.VertexNoise?.Enabled == true && _evaluatedVertexNoiseAmount > 0f;
+            material.SetFloat(VertexNoiseEnabledId, enabled ? 1f : 0f);
+            material.SetFloat(VertexNoiseTypeId, (float)(_params.VertexNoise?.Type ?? VertexNoiseType.Simplex));
+            material.SetVector(VertexNoiseParamsId, new Vector4(_evaluatedVertexNoiseAmount,
+                _evaluatedVertexNoiseFrequency, _evaluatedVertexNoiseSpeed, Time.time));
+            material.SetVector(VertexNoiseOffsetId, _evaluatedVertexNoiseOffset);
+            material.SetFloat(VertexNoiseDirectionId,
+                (float)(_params.VertexNoise?.Direction ?? VertexNoiseDisplacementDirection.Normal));
         }
 
         private void ApplyColor(Material material, in EvaluatedPaletteColor evaluated)
@@ -315,7 +335,7 @@ namespace Aetherin
             if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
                 colorA.a *= _evaluatedOpacity;
             material.SetColor(BaseColorId, colorA);
-            material.SetFloat(UseGradientId, evaluated.IsGradient ? 1f : 0f);
+            material.SetFloat(UseGradientId, (float)evaluated.PatternMode);
             material.SetFloat(UsePaletteRandomId, evaluated.IsPaletteRandom ? 1f : 0f);
 
             if (evaluated.IsPaletteRandom)
@@ -326,7 +346,8 @@ namespace Aetherin
                 return;
             }
 
-            if (!evaluated.IsGradient) return;
+            if (evaluated.PatternMode is not (PaletteColorMode.Gradient or PaletteColorMode.Check or
+                PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes)) return;
 
             Color colorB = evaluated.ColorB;
             if (_evaluatedRepeater.TransformMode != RepeaterTransformMode.FromSource)
@@ -370,6 +391,10 @@ namespace Aetherin
             _evaluatedOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(context) ?? 1f);
             _evaluatedMetallic = Mathf.Clamp01(_params.Metallic?.Evaluate(context) ?? 0f);
             _evaluatedSmoothness = Mathf.Clamp01(_params.Smoothness?.Evaluate(context) ?? 0.5f);
+            _evaluatedVertexNoiseAmount = Mathf.Max(0f, _params.VertexNoise?.Amount?.Evaluate(context) ?? 0f);
+            _evaluatedVertexNoiseFrequency = Mathf.Max(0.001f, _params.VertexNoise?.Frequency?.Evaluate(context) ?? 1f);
+            _evaluatedVertexNoiseSpeed = _params.VertexNoise?.Speed?.Evaluate(context) ?? 1f;
+            _evaluatedVertexNoiseOffset = _params.VertexNoise?.Offset?.Evaluate(context) ?? Vector3.zero;
 
             var palette = Application.isPlaying && _deckStateProvider != null
                 ? _deckStateProvider.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
@@ -390,6 +415,7 @@ namespace Aetherin
                 hash = hash * 31 + _evaluatedPoints;
                 hash = hash * 31 + _evaluatedInnerRadius.GetHashCode();
                 hash = hash * 31 + _params.EllipseSegments;
+                hash = hash * 31 + (_params.VertexNoise?.Enabled == true ? _params.VertexNoiseTessellation : 1);
                 hash = hash * 31 + _params.FillEnabled.GetHashCode();
                 hash = hash * 31 + _params.StrokeEnabled.GetHashCode();
                 hash = hash * 31 + _evaluatedStrokeWidth.GetHashCode();

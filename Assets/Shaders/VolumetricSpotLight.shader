@@ -17,6 +17,7 @@ Shader "Aetherin/Volumetric Spot Light"
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Includes/AetherinNoise.hlsl"
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; };
             CBUFFER_START(UnityPerMaterial)
@@ -31,7 +32,6 @@ Shader "Aetherin/Volumetric Spot Light"
                 output.positionCS = TransformWorldToHClip(output.positionWS);
                 return output;
             }
-            float Hash(float3 p) { return frac(sin(dot(p, float3(12.9898, 78.233, 37.719))) * 43758.5453); }
             half4 frag(Varyings input) : SV_Target
             {
                 float3 originOS = TransformWorldToObject(GetCameraPositionWS());
@@ -67,7 +67,11 @@ Shader "Aetherin/Volumetric Spot Light"
                     float radius = p.z;
                     if (p.z > 0 && p.z < 1 && dot(p.xy, p.xy) < radius * radius)
                     {
-                        float noise = lerp(1.0 - _NoiseAmount, 1.0, Hash(floor(p * 14.0) + _Time.y));
+                        // Sample in world space so the noise reads as smoke fixed
+                        // in the scene rather than a pattern attached to the cone.
+                        float3 noisePositionWS = TransformObjectToWorld(p);
+                        float fractalNoise = AN_FractalNoise(noisePositionWS * 0.1 + float3(0.0, 0.0, _Time.y * 0.1));
+                        float noise = lerp(1.0 - _NoiseAmount, 1.0, saturate(fractalNoise));
                         accumulated += noise * stepLength;
                     }
                 }

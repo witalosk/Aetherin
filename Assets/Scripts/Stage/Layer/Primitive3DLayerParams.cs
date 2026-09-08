@@ -10,6 +10,7 @@ namespace Aetherin
         Icosphere,
         Tetrahedron,
         Cylinder,
+        Plane,
     }
 
     public enum Primitive3DColorMode
@@ -19,6 +20,9 @@ namespace Aetherin
         ShadedLerp,
         ToonTwoTone,
         PaletteRandom,
+        Check,
+        Dots,
+        DiagonalStripes,
     }
 
     public enum Primitive3DRenderMode
@@ -59,6 +63,9 @@ namespace Aetherin
         [Range(0, 5)]
         public int IcosphereSubdivisions = 2;
 
+        [Min(1)] public int PlaneSegments = 32;
+        public VertexNoiseParams VertexNoise = new();
+
         public Primitive3DColorMode ColorMode;
         public PaletteColorSource ColorA = PaletteColorSource.AccentColor1;
         public PaletteColorSource ColorB = PaletteColorSource.AccentColor2;
@@ -90,6 +97,7 @@ namespace Aetherin
         [Tooltip("UVのU座標へ掛ける値")]
         public FloatParameter UvScale = new(1f);
         public FloatParameter UvOffset = new(0f);
+        public FloatParameter PatternAngle = new(45f);
 
         [Tooltip("Shadingで使う、面から光へ向かう方向")]
         public Vector3Parameter LightDirection = new(new Vector3(0.3f, 0.8f, -0.5f));

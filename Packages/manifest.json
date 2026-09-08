@@ -18,7 +18,7 @@
     "com.witalosk.unistats": "https://github.com/witalosk/UniStats.git?path=Packages/com.witalosk.unistats",
     "com.witalosk.unity-simple-container": "https://github.com/witalosk/UnitySimpleContainer.git?path=Packages/UnitySimpleContainer",
     "com.witalosk.unity_runtime_shader": "https://github.com/witalosk/UnityRuntimeShader.git?path=Packages/com.witalosk.unity_runtime_shader",
-    "ga.fuquna.rosettaui": "2.0.1",
+    "ga.fuquna.rosettaui": "file:Packages/RosettaUI",
     "io.github.hatayama.uloopmcp": "https://github.com/hatayama/unity-cli-loop.git?path=/Packages/src",
     "jp.keijiro.klak.hap": "1.0.0",
     "jp.keijiro.klak.spout": "2.0.6",
