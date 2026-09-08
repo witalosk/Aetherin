@@ -408,7 +408,7 @@ namespace Aetherin
             // kept a Lit primitive in the transparent queue, where SSR cannot reflect it.
             LayerMaterialUtility.ApplyBlendMode(_material,
                 glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
-            _meshRenderer.receiveShadows = lit;
+            _meshRenderer.receiveShadows = !glass;
             _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
             _material.SetFloat(GlassTintId, _evaluatedGlassTint);
             _material.SetFloat(GlassFresnelPowerId, _evaluatedGlassFresnelPower);

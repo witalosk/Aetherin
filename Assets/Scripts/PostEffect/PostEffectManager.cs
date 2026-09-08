@@ -50,6 +50,7 @@ namespace Aetherin
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
         private ICounter _counter;
+        private IDeckStateProvider _deckStateProvider;
         // 0はVolume、1以降はNextのDeckインデックス + 1。
         private int _selectedEditorItem;
         private int _editorRevision;
@@ -58,17 +59,24 @@ namespace Aetherin
         public void Construct(
             IAudioFeatureProvider audioFeatureProvider,
             IBeatManager beatManager,
-            ICounter counter)
+            ICounter counter,
+            IDeckStateProvider deckStateProvider)
         {
             _audioFeatureProvider = audioFeatureProvider;
             _beatManager = beatManager;
             _counter = counter;
+            _deckStateProvider = deckStateProvider;
         }
 
         private void Awake()
         {
             Shader shader = _shader != null ? _shader : Shader.Find("Hidden/Aetherin/PostEffectStack");
             if (shader != null) _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+        }
+
+        private void Start()
+        {
+            _deckStateProvider.NextPromoted += PromoteNextToCurrent;
         }
 
         public Texture ProcessCurrent(Texture source)
@@ -129,6 +137,8 @@ namespace Aetherin
 
         private void UpdateNextToggleButtons()
         {
+            if (_deckStateProvider.IsPreparingNext) return;
+
             DeckVolumeEffects effects = _params.NextVolume;
             effects.EnsureInitialized();
 
@@ -160,7 +170,7 @@ namespace Aetherin
         /// フェーダー到達時に、編集対象だったNextをCurrentへ昇格する。
         /// PreviousFrameBlendの履歴も一緒に移し、新しいNextは履歴なしで開始する。
         /// </summary>
-        public void PromoteNextToCurrent()
+        private void PromoteNextToCurrent()
         {
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
@@ -283,7 +293,13 @@ namespace Aetherin
             }
         }
 
-        private void OnDestroy() => Dispose();
+        private void OnDestroy()
+        {
+            if (_deckStateProvider != null)
+                _deckStateProvider.NextPromoted -= PromoteNextToCurrent;
+
+            Dispose();
+        }
 
         public Element AdditiveUi()
         {

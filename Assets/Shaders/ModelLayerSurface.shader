@@ -23,10 +23,12 @@ Shader "Aetherin/Model Layer Surface"
             #pragma vertex vert
             #pragma fragment frag
             #pragma multi_compile _ _MAIN_LIGHT_SHADOWS _MAIN_LIGHT_SHADOWS_CASCADE _MAIN_LIGHT_SHADOWS_SCREEN
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BLENDING
             #pragma multi_compile_fragment _ _REFLECTION_PROBE_BOX_PROJECTION
+            #pragma multi_compile _ _LIGHT_LAYERS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
@@ -67,7 +69,7 @@ Shader "Aetherin/Model Layer Surface"
                     color.rgb = lerp(refracted, refracted * color.rgb, _GlassTint) + _ColorB.rgb * fresnel;
                     return color;
                 }
-                if (_MaterialMode > 1.5)
+                if (_MaterialMode < 0.5 || _MaterialMode > 1.5)
                 {
                     InputData inputData = (InputData)0;
                     inputData.positionWS = i.positionWS; inputData.positionCS = i.positionCS;
@@ -75,12 +77,13 @@ Shader "Aetherin/Model Layer Surface"
                     inputData.shadowCoord = TransformWorldToShadowCoord(i.positionWS); inputData.vertexLighting = VertexLighting(i.positionWS, inputData.normalWS);
                     inputData.bakedGI = SampleSH(inputData.normalWS); inputData.normalizedScreenSpaceUV = GetNormalizedScreenSpaceUV(i.positionCS); inputData.shadowMask = half4(1, 1, 1, 1);
                     SurfaceData surfaceData = (SurfaceData)0;
-                    surfaceData.albedo = color.rgb; surfaceData.metallic = saturate(_Metallic); surfaceData.smoothness = saturate(_Smoothness);
+                    bool detailedLit = _MaterialMode > 1.5;
+                    surfaceData.albedo = color.rgb;
+                    surfaceData.metallic = detailedLit ? saturate(_Metallic) : 0;
+                    surfaceData.smoothness = detailedLit ? saturate(_Smoothness) : 0.2;
                     surfaceData.normalTS = half3(0, 0, 1); surfaceData.occlusion = 1; surfaceData.alpha = color.a;
                     return UniversalFragmentPBR(inputData, surfaceData);
                 }
-                float light = 0.35 + 0.65 * saturate(dot(normalize(i.normalWS), normalize(float3(0.3,0.8,-0.5))));
-                color.rgb *= light;
                 return color;
             }
             ENDHLSL

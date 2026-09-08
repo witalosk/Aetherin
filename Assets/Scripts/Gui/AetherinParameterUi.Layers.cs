@@ -74,6 +74,9 @@ namespace Aetherin
                     ("Style", UI.Column(
                         Param("Opacity", p.Opacity),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
+                        UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
+                        UI.DynamicElementIf(() => p.MaterialMode == ShapeLayerMaterialMode.Lit,
+                            () => UI.Row(Param("Metallic", p.Metallic), Param("Smoothness", p.Smoothness))),
                         UI.Toggle("Fill", () => p.FillEnabled, value => p.FillEnabled = value),
                         UI.DynamicElementIf(() => p.FillEnabled, () => Param("Fill Color", p.FillColor)),
                         UI.Toggle("Stroke", () => p.StrokeEnabled, value => p.StrokeEnabled = value),
@@ -172,10 +175,6 @@ namespace Aetherin
 
             return UI.Column(
                 UI.Tabs(
-                    ("Shader", UI.Column(
-                        UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
-                            .SetMinHeight(320f),
-                        UI.Label(() => p.CompileMessage).SetFlexGrow(1f))),
                     ("Transform", UI.Column(
                         UI.Toggle("Screen Space", () => p.ScreenSpace, value => p.ScreenSpace = value),
                         Param("Size", p.Size),
@@ -183,6 +182,10 @@ namespace Aetherin
                         Param("Rotation", p.Rotation),
                         Param("Scale", p.Scale),
                         Param("Anchor", p.Anchor))),
+                    ("Shader", UI.ScrollViewVertical(500f,
+                        UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)
+                            .SetMinHeight(320f),
+                        UI.Label(() => p.CompileMessage).SetFlexGrow(1f))),
                     ("Rendering", UI.Column(
                         Param("Opacity", p.Opacity),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value))),

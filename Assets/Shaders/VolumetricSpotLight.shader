@@ -8,12 +8,15 @@ Shader "Aetherin/Volumetric Spot Light"
         {
             Blend SrcAlpha One
             ZWrite Off
-            ZTest LEqual
+            // The cone's exit face is usually behind the opaque surface hit by
+            // the beam. Always run the fragment and clamp the march to depth.
+            ZTest Always
             Cull Front
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; };
             CBUFFER_START(UnityPerMaterial)
@@ -37,6 +40,23 @@ Shader "Aetherin/Volumetric Spot Light"
                 float lengthToExit = length(ray);
                 if (lengthToExit < 0.0001) discard;
                 ray /= lengthToExit;
+
+                float2 screenUV = GetNormalizedScreenSpaceUV(input.positionCS);
+                float rawDepth = SampleSceneDepth(screenUV);
+#if UNITY_REVERSED_Z
+                bool hasSceneDepth = rawDepth > 0.0001;
+#else
+                bool hasSceneDepth = rawDepth < 0.9999;
+#endif
+                if (hasSceneDepth)
+                {
+                    float3 sceneWS = ComputeWorldSpacePosition(screenUV, rawDepth, UNITY_MATRIX_I_VP);
+                    float3 sceneOS = TransformWorldToObject(sceneWS);
+                    float lengthToScene = dot(sceneOS - originOS, ray);
+                    lengthToExit = min(lengthToExit, max(0.0, lengthToScene));
+                }
+                if (lengthToExit < 0.0001) discard;
+
                 float accumulated = 0;
                 int steps = clamp(_Steps, 4, 64);
                 float stepLength = lengthToExit / steps;
