@@ -39,7 +39,9 @@ namespace Aetherin
         private static readonly int[] PaletteColorIds = CreatePaletteColorIds();
         private static readonly int VertexNoiseEnabledId = Shader.PropertyToID("_VertexNoiseEnabled");
         private static readonly int VertexNoiseTypeId = Shader.PropertyToID("_VertexNoiseType");
-        private static readonly int VertexNoiseParamsId = Shader.PropertyToID("_VertexNoiseParams");
+        private static readonly int VertexNoiseAmountId = Shader.PropertyToID("_VertexNoiseAmount");
+        private static readonly int VertexNoiseFrequencyId = Shader.PropertyToID("_VertexNoiseFrequency");
+        private static readonly int VertexNoiseSpeedId = Shader.PropertyToID("_VertexNoiseSpeed");
         private static readonly int VertexNoiseOffsetId = Shader.PropertyToID("_VertexNoiseOffset");
         private static readonly int VertexNoiseDirectionId = Shader.PropertyToID("_VertexNoiseDirection");
 
@@ -92,8 +94,8 @@ namespace Aetherin
         private float _evaluatedGlassDistortion = 0.003f;
         private float _evaluatedGlassDistortionScale = 12f;
         private float _evaluatedVertexNoiseAmount;
-        private float _evaluatedVertexNoiseFrequency = 1f;
-        private float _evaluatedVertexNoiseSpeed = 1f;
+        private Vector3 _evaluatedVertexNoiseFrequency = Vector3.one;
+        private Vector4 _evaluatedVertexNoiseSpeed = Vector4.one;
         private Vector3 _evaluatedVertexNoiseOffset;
         private EvaluatedRepeater _evaluatedRepeater;
         private Color _evaluatedColorA = Color.white;
@@ -377,8 +379,11 @@ namespace Aetherin
             _evaluatedGlassDistortionScale = Mathf.Max(0.01f,
                 _params.GlassDistortionScale?.Evaluate(context) ?? 12f);
             _evaluatedVertexNoiseAmount = Mathf.Max(0f, _params.VertexNoise?.Amount?.Evaluate(context) ?? 0f);
-            _evaluatedVertexNoiseFrequency = Mathf.Max(0.001f, _params.VertexNoise?.Frequency?.Evaluate(context) ?? 1f);
-            _evaluatedVertexNoiseSpeed = _params.VertexNoise?.Speed?.Evaluate(context) ?? 1f;
+            _evaluatedVertexNoiseFrequency = _params.VertexNoise?.Frequency?.Evaluate(context) ?? Vector3.one;
+            _evaluatedVertexNoiseFrequency.x = Mathf.Max(0.001f, _evaluatedVertexNoiseFrequency.x);
+            _evaluatedVertexNoiseFrequency.y = Mathf.Max(0.001f, _evaluatedVertexNoiseFrequency.y);
+            _evaluatedVertexNoiseFrequency.z = Mathf.Max(0.001f, _evaluatedVertexNoiseFrequency.z);
+            _evaluatedVertexNoiseSpeed = _params.VertexNoise?.Speed?.Evaluate(context) ?? Vector4.one;
             _evaluatedVertexNoiseOffset = _params.VertexNoise?.Offset?.Evaluate(context) ?? Vector3.zero;
             _evaluatedRepeater = EvaluatedRepeater.Evaluate(_params.Repeater, context, MaxRepeaterCopies);
 
@@ -494,8 +499,9 @@ namespace Aetherin
             bool enabled = _params.VertexNoise?.Enabled == true && _evaluatedVertexNoiseAmount > 0f;
             material.SetFloat(VertexNoiseEnabledId, enabled ? 1f : 0f);
             material.SetFloat(VertexNoiseTypeId, (float)(_params.VertexNoise?.Type ?? VertexNoiseType.Simplex));
-            material.SetVector(VertexNoiseParamsId, new Vector4(_evaluatedVertexNoiseAmount,
-                _evaluatedVertexNoiseFrequency, _evaluatedVertexNoiseSpeed, Time.time));
+            material.SetFloat(VertexNoiseAmountId, _evaluatedVertexNoiseAmount);
+            material.SetVector(VertexNoiseFrequencyId, _evaluatedVertexNoiseFrequency);
+            material.SetVector(VertexNoiseSpeedId, _evaluatedVertexNoiseSpeed);
             material.SetVector(VertexNoiseOffsetId, _evaluatedVertexNoiseOffset);
             material.SetFloat(VertexNoiseDirectionId,
                 (float)(_params.VertexNoise?.Direction ?? VertexNoiseDisplacementDirection.Normal));

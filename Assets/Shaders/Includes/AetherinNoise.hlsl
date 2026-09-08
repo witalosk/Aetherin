@@ -44,6 +44,17 @@ float AN_SimplexNoise(float3 v)
     return 42.0 * dot(m * m, float4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
 }
 
+// A 4D domain assembled from three skewed simplex projections.  Every input
+// component affects more than one projection, avoiding a simple 3D slide when
+// the W axis is animated.
+float AN_SimplexNoise(float4 p)
+{
+    return (AN_SimplexNoise(p.xyz + p.www * float3(0.1031, 0.11369, 0.13787)) +
+            AN_SimplexNoise(p.yzw + p.xxx * float3(0.1099, 0.1277, 0.1513)) +
+            AN_SimplexNoise(float3(p.x + p.z * 0.1732, p.y + p.w * 0.1919,
+                                   p.z + p.x * 0.2113))) / 3.0;
+}
+
 // Smooth 3D fractal Brownian motion (fBm) built from the simplex function above.
 // The normalization keeps the return value approximately in [-1, 1] regardless
 // of the number of octaves, which makes it safe to map directly to a density.
@@ -72,6 +83,12 @@ float AN_BlockNoise(float3 p)
     return frac(sin(dot(p, float3(127.1, 311.7, 74.7))) * 43758.5453123) * 2.0 - 1.0;
 }
 
+float AN_BlockNoise(float4 p)
+{
+    p = floor(p);
+    return frac(sin(dot(p, float4(127.1, 311.7, 74.7, 269.5))) * 43758.5453123) * 2.0 - 1.0;
+}
+
 float3 AN_CurlNoise(float3 p)
 {
     const float e = 0.08;
@@ -88,5 +105,14 @@ float AN_VertexNoise(float3 p, int type)
     if (type == 0) return AN_BlockNoise(p);
     if (type == 1) return AN_SimplexNoise(p);
     return dot(normalize(AN_CurlNoise(p) + 1e-5), normalize(float3(0.57735, 0.57735, 0.57735)));
+}
+
+float AN_VertexNoise(float4 p, int type)
+{
+    if (type == 0) return AN_BlockNoise(p);
+    if (type == 1) return AN_SimplexNoise(p);
+    float3 curl = AN_CurlNoise(float3(p.x + p.w * 0.1031, p.y + p.w * 0.11369,
+                                     p.z + p.w * 0.13787));
+    return dot(normalize(curl + 1e-5), normalize(float3(0.57735, 0.57735, 0.57735)));
 }
 #endif

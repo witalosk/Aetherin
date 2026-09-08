@@ -13,15 +13,15 @@ namespace Aetherin
         public VertexNoiseType Type = VertexNoiseType.Simplex;
         public VertexNoiseDisplacementDirection Direction;
         [Min(0f)] public FloatParameter Amount = new(0.1f);
-        [Min(0.001f)] public FloatParameter Frequency = new(1f);
-        public FloatParameter Speed = new(1f);
+        public Vector3Parameter Frequency = new(Vector3.one);
+        public Vector4Parameter Speed = new(Vector4.one);
         public Vector3Parameter Offset = new();
 
         public void EnsureInitialized()
         {
             Amount ??= new FloatParameter(0.1f);
-            Frequency ??= new FloatParameter(1f);
-            Speed ??= new FloatParameter(1f);
+            Frequency ??= new Vector3Parameter(Vector3.one);
+            Speed ??= new Vector4Parameter(Vector4.one);
             Offset ??= new Vector3Parameter();
         }
     }

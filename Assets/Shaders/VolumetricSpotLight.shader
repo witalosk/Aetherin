@@ -15,14 +15,20 @@ Shader "Aetherin/Volumetric Spot Light"
             HLSLPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS_VERTEX _ADDITIONAL_LIGHTS
+            #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Includes/AetherinNoise.hlsl"
             struct Attributes { float4 positionOS : POSITION; };
             struct Varyings { float4 positionCS : SV_POSITION; float3 positionWS : TEXCOORD0; };
             CBUFFER_START(UnityPerMaterial)
             float4 _VolumeColor;
             float _Density, _VolumeIntensity, _NoiseAmount;
+            float4 _VolumetricLightPositionWS;
+            float _VolumetricLightRange;
+            float _VolumetricShadowsEnabled;
             int _Steps;
             CBUFFER_END
             Varyings vert(Attributes input)
@@ -31,6 +37,33 @@ Shader "Aetherin/Volumetric Spot Light"
                 output.positionWS = TransformObjectToWorld(input.positionOS.xyz);
                 output.positionCS = TransformWorldToHClip(output.positionWS);
                 return output;
+            }
+            half SampleVolumetricShadow(float3 positionWS)
+            {
+#if (defined(_ADDITIONAL_LIGHTS) || defined(_ADDITIONAL_LIGHTS_VERTEX)) && defined(_ADDITIONAL_LIGHT_SHADOWS)
+                if (_VolumetricShadowsEnabled < 0.5) return 1.0;
+
+                float3 toThisLight = _VolumetricLightPositionWS.xyz - positionWS;
+                toThisLight *= rsqrt(max(dot(toThisLight, toThisLight), 1e-6));
+                uint lightCount = GetAdditionalLightsCount();
+                int matchingLightIndex = -1;
+
+                [loop] for (uint i = 0; i < lightCount; i++)
+                {
+                    Light candidate = GetAdditionalLight(i, positionWS);
+                    // Match this layer's additional light by its direction at the
+                    // sample point; the matching index owns the shadow map entry.
+                    if (dot(candidate.direction, toThisLight) > 0.9999)
+                    {
+                        matchingLightIndex = GetPerObjectLightIndex(i);
+                        break;
+                    }
+                }
+
+                if (matchingLightIndex >= 0)
+                    return AdditionalLightRealtimeShadow(matchingLightIndex, positionWS, toThisLight);
+#endif
+                return 1.0;
             }
             half4 frag(Varyings input) : SV_Target
             {
@@ -72,7 +105,9 @@ Shader "Aetherin/Volumetric Spot Light"
                         float3 noisePositionWS = TransformObjectToWorld(p);
                         float fractalNoise = AN_FractalNoise(noisePositionWS * 0.1 + float3(0.0, 0.0, _Time.y * 0.1));
                         float noise = lerp(1.0 - _NoiseAmount, 1.0, saturate(fractalNoise));
-                        accumulated += noise * stepLength;
+                        float distanceToLight = distance(noisePositionWS, _VolumetricLightPositionWS.xyz);
+                        float rangeFalloff = saturate(1.0 - distanceToLight / max(_VolumetricLightRange, 0.001));
+                        accumulated += noise * rangeFalloff * rangeFalloff * SampleVolumetricShadow(noisePositionWS) * stepLength;
                     }
                 }
                 float alpha = (1.0 - exp(-accumulated * _Density * 5.0)) * _VolumeColor.a;

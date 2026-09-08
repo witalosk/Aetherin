@@ -19,6 +19,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<IntParameter>(CreateIntParameterElement);
             UICustom.RegisterElementCreationFunc<Vector2Parameter>(CreateVector2ParameterElement);
             UICustom.RegisterElementCreationFunc<Vector3Parameter>(CreateVector3ParameterElement);
+            UICustom.RegisterElementCreationFunc<Vector4Parameter>(CreateVector4ParameterElement);
             UICustom.RegisterElementCreationFunc<FloatModulationStack>(CreateModulationStackElement);
             UICustom.RegisterElementCreationFunc<FloatModulator>(CreateModulatorElement);
             UICustom.RegisterElementCreationFunc<PaletteColorParameter>(CreatePaletteColorElement);

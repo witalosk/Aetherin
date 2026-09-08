@@ -63,6 +63,26 @@ namespace Aetherin
             );
         }
 
+        private static Element CreateVector4ParameterElement(LabelElement label, IBinder<Vector4Parameter> binder)
+        {
+            var parameter = binder.Get();
+            if (parameter == null) return UI.Row(label, UI.Label("-"));
+
+            return UI.Row(
+                UI.Field(label, () => parameter.BaseValue, value => parameter.BaseValue = value).SetFlexGrow(1f),
+                CreateAxisModulationLauncher(LabelText(label),
+                    () => parameter.ApplyXModulationToAllAxes,
+                    value => parameter.ApplyXModulationToAllAxes = value,
+                    new[]
+                    {
+                        ("X", parameter.XModulation),
+                        ("Y", parameter.YModulation),
+                        ("Z", parameter.ZModulation),
+                        ("W", parameter.WModulation),
+                    })
+            );
+        }
+
         #endregion
 
         #region Modulation

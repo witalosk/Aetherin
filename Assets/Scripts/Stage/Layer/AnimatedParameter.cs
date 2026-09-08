@@ -124,6 +124,39 @@ namespace Aetherin
     }
 
     [Serializable]
+    public sealed class Vector4Parameter : AnimatedParameter<Vector4>
+    {
+        [Tooltip("X ModulationをY/Z/Wにも適用します。有効時はY/Z/W Modulationを使用しません")]
+        public bool ApplyXModulationToAllAxes;
+
+        public FloatModulationStack XModulation = new();
+        public FloatModulationStack YModulation = new();
+        public FloatModulationStack ZModulation = new();
+        public FloatModulationStack WModulation = new();
+
+        public Vector4Parameter()
+        {
+        }
+
+        public Vector4Parameter(Vector4 baseValue) : base(baseValue)
+        {
+        }
+
+        public override Vector4 Evaluate(in ModulationContext context)
+        {
+            FloatModulationStack yModulation = ApplyXModulationToAllAxes ? XModulation : YModulation;
+            FloatModulationStack zModulation = ApplyXModulationToAllAxes ? XModulation : ZModulation;
+            FloatModulationStack wModulation = ApplyXModulationToAllAxes ? XModulation : WModulation;
+
+            return new Vector4(
+                XModulation?.Evaluate(BaseValue.x, context) ?? BaseValue.x,
+                yModulation?.Evaluate(BaseValue.y, context) ?? BaseValue.y,
+                zModulation?.Evaluate(BaseValue.z, context) ?? BaseValue.z,
+                wModulation?.Evaluate(BaseValue.w, context) ?? BaseValue.w);
+        }
+    }
+
+    [Serializable]
     public sealed class IntParameter : AnimatedParameter<int>
     {
         public FloatModulationStack Modulation = new();

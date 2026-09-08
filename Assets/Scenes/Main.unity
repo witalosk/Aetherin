@@ -286,6 +286,10 @@ MonoBehaviour:
     TargetFps: 60
     VSyncCOUnt: 0
     Resolution: {x: 3840, y: 2160}
+    TimeScaleCc:
+      _ccNumber: -1
+    TimeScaleMin: 0
+    TimeScaleMax: 2
 --- !u!4 &159083590
 Transform:
   m_ObjectHideFlags: 0

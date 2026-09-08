@@ -78,7 +78,9 @@ Shader "Aetherin/Shape Fill"
                 float _Smoothness;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
-                float4 _VertexNoiseParams;
+                float _VertexNoiseAmount;
+                float4 _VertexNoiseFrequency;
+                float4 _VertexNoiseSpeed;
                 float4 _VertexNoiseOffset;
                 float _VertexNoiseDirection;
             CBUFFER_END
@@ -90,9 +92,9 @@ Shader "Aetherin/Shape Fill"
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
                 if (_VertexNoiseEnabled > 0.5)
                 {
-                    float3 samplePosition = input.positionOS.xyz * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
-                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
-                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float4 samplePosition = float4(input.positionOS.xyz * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
+                        0.0) + _VertexNoiseSpeed * _Time.y;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
                     float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
@@ -219,7 +221,9 @@ Shader "Aetherin/Shape Fill"
                 float4x4 _ShapeNormalMatrix;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
-                float4 _VertexNoiseParams;
+                float _VertexNoiseAmount;
+                float4 _VertexNoiseFrequency;
+                float4 _VertexNoiseSpeed;
                 float4 _VertexNoiseOffset;
                 float _VertexNoiseDirection;
             CBUFFER_END
@@ -231,9 +235,9 @@ Shader "Aetherin/Shape Fill"
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
                 if (_VertexNoiseEnabled > 0.5)
                 {
-                    float3 samplePosition = input.positionOS.xyz * _VertexNoiseParams.y + _VertexNoiseOffset.xyz;
-                    samplePosition += _VertexNoiseParams.www * _VertexNoiseParams.z;
-                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseParams.x;
+                    float4 samplePosition = float4(input.positionOS.xyz * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
+                        0.0) + _VertexNoiseSpeed * _Time.y;
+                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
                     float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :

@@ -14,6 +14,9 @@ namespace Aetherin
         private static readonly int VolumeIntensityId = Shader.PropertyToID("_VolumeIntensity");
         private static readonly int NoiseAmountId = Shader.PropertyToID("_NoiseAmount");
         private static readonly int StepsId = Shader.PropertyToID("_Steps");
+        private static readonly int VolumetricLightPositionWsId = Shader.PropertyToID("_VolumetricLightPositionWS");
+        private static readonly int VolumetricLightRangeId = Shader.PropertyToID("_VolumetricLightRange");
+        private static readonly int VolumetricShadowsEnabledId = Shader.PropertyToID("_VolumetricShadowsEnabled");
 
         [SerializeField] private LightLayerParams _params = new();
         [SerializeField] private Shader _volumetricShader;
@@ -92,6 +95,9 @@ namespace Aetherin
                 _volumeMaterial.SetFloat(VolumeIntensityId, Mathf.Max(0f, _params.VolumetricIntensity.Evaluate(context)));
                 _volumeMaterial.SetFloat(NoiseAmountId, Mathf.Clamp01(_params.VolumetricNoise.Evaluate(context)));
                 _volumeMaterial.SetInt(StepsId, Mathf.Clamp(_params.VolumetricSteps, 4, 64));
+                _volumeMaterial.SetVector(VolumetricLightPositionWsId, transform.position);
+                _volumeMaterial.SetFloat(VolumetricLightRangeId, range);
+                _volumeMaterial.SetFloat(VolumetricShadowsEnabledId, _params.CastShadows ? 1f : 0f);
             }
             _meshRenderer.enabled = volume;
             ApplyLayerState();
