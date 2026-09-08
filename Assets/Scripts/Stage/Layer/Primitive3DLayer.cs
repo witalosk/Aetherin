@@ -44,6 +44,8 @@ namespace Aetherin
         private static readonly int VertexNoiseSpeedId = Shader.PropertyToID("_VertexNoiseSpeed");
         private static readonly int VertexNoiseOffsetId = Shader.PropertyToID("_VertexNoiseOffset");
         private static readonly int VertexNoiseDirectionId = Shader.PropertyToID("_VertexNoiseDirection");
+        private static readonly int ReflectionSourceId = Shader.PropertyToID("_ReflectionSource");
+        private static readonly int SolidReflectionColorId = Shader.PropertyToID("_SolidReflectionColor");
 
         [SerializeField] private Primitive3DLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -259,7 +261,7 @@ namespace Aetherin
             _meshRenderer.sharedMaterial = _material;
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
             _meshRenderer.receiveShadows = false;
-            _meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbes;
+            _meshRenderer.reflectionProbeUsage = ReflectionProbeUsage.BlendProbesAndSkybox;
         }
 
         private void EnsureWireResources()
@@ -434,6 +436,7 @@ namespace Aetherin
             LayerMaterialUtility.ApplyBlendMode(_material,
                 glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
             _meshRenderer.receiveShadows = !glass;
+            ApplyLitReflectionSource();
             _material.SetFloat(GlassRefractionId, _evaluatedGlassRefraction);
             _material.SetFloat(GlassTintId, _evaluatedGlassTint);
             _material.SetFloat(GlassFresnelPowerId, _evaluatedGlassFresnelPower);
@@ -459,6 +462,20 @@ namespace Aetherin
             _material.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
             ApplyWireAppearance(matrix);
             ApplyTransformedBounds(matrix);
+        }
+
+        private void ApplyLitReflectionSource()
+        {
+            if (_meshRenderer == null) return;
+            CameraStage cameraStage = _stage as CameraStage ?? GetComponentInParent<CameraStage>();
+            if (cameraStage != null)
+            {
+                cameraStage.ResolveLitReflection(_params.LitReflectionSource, out bool useSolidColor, out Color solidColor);
+                _material.SetFloat(ReflectionSourceId, useSolidColor ? 1f : 0f);
+                _material.SetColor(SolidReflectionColorId, solidColor);
+            }
+            else
+                _material.SetFloat(ReflectionSourceId, 0f);
         }
 
         private void ApplyWireAppearance(Matrix4x4 matrix)

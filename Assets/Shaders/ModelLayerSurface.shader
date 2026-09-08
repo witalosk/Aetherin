@@ -40,6 +40,8 @@ Shader "Aetherin/Model Layer Surface"
             float _MaterialMode, _Metallic, _Smoothness;
             float _GlassRefraction, _GlassTint, _GlassFresnelPower, _GlassFresnelIntensity;
             float _GlassChromaticAberration, _GlassDistortion, _GlassDistortionScale;
+            float _ReflectionSource;
+            half4 _SolidReflectionColor;
             CBUFFER_END
             Varyings vert(Attributes v)
             {
@@ -82,6 +84,18 @@ Shader "Aetherin/Model Layer Surface"
                     surfaceData.metallic = detailedLit ? saturate(_Metallic) : 0;
                     surfaceData.smoothness = detailedLit ? saturate(_Smoothness) : 0.2;
                     surfaceData.normalTS = half3(0, 0, 1); surfaceData.occlusion = 1; surfaceData.alpha = color.a;
+                    if (detailedLit && _ReflectionSource > 0.5)
+                    {
+                        // SampleSH is generated from the scene skybox. Replace that diffuse
+                        // environment term as well as the glossy cubemap reflection.
+                        inputData.bakedGI = _SolidReflectionColor.rgb;
+                        BRDFData brdfData;
+                        InitializeBRDFData(surfaceData, brdfData);
+                        half3 reflection = GlossyEnvironmentReflection(reflect(-inputData.viewDirectionWS, inputData.normalWS),
+                            inputData.positionWS, brdfData.perceptualRoughness, 1.0h, inputData.normalizedScreenSpaceUV);
+                        half fresnel = Pow4(1.0 - saturate(dot(inputData.normalWS, inputData.viewDirectionWS)));
+                        surfaceData.emission += EnvironmentBRDFSpecular(brdfData, fresnel) * (_SolidReflectionColor.rgb - reflection);
+                    }
                     return UniversalFragmentPBR(inputData, surfaceData);
                 }
                 return color;

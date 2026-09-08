@@ -34,7 +34,8 @@ namespace Aetherin
                         UI.DynamicElementIf(() => p.MaterialMode != ModelLayerMaterialMode.Glass,
                             () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
                         UI.DynamicElementOnStatusChanged(() => p.MaterialMode, mode => mode == ModelLayerMaterialMode.Lit
-                            ? UI.Column(Param("Metallic", p.Metallic), Param("Smoothness", p.Smoothness))
+                            ? UI.Column(Param("Metallic", p.Metallic), Param("Smoothness", p.Smoothness),
+                                UI.Field("Reflection Source", () => p.LitReflectionSource, value => p.LitReflectionSource = value))
                             : mode == ModelLayerMaterialMode.Glass
                                 ? UI.Column(Param("Refraction", p.GlassRefraction), Param("Tint", p.GlassTint),
                                     Param("Fresnel Power", p.GlassFresnelPower), Param("Fresnel Intensity", p.GlassFresnelIntensity),

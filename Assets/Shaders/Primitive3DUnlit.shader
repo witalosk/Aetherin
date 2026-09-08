@@ -83,6 +83,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float _GlassChromaticAberration;
                 float _GlassDistortion;
                 float _GlassDistortionScale;
+                float _ReflectionSource;
+                half4 _SolidReflectionColor;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
                 float _VertexNoiseAmount;
@@ -223,6 +225,18 @@ Shader "Aetherin/Primitive 3D Unlit"
                     surfaceData.alpha = color.a * input.color.a;
                     surfaceData.clearCoatMask = 0;
                     surfaceData.clearCoatSmoothness = 0;
+                    if (detailedLit && _ReflectionSource > 0.5)
+                    {
+                        // SampleSH is generated from the scene skybox. Replace that diffuse
+                        // environment term as well as the glossy cubemap reflection.
+                        inputData.bakedGI = _SolidReflectionColor.rgb;
+                        BRDFData brdfData;
+                        InitializeBRDFData(surfaceData, brdfData);
+                        half3 reflection = GlossyEnvironmentReflection(reflect(-inputData.viewDirectionWS, inputData.normalWS),
+                            inputData.positionWS, brdfData.perceptualRoughness, 1.0h, inputData.normalizedScreenSpaceUV);
+                        half fresnel = Pow4(1.0 - saturate(dot(inputData.normalWS, inputData.viewDirectionWS)));
+                        surfaceData.emission += EnvironmentBRDFSpecular(brdfData, fresnel) * (_SolidReflectionColor.rgb - reflection);
+                    }
                     return UniversalFragmentPBR(inputData, surfaceData);
                 }
 

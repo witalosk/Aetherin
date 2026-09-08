@@ -25,6 +25,7 @@ namespace Aetherin
         public string ModelKey;
         public ModelLayerRenderMode RenderMode;
         public ModelLayerMaterialMode MaterialMode;
+        public LitReflectionSource LitReflectionSource = LitReflectionSource.MatchBackground;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);

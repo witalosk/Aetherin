@@ -45,6 +45,7 @@ namespace Aetherin
         public Primitive3DType Primitive;
         public Primitive3DRenderMode RenderMode;
         public Primitive3DMaterialMode MaterialMode;
+        public LitReflectionSource LitReflectionSource = LitReflectionSource.MatchBackground;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);

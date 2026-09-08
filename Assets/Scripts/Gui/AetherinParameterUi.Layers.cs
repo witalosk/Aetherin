@@ -316,7 +316,8 @@ namespace Aetherin
         private static Element CreateLitMaterialElement(Primitive3DLayerParams p) => UI.Column(
             CreateStandardMaterialElement(p),
             Param("Metallic", p.Metallic),
-            Param("Smoothness", p.Smoothness));
+            Param("Smoothness", p.Smoothness),
+            UI.Field("Reflection Source", () => p.LitReflectionSource, value => p.LitReflectionSource = value));
 
         private static Element CreateVertexNoiseElement(LabelElement label, IBinder<VertexNoiseParams> binder)
         {

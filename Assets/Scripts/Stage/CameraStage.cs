@@ -15,6 +15,13 @@ namespace Aetherin
         SolidColor,
     }
 
+    public enum LitReflectionSource
+    {
+        [InspectorName("Always SkyBox")] AlwaysSkybox,
+        [InspectorName("Match Background")] MatchBackground,
+        [InspectorName("SolidColor Only")] SolidColor,
+    }
+
     /// <summary>
     /// カメラで撮ったシーンをそのまま出力するステージ
     /// カメラと被写体はこのオブジェクトの子に置く想定
@@ -61,6 +68,16 @@ namespace Aetherin
         {
             get => _backgroundColor;
             set => _backgroundColor = value;
+        }
+
+        /// <summary>Litシェーダーが使用する環境反射の種類とSolidColor値を返す。</summary>
+        public void ResolveLitReflection(LitReflectionSource source, out bool useSolidColor, out Color solidColor)
+        {
+            useSolidColor = source == LitReflectionSource.SolidColor ||
+                            source == LitReflectionSource.MatchBackground &&
+                            _backgroundMode == CameraStageBackgroundMode.SolidColor;
+            ColorPalette palette = _deckStateProvider?.GetState(Deck).Palette;
+            solidColor = PaletteColorParameter.Resolve(palette, _backgroundColor).linear;
         }
 
         [Inject]

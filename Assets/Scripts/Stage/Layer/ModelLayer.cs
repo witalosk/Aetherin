@@ -27,6 +27,8 @@ namespace Aetherin
         private static readonly int GlassChromaticAberrationId = Shader.PropertyToID("_GlassChromaticAberration");
         private static readonly int GlassDistortionId = Shader.PropertyToID("_GlassDistortion");
         private static readonly int GlassDistortionScaleId = Shader.PropertyToID("_GlassDistortionScale");
+        private static readonly int ReflectionSourceId = Shader.PropertyToID("_ReflectionSource");
+        private static readonly int SolidReflectionColorId = Shader.PropertyToID("_SolidReflectionColor");
 
         [SerializeField] private ModelLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -152,7 +154,7 @@ namespace Aetherin
                 _surfaceRenderers.Add(renderer);
                 var material = new Material(_surfaceShader) { name = "Model Layer Surface (Runtime)" };
                 renderer.sharedMaterials = BuildMaterialArray(renderer.sharedMaterials.Length, material);
-                renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbes;
+                ApplyLitReflectionSource(renderer);
                 _materials.Add(material);
                 CreateWireRenderer(renderer);
             }
@@ -330,9 +332,26 @@ namespace Aetherin
                     material.SetFloat(GlassDistortionScaleId, Mathf.Max(0.01f, _params.GlassDistortionScale.Evaluate(context)));
                     LayerMaterialUtility.ApplyBlendMode(material, glass ? LayerBlendMode.Transparent : lit ? LayerBlendMode.Opaque : _params.BlendMode);
                     renderers[i].receiveShadows = !glass;
+                    ApplyLitReflectionSource(renderers[i]);
                 }
                 else LayerMaterialUtility.ApplyBlendMode(material, _params.MaterialMode == ModelLayerMaterialMode.Glass ? LayerBlendMode.Transparent : _params.BlendMode);
             }
+        }
+
+        private void ApplyLitReflectionSource(Renderer renderer)
+        {
+            if (renderer == null) return;
+            renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.BlendProbesAndSkybox;
+            if (_cameraStage == null) _cameraStage = GetComponentInParent<CameraStage>();
+            if (_cameraStage != null)
+            {
+                _cameraStage.ResolveLitReflection(_params.LitReflectionSource, out bool useSolidColor, out Color solidColor);
+                Material material = renderer.sharedMaterial;
+                material.SetFloat(ReflectionSourceId, useSolidColor ? 1f : 0f);
+                material.SetColor(SolidReflectionColorId, solidColor);
+            }
+            else
+                renderer.sharedMaterial.SetFloat(ReflectionSourceId, 0f);
         }
 
 
