@@ -180,6 +180,17 @@ namespace Aetherin
                                 .SetFlexGrow(1f)
                         ));
 
+                case FloatModulationSource.ElapsedTime:
+                    return UI.Column(
+                        UI.Field("Curve", () => modulator.ElapsedTimeCurve,
+                            value => modulator.ElapsedTimeCurve = value),
+                        UI.DynamicElementIf(
+                            () => modulator.ElapsedTimeCurve != ElapsedTimeCurve.Linear,
+                            () => UI.Field(
+                                modulator.ElapsedTimeCurve == ElapsedTimeCurve.Power ? "Exponent" : "Log Base",
+                                () => modulator.ElapsedTimeCurveValue,
+                                value => modulator.ElapsedTimeCurveValue = Math.Max(0.001f, value))));
+
                 case FloatModulationSource.Beat:
                 case FloatModulationSource.Beat2And4:
                 case FloatModulationSource.Bar:

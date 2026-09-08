@@ -63,7 +63,7 @@ namespace Aetherin
         private void EvaluateTransform()
         {
             bool runtime = Application.isPlaying;
-            var context = new ModulationContext(runtime ? Time.timeAsDouble : 0d,
+            var context = CreateModulationContext(runtime ? Time.timeAsDouble : 0d,
                 runtime ? _audio : null, runtime ? _beat : null,
                 runtime && (_stage == null || _stage.Deck == StageDeck.Next));
             Vector3 position = _params.Position.Evaluate(context);

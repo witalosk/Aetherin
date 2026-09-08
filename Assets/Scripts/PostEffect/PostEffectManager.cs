@@ -192,6 +192,8 @@ namespace Aetherin
 
             _current.Dispose();
             _current = _next;
+            // Deck切り替え後は、Current側のElapsed Timeを切り替え時から数え直す。
+            _current.Activations.Clear();
             _next = new StackRuntime();
         }
 
@@ -208,11 +210,23 @@ namespace Aetherin
 
             foreach (var deck in stack.Decks)
             {
-                if (deck == null || !deck.Enabled) continue;
+                if (deck == null) continue;
                 deck.EnsureInitialized();
+                bool isOutputPadDeck = deck.ControlMode == PostEffectControlMode.OutputPad;
+                bool deckIsActive = deck.Enabled && (!outputOnly
+                    ? !isOutputPadDeck || (context.AllowMidi && deck.OutputPad?.IsNoteOn == true)
+                    : isOutputPadDeck && deck.OutputPad?.IsNoteOn == true);
+                ModulationContext deckContext = context.WithElapsedTime(
+                    runtime.Activations.Evaluate(deck, deckIsActive, context.Time));
+                if (!deckIsActive)
+                {
+                    if (deck.Modules != null)
+                        foreach (PostEffectModule module in deck.Modules)
+                            if (module != null) runtime.Activations.Evaluate(module, false, context.Time);
+                    continue;
+                }
                 if (deck.Modules == null) continue;
 
-                bool isOutputPadDeck = deck.ControlMode == PostEffectControlMode.OutputPad;
                 if (outputOnly)
                 {
                     if (!isOutputPadDeck || deck.OutputPad?.IsNoteOn != true) continue;
@@ -223,7 +237,7 @@ namespace Aetherin
                     continue;
                 }
 
-                float deckStrength = Mathf.Clamp01(deck.Strength?.Evaluate(context) ?? 1f);
+                float deckStrength = Mathf.Clamp01(deck.Strength?.Evaluate(deckContext) ?? 1f);
                 if (!outputOnly)
                 {
                     deckStrength *= context.AllowMidi
@@ -234,9 +248,12 @@ namespace Aetherin
 
                 foreach (var module in deck.Modules)
                 {
-                    if (module == null || !module.Enabled) continue;
+                    if (module == null) continue;
+                    ModulationContext moduleContext = deckContext.WithElapsedTime(
+                        runtime.Activations.Evaluate(module, module.Enabled && deckIsActive, context.Time));
+                    if (!module.Enabled) continue;
                     module.EnsureInitialized();
-                    float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(context) ?? 1f);
+                    float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(moduleContext) ?? 1f);
                     if (strength <= 0f) continue;
 
                     RenderTexture target = runtime.NextTarget(input);
@@ -244,19 +261,19 @@ namespace Aetherin
                     _material.SetTexture(HistoryTexId, runtime.HistoryValid ? runtime.History : input);
                     _material.SetInt(EffectTypeId, (int)module.Type);
                     _material.SetFloat(StrengthId, strength);
-                    _material.SetFloat(AmountId, module.Amount?.Evaluate(context) ?? 0f);
-                    _material.SetFloat(ScaleId, module.Scale?.Evaluate(context) ?? 1f);
-                    _material.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
-                    _material.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 0f);
-                    _material.SetFloat(TimeValueId, (float)context.Time);
-                    _material.SetFloat(HueId, module.Hue?.Evaluate(context) ?? 0f);
-                    _material.SetFloat(SaturationId, module.Saturation?.Evaluate(context) ?? 1f);
-                    _material.SetFloat(ValueId, module.Value?.Evaluate(context) ?? 1f);
-                    _material.SetFloat(BlackLevelId, module.BlackLevel?.Evaluate(context) ?? 0f);
-                    _material.SetFloat(WhiteLevelId, module.WhiteLevel?.Evaluate(context) ?? 1f);
-                    _material.SetFloat(GammaId, module.Gamma?.Evaluate(context) ?? 1f);
+                    _material.SetFloat(AmountId, module.Amount?.Evaluate(moduleContext) ?? 0f);
+                    _material.SetFloat(ScaleId, module.Scale?.Evaluate(moduleContext) ?? 1f);
+                    _material.SetFloat(SpeedId, module.Speed?.Evaluate(moduleContext) ?? 1f);
+                    _material.SetFloat(SecondaryId, module.Secondary?.Evaluate(moduleContext) ?? 0f);
+                    _material.SetFloat(TimeValueId, (float)moduleContext.ElapsedTime);
+                    _material.SetFloat(HueId, module.Hue?.Evaluate(moduleContext) ?? 0f);
+                    _material.SetFloat(SaturationId, module.Saturation?.Evaluate(moduleContext) ?? 1f);
+                    _material.SetFloat(ValueId, module.Value?.Evaluate(moduleContext) ?? 1f);
+                    _material.SetFloat(BlackLevelId, module.BlackLevel?.Evaluate(moduleContext) ?? 0f);
+                    _material.SetFloat(WhiteLevelId, module.WhiteLevel?.Evaluate(moduleContext) ?? 1f);
+                    _material.SetFloat(GammaId, module.Gamma?.Evaluate(moduleContext) ?? 1f);
                     _material.SetInt(ShutterModeId, (int)module.ShutterMode);
-                    _material.SetFloat(HandDrawnFrameRateId, module.HandDrawnFrameRate?.Evaluate(context) ?? 8f);
+                    _material.SetFloat(HandDrawnFrameRateId, module.HandDrawnFrameRate?.Evaluate(moduleContext) ?? 8f);
                     Graphics.Blit(input, target, _material);
                     input = target;
                     wroteAny = true;
@@ -578,6 +595,7 @@ namespace Aetherin
 
         private sealed class StackRuntime : IDisposable
         {
+            public readonly ActivationTracker Activations = new();
             public RenderTexture History { get; private set; }
             public bool HistoryValid { get; set; }
             private RenderTexture _ping;
@@ -603,6 +621,7 @@ namespace Aetherin
                 _pong = null;
                 History = null;
                 HistoryValid = false;
+                Activations.Clear();
             }
 
             private static RenderTexture Create(int width, int height, string name)
@@ -623,6 +642,35 @@ namespace Aetherin
                 texture.Release();
                 if (Application.isPlaying) UnityEngine.Object.Destroy(texture);
                 else UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+
+        private sealed class ActivationTracker
+        {
+            private readonly Dictionary<object, Entry> _entries = new();
+
+            public double Evaluate(object key, bool active, double time)
+            {
+                if (!_entries.TryGetValue(key, out Entry entry))
+                {
+                    entry = new Entry { Active = active, StartTime = time };
+                    _entries.Add(key, entry);
+                }
+                else if (active && !entry.Active)
+                {
+                    entry.StartTime = time;
+                }
+
+                entry.Active = active;
+                return active ? Math.Max(0d, time - entry.StartTime) : 0d;
+            }
+
+            public void Clear() => _entries.Clear();
+
+            private sealed class Entry
+            {
+                public bool Active;
+                public double StartTime;
             }
         }
 

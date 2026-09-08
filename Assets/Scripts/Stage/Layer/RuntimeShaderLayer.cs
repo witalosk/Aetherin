@@ -71,7 +71,7 @@ namespace Aetherin
             EnsureResources();
             if (_material == null || _runtimeRenderer == null) return;
 
-            var context = new ModulationContext(
+            var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 Application.isPlaying ? _audio : null,
                 Application.isPlaying ? _beat : null,
@@ -98,7 +98,7 @@ namespace Aetherin
             base.LateUpdate();
             if (!_params.ScreenSpace) return;
 
-            var context = new ModulationContext(
+            var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 Application.isPlaying ? _audio : null,
                 Application.isPlaying ? _beat : null,

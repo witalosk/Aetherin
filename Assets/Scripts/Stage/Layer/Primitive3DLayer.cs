@@ -324,7 +324,7 @@ namespace Aetherin
 
         private void EvaluateParameters(bool runtime)
         {
-            var context = new ModulationContext(
+            var context = CreateModulationContext(
                 runtime ? Time.timeAsDouble : 0d,
                 runtime ? _audioFeatureProvider : null,
                 runtime ? _beatManager : null,

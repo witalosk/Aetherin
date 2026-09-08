@@ -271,7 +271,7 @@ namespace Aetherin
 
         private void EvaluateAndApply()
         {
-            var context = new ModulationContext(Time.unscaledTimeAsDouble,
+            var context = CreateModulationContext(Time.unscaledTimeAsDouble,
                 Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null, Application.isPlaying);
             float layerOpacity = Mathf.Clamp01(_params.Opacity.Evaluate(context));
             Vector3 position = _params.Position.Evaluate(context);

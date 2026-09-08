@@ -28,6 +28,13 @@ namespace Aetherin
         Override,
     }
 
+    public enum ElapsedTimeCurve
+    {
+        Linear,
+        Power,
+        Logarithm,
+    }
+
     public enum LfoWaveform
     {
         Sine,
@@ -71,6 +78,8 @@ namespace Aetherin
     public readonly struct ModulationContext
     {
         public readonly double Time;
+        /// <summary>Owner activation (layer/effect) からの経過秒数。</summary>
+        public readonly double ElapsedTime;
         public readonly IAudioFeatureProvider Audio;
         public readonly IBeatManager Beat;
         public readonly ICounter Counter;
@@ -83,9 +92,11 @@ namespace Aetherin
             IBeatManager beat,
             bool allowMidi,
             float animationPhaseOffset = 0f,
-            ICounter counter = null)
+            ICounter counter = null,
+            double? elapsedTime = null)
         {
             Time = time;
+            ElapsedTime = elapsedTime ?? time;
             Audio = audio;
             Beat = beat;
             Counter = counter;
@@ -94,7 +105,10 @@ namespace Aetherin
         }
 
         public ModulationContext WithAnimationPhaseOffset(float offset) =>
-            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter);
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter, ElapsedTime);
+
+        public ModulationContext WithElapsedTime(double elapsedTime) =>
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, elapsedTime);
     }
 
     [Serializable]
@@ -118,6 +132,11 @@ namespace Aetherin
 
         public LfoWaveform LfoWaveform;
         public bool LfoUnipolar;
+
+        [Tooltip("Elapsed Timeへ適用するカーブ")]
+        public ElapsedTimeCurve ElapsedTimeCurve;
+        [Tooltip("Power は指数、Logarithm は底。Logarithm は log(1 + t) を使用します")]
+        [Min(0.001f)] public float ElapsedTimeCurveValue = 2f;
 
         [Tooltip("Beat / Barはパルスの減衰、Counterは値のカーブを調整します。1で線形です")]
         [Min(0.01f)]
@@ -169,7 +188,7 @@ namespace Aetherin
                 FloatModulationSource.Beat2And4 => EvaluateBeat2And4Pulse(
                     context.Beat, context.AnimationPhaseOffset),
                 FloatModulationSource.Bar => EvaluateBeatPulse(context.Beat, true, context.AnimationPhaseOffset),
-                FloatModulationSource.ElapsedTime => (float)context.Time + context.AnimationPhaseOffset,
+                FloatModulationSource.ElapsedTime => EvaluateElapsedTime(context),
                 FloatModulationSource.Kick => context.Audio?.Kick ?? 0f,
                 FloatModulationSource.SnareClap => context.Audio?.SnareClap ?? 0f,
                 FloatModulationSource.InputVolume => context.Audio?.InputVolume ?? 0f,
@@ -181,6 +200,17 @@ namespace Aetherin
             };
 
             return Offset + source * Amount;
+        }
+
+        private float EvaluateElapsedTime(in ModulationContext context)
+        {
+            float time = Mathf.Max(0f, (float)context.ElapsedTime + context.AnimationPhaseOffset);
+            return ElapsedTimeCurve switch
+            {
+                ElapsedTimeCurve.Power => Mathf.Pow(time, Mathf.Max(0.001f, ElapsedTimeCurveValue)),
+                ElapsedTimeCurve.Logarithm => Mathf.Log(1f + time, Mathf.Max(1.001f, ElapsedTimeCurveValue)),
+                _ => time,
+            };
         }
 
         public void ResetAccumulator()

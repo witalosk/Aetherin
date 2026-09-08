@@ -78,6 +78,8 @@ namespace Aetherin
     /// </summary>
     public abstract class StageLayer : MonoBehaviour, IStageLayer, ISaveTarget
     {
+        private bool _elapsedTimeActive;
+        private double _elapsedTimeStart;
         public abstract IParams Params { get; }
         public bool Visible
         {
@@ -142,6 +144,33 @@ namespace Aetherin
         // GroupLayer uses this to propagate a visibility change immediately to
         // descendants, including renderer-less GPU/VFX layers.
         internal void RefreshLayerState() => ApplyLayerState();
+
+        /// <summary>
+        /// レイヤーが表示状態になった時点からの時間を持つContextを作る。
+        /// 非表示中は停止し、再表示でElapsed Timeが0へ戻る。
+        /// </summary>
+        protected ModulationContext CreateModulationContext(
+            double time, IAudioFeatureProvider audio, IBeatManager beat, bool allowMidi)
+        {
+            bool active = IsEffectivelyVisible();
+            if (active && (!_elapsedTimeActive || time < _elapsedTimeStart)) _elapsedTimeStart = time;
+            _elapsedTimeActive = active;
+            return new ModulationContext(time, audio, beat, allowMidi,
+                elapsedTime: active ? Math.Max(0d, time - _elapsedTimeStart) : 0d);
+        }
+
+        private bool IsEffectivelyVisible()
+        {
+            if (LayerParams == null || !LayerParams.Visible) return false;
+            Transform ancestor = transform.parent;
+            while (ancestor != null)
+            {
+                var group = ancestor.GetComponent<GroupLayer>();
+                if (group != null && !group.Visible) return false;
+                ancestor = ancestor.parent;
+            }
+            return true;
+        }
 
         protected virtual void ApplyCustomLayerState(bool visible, int order) { }
     }

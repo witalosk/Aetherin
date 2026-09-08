@@ -95,7 +95,7 @@ namespace Aetherin
             EnsureFont();
             if (_fontAsset == null || _text == null) return;
 
-            var context = new ModulationContext(
+            var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 _audio, _beat, Application.isPlaying);
             EvaluateLayout(context);
@@ -109,7 +109,7 @@ namespace Aetherin
             base.LateUpdate();
             if (!_params.ScreenSpace) return;
 
-            var context = new ModulationContext(
+            var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 _audio, _beat, Application.isPlaying);
             ApplyTransform(context);
