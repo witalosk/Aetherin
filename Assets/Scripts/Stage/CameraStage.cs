@@ -78,7 +78,7 @@ namespace Aetherin
 
         /// <summary>
         /// Current / Nextごとに描画LayerとCameraのcullingMaskを分け、
-        /// Color・Depth・DepthNormals（SSR入力）が別デッキを参照しないようにする。
+        /// Color・Depth・DepthNormals（SSR入力）と照明・影が別デッキを参照しないようにする。
         /// Stage生成・昇格時だけ呼ばれ、毎フレームの階層走査は行わない。
         /// </summary>
         internal void ConfigureDeckRenderingIsolation()
@@ -107,9 +107,22 @@ namespace Aetherin
         private int GetDeckRenderingLayer() => LayerMask.NameToLayer(
             Deck == StageDeck.Current ? CurrentRenderingLayerName : NextRenderingLayerName);
 
-        private static void SetLayerRecursively(Transform root, int layer)
+        private void SetLayerRecursively(Transform root, int layer)
         {
             root.gameObject.layer = layer;
+            // URP lighting uses Rendering Layers independently of Camera.cullingMask.
+            // Reserve bits 1/2 for the decks; bit 0 remains for non-stage objects.
+            uint lightingMask = Deck == StageDeck.Current ? 1u << 1 : 1u << 2;
+            foreach (Renderer renderer in root.GetComponents<Renderer>())
+                renderer.renderingLayerMask = lightingMask;
+            if (root.TryGetComponent(out Light light))
+            {
+                light.cullingMask = 1 << layer;
+                UniversalAdditionalLightData data = light.GetUniversalAdditionalLightData();
+                data.renderingLayers = lightingMask;
+                data.customShadowLayers = false;
+                data.shadowRenderingLayers = lightingMask;
+            }
             for (int i = 0; i < root.childCount; i++) SetLayerRecursively(root.GetChild(i), layer);
         }
 
@@ -200,6 +213,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<ShapeLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -214,6 +228,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<Primitive3DLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -298,6 +313,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<ModelLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -312,6 +328,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<SpriteSheetLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -327,6 +344,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<LightLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -339,6 +357,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<GpuParticleLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -353,6 +372,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<TextLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -367,6 +387,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<RuntimeShaderLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
@@ -379,6 +400,7 @@ namespace Aetherin
             var layer = layerObject.AddComponent<GroupLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
