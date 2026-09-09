@@ -4,6 +4,7 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
+using UnityEngine.Serialization;
 using UnityEngine.VFX;
 using UnitySimpleContainer;
 
@@ -52,6 +53,8 @@ namespace Aetherin
 
         [SerializeField] private Camera _camera;
         [SerializeField] private ModelLayerLibrary _modelLibrary;
+        [FormerlySerializedAs("_spriteSheetLibrary")]
+        [SerializeField] private TextureLibrary _textureLibrary;
         [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
         [SerializeField] private FontAssetLibrary _fontAssetLibrary;
         [SerializeField] private CameraStageBackgroundMode _backgroundMode;
@@ -227,6 +230,24 @@ namespace Aetherin
             return _modelLibrary?.GetKeys() ?? Array.Empty<string>();
         }
 
+        public Texture2D ResolveSpriteSheet(string key)
+        {
+            EnsureTextureLibrary();
+            return _textureLibrary?.Resolve(key);
+        }
+
+        public IReadOnlyList<string> GetSpriteSheetKeys()
+        {
+            EnsureTextureLibrary();
+            return _textureLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private void EnsureTextureLibrary()
+        {
+            if (_textureLibrary == null)
+                _textureLibrary = FindFirstObjectByType<TextureLibrary>(FindObjectsInactive.Include);
+        }
+
         private void EnsureModelLibrary()
         {
             if (_modelLibrary == null)
@@ -275,6 +296,20 @@ namespace Aetherin
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
             ApplyDeckRenderingLayer(layerObject);
             var layer = layerObject.AddComponent<ModelLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            RefreshLayers();
+            return layer;
+        }
+
+        public SpriteSheetLayer AddSpriteSheetLayer(Transform parent = null)
+        {
+            var layerObject = new GameObject("Sprite Sheet Layer");
+            layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<SpriteSheetLayer>();
             layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
             RefreshLayers();
@@ -441,7 +476,7 @@ namespace Aetherin
         {
             Type = layer switch
             {
-                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", LightLayer => "light",
+                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", SpriteSheetLayer => "sprite-sheet", LightLayer => "light",
                 GpuParticleLayer => "gpu-particle", TextLayer => "text",
                 RuntimeShaderLayer => "runtime-shader", GroupLayer => "group", _ => string.Empty,
             },
@@ -470,7 +505,7 @@ namespace Aetherin
             StageLayer layer = savedLayer?.Type switch
             {
                 "shape" => AddShapeLayer(parent), "primitive3d" => AddPrimitive3DLayer(parent),
-                "model" => AddModelLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
+                "model" => AddModelLayer(parent), "sprite-sheet" => AddSpriteSheetLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
                 "text" => AddTextLayer(parent), "runtime-shader" => AddRuntimeShaderLayer(parent),
                 "group" => AddGroupLayer(parent), _ => null,
             };
@@ -486,6 +521,7 @@ namespace Aetherin
                     ShapeLayer => "Shape Layer",
                     Primitive3DLayer => "Primitive 3D Layer",
                     ModelLayer => "Model Layer",
+                    SpriteSheetLayer => "Sprite Sheet Layer",
                     LightLayer => "Light Layer",
                     GpuParticleLayer => "GPU Particle Layer",
                     TextLayer => "Text Layer",

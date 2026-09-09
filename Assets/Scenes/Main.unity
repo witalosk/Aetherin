@@ -1059,6 +1059,7 @@ MonoBehaviour:
   _tex: {fileID: 0}
   _camera: {fileID: 174343825}
   _modelLibrary: {fileID: 1994971893}
+  _textureLibrary: {fileID: 0}
   _vfxGraphLibrary: {fileID: 0}
   _fontAssetLibrary: {fileID: 0}
   _backgroundMode: 0
@@ -1127,6 +1128,53 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: c93b7f1dfa28b8a418506fa1b2e073a8, type: 3}
+--- !u!1 &910745196
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 910745197}
+  - component: {fileID: 910745198}
+  m_Layer: 0
+  m_Name: TextureLibrarly
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &910745197
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910745196}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1242.8088, y: 7.03905, z: -182.79358}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384360350}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &910745198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910745196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a035bcfad2874c845a1fbe91bdf7b7d2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.TextureLibrary
+  _textures:
+  - Key: girl_sprite
+    Texture: {fileID: 2800000, guid: 860376efed7c0994dad1d3d4eea556c2, type: 3}
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1343,6 +1391,7 @@ Transform:
   m_Children:
   - {fileID: 1994971894}
   - {fileID: 2093487958}
+  - {fileID: 910745197}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1404546250
@@ -1975,7 +2024,7 @@ MonoBehaviour:
   - Key: walking-person
     Model: {fileID: 2869347680299580818, guid: e8abb4a9a02c22c46bab317756cac17e, type: 3}
   - Key: rose
-    Model: {fileID: 1957659748175502907, guid: ab399a1a1b6989341b26e745c6d386bd, type: 3}
+    Model: {fileID: 919132149155446097, guid: 682173a6c8bbd704a83b665546887040, type: 3}
 --- !u!4 &1994971894
 Transform:
   m_ObjectHideFlags: 0
