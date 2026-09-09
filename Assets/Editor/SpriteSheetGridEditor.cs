@@ -8,8 +8,8 @@ namespace Aetherin.Editor
     public class SpriteSheetGridEditor : EditorWindow
     {
         private Texture2D targetTexture;
-        private int columns = 4; // 横方向（アニメーションのフレーム数）
-        private int rows = 4; // 縦方向（アニメーションの種類）
+        private int columns = 8; // 横方向（アニメーションのフレーム数）
+        private int rows = 8; // 縦方向（アニメーションの種類）
 
         // 単一マスの操作用
         private int swapIndexA = 0, swapIndexB = 1;
