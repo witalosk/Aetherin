@@ -25,6 +25,13 @@ namespace Aetherin
         DiagonalStripes,
     }
 
+    /// <summary>色をパレットから参照するか、個別に指定するか</summary>
+    public enum PaletteColorReference
+    {
+        Palette,
+        Custom,
+    }
+
     /// <summary>
     /// ColorPaletteの色を参照する色指定
     /// 単色か、パレットの2色を結ぶグラデーション (シェイプ空間の線形グラデーション) かを選べる
@@ -35,10 +42,17 @@ namespace Aetherin
     {
         public PaletteColorMode Mode;
 
+        public PaletteColorReference ColorReference;
         public PaletteColorSource Color = PaletteColorSource.AccentColor1;
+        public Color CustomColor = UnityEngine.Color.white;
 
+        public PaletteColorReference GradientColorAReference;
         public PaletteColorSource GradientColorA = PaletteColorSource.AccentColor1;
+        public Color CustomGradientColorA = UnityEngine.Color.white;
+
+        public PaletteColorReference GradientColorBReference;
         public PaletteColorSource GradientColorB = PaletteColorSource.AccentColor2;
+        public Color CustomGradientColorB = new(0.7f, 0.7f, 0.7f, 1f);
 
         [Tooltip("Palette Randomの並びを変える値。同じSeedではコピーごとの色が安定します")]
         public int RandomSeed;
@@ -95,6 +109,12 @@ namespace Aetherin
             };
         }
 
+        public static Color Resolve(ColorPalette palette, PaletteColorReference reference,
+            PaletteColorSource source, Color customColor)
+        {
+            return reference == PaletteColorReference.Custom ? customColor : Resolve(palette, source);
+        }
+
         internal Color[] GetPaletteBuffer() => _paletteBuffer ??= new Color[6];
     }
 
@@ -129,8 +149,11 @@ namespace Aetherin
             float alpha = Mathf.Clamp01(parameter.Alpha?.Evaluate(context) ?? 1f);
 
             var colorA = ToOutputColor(
-                PaletteColorParameter.Resolve(palette,
-                    parameter.Mode == PaletteColorMode.Single ? parameter.Color : parameter.GradientColorA),
+                parameter.Mode == PaletteColorMode.Single
+                    ? PaletteColorParameter.Resolve(palette, parameter.ColorReference, parameter.Color,
+                        parameter.CustomColor)
+                    : PaletteColorParameter.Resolve(palette, parameter.GradientColorAReference,
+                        parameter.GradientColorA, parameter.CustomGradientColorA),
                 intensity, alpha);
 
             if (parameter.Mode != PaletteColorMode.Gradient &&
@@ -156,7 +179,8 @@ namespace Aetherin
             return new EvaluatedPaletteColor
             {
                 ColorA = colorA,
-                ColorB = ToOutputColor(PaletteColorParameter.Resolve(palette, parameter.GradientColorB), intensity, alpha),
+                ColorB = ToOutputColor(PaletteColorParameter.Resolve(palette, parameter.GradientColorBReference,
+                    parameter.GradientColorB, parameter.CustomGradientColorB), intensity, alpha),
                 IsGradient = parameter.Mode == PaletteColorMode.Gradient,
                 PatternMode = parameter.Mode,
                 AngleDegrees = parameter.GradientAngle?.Evaluate(context) ?? 0f,

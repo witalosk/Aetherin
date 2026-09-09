@@ -20,13 +20,22 @@ namespace Aetherin
                 UI.DynamicElementOnStatusChanged(
                     readStatus: () => parameter.Mode,
                     build: mode => mode == PaletteColorMode.Single
-                        ? UI.Field(null, () => parameter.Color, value => parameter.Color = value).SetFlexGrow(1f)
+                        ? CreateColorReferenceElement(
+                            () => parameter.ColorReference, value => parameter.ColorReference = value,
+                            () => parameter.Color, value => parameter.Color = value,
+                            () => parameter.CustomColor, value => parameter.CustomColor = value)
                         : mode is PaletteColorMode.Gradient or PaletteColorMode.Check or
                               PaletteColorMode.Dots or PaletteColorMode.DiagonalStripes ? UI.Row(
-                            UI.Field(null, () => parameter.GradientColorA,
-                                value => parameter.GradientColorA = value).SetFlexGrow(1f),
-                            UI.Field(null, () => parameter.GradientColorB,
-                                value => parameter.GradientColorB = value).SetFlexGrow(1f)
+                            CreateColorReferenceElement(
+                                () => parameter.GradientColorAReference,
+                                value => parameter.GradientColorAReference = value,
+                                () => parameter.GradientColorA, value => parameter.GradientColorA = value,
+                                () => parameter.CustomGradientColorA, value => parameter.CustomGradientColorA = value),
+                            CreateColorReferenceElement(
+                                () => parameter.GradientColorBReference,
+                                value => parameter.GradientColorBReference = value,
+                                () => parameter.GradientColorB, value => parameter.GradientColorB = value,
+                                () => parameter.CustomGradientColorB, value => parameter.CustomGradientColorB = value)
                         ) : UI.Field("Seed", () => parameter.RandomSeed,
                             value => parameter.RandomSeed = value).SetFlexGrow(1f)),
                 UI.WindowLauncher("...",
@@ -44,6 +53,21 @@ namespace Aetherin
                             )).SetWidth(DetailWindowWidth))
                     .SetWidth(32f)
             );
+        }
+
+        private static Element CreateColorReferenceElement(
+            Func<PaletteColorReference> readReference, Action<PaletteColorReference> writeReference,
+            Func<PaletteColorSource> readPaletteColor, Action<PaletteColorSource> writePaletteColor,
+            Func<UnityEngine.Color> readCustomColor, Action<UnityEngine.Color> writeCustomColor)
+        {
+            return UI.Row(
+                UI.Field(null, readReference, writeReference).SetWidth(78f),
+                UI.DynamicElementOnStatusChanged(
+                    readReference,
+                    reference => reference == PaletteColorReference.Custom
+                        ? UI.Field(null, readCustomColor, writeCustomColor).SetFlexGrow(1f)
+                        : UI.Field(null, readPaletteColor, writePaletteColor).SetFlexGrow(1f)
+                )).SetFlexGrow(1f);
         }
 
         #endregion
