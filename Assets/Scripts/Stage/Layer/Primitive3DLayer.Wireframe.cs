@@ -139,26 +139,10 @@ namespace Aetherin
 
         private void BuildIcosphereWireframe(float radius)
         {
-            BuildIcosphereTopology(
-                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5),
-                out System.Collections.Generic.List<Vector3> vertices,
-                out System.Collections.Generic.List<int> triangles);
-            var edges = new System.Collections.Generic.HashSet<ulong>();
-
-            for (int i = 0; i < triangles.Count; i += 3)
-            {
-                AddEdge(triangles[i], triangles[i + 1]);
-                AddEdge(triangles[i + 1], triangles[i + 2]);
-                AddEdge(triangles[i + 2], triangles[i]);
-
-                void AddEdge(int a, int b)
-                {
-                    uint min = (uint)Mathf.Min(a, b);
-                    uint max = (uint)Mathf.Max(a, b);
-                    ulong key = ((ulong)min << 32) | max;
-                    if (edges.Add(key)) AddWireEdge(vertices[a], vertices[b], radius);
-                }
-            }
+            IcosphereTopology topology = GetIcosphereTopology(
+                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5));
+            foreach (IcosphereEdge edge in topology.Edges)
+                AddWireEdge(topology.Vertices[edge.A], topology.Vertices[edge.B], radius);
         }
 
         private void BuildPlaneWireframe(float radius)

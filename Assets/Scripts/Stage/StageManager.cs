@@ -372,7 +372,12 @@ namespace Aetherin
                 GetCameraStage(_nextStages, _params.NextStageIndex)?.StageCamera);
 
             var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
-            var nextTexture = GetStageTexture(_nextStages, _params.NextStageIndex);
+            // Swap直後はNextを数フレームかけて再構築するため、選択中スロットも一時的にnullになる。
+            // nullを黒へフォールバックすると、フェーダー位置やPost FX次第でOutputに黒フレームが混ざる。
+            // 準備中は直前まで表示していたCurrentを両入力に使い、次の絵が描画可能になるまで出力を維持する。
+            var nextTexture = _isPreparingNext
+                ? currentTexture
+                : GetStageTexture(_nextStages, _params.NextStageIndex);
 
             _currentPostTexture = _postEffectManager.ProcessCurrent(currentTexture);
             _nextPostTexture = _postEffectManager.ProcessNext(nextTexture);
@@ -735,7 +740,7 @@ namespace Aetherin
 
         private static Texture GetStageTexture(List<StageBase> stages, int index)
         {
-            if (stages.Count == 0) return Texture2D.blackTexture;
+            if (stages == null || stages.Count == 0) return Texture2D.blackTexture;
 
             var stage = stages[Mathf.Clamp(index, 0, stages.Count - 1)];
             return stage != null && stage.OutputTexture != null ? stage.OutputTexture : Texture2D.blackTexture;

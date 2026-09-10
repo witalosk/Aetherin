@@ -5,6 +5,36 @@ namespace Aetherin
 {
     public sealed partial class Primitive3DLayer
     {
+        private readonly struct IcosphereEdge
+        {
+            public readonly int A;
+            public readonly int B;
+
+            public IcosphereEdge(int a, int b)
+            {
+                A = a;
+                B = b;
+            }
+        }
+
+        private readonly struct IcosphereTopology
+        {
+            public readonly Vector3[] Vertices;
+            public readonly int[] Triangles;
+            public readonly IcosphereEdge[] Edges;
+
+            public IcosphereTopology(Vector3[] vertices, int[] triangles, IcosphereEdge[] edges)
+            {
+                Vertices = vertices;
+                Triangles = triangles;
+                Edges = edges;
+            }
+        }
+
+        // subdivisionは0〜5に制限される。各段階の形状は不変なので、Swapごとに
+        // topology生成とwireframe用の重複edge除去を繰り返さない。
+        private static readonly Dictionary<int, IcosphereTopology> IcosphereTopologyCache = new();
+
         private void RebuildGeometry()
         {
             if (_mesh == null) return;
@@ -167,15 +197,13 @@ namespace Aetherin
 
         private void BuildIcosphere()
         {
-            BuildIcosphereTopology(
-                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5),
-                out List<Vector3> vertices,
-                out List<int> triangles);
-            EnsureCapacity(_vertices, vertices.Count);
-            EnsureCapacity(_uvs, vertices.Count);
-            EnsureCapacity(_triangles, triangles.Count);
+            IcosphereTopology topology = GetIcosphereTopology(
+                Mathf.Clamp(_params.IcosphereSubdivisions, 0, 5));
+            EnsureCapacity(_vertices, topology.Vertices.Length);
+            EnsureCapacity(_uvs, topology.Vertices.Length);
+            EnsureCapacity(_triangles, topology.Triangles.Length);
 
-            foreach (Vector3 vertex in vertices)
+            foreach (Vector3 vertex in topology.Vertices)
             {
                 _vertices.Add(vertex);
                 Vector3 direction = vertex.normalized;
@@ -183,13 +211,20 @@ namespace Aetherin
                     Mathf.Atan2(direction.z, direction.x) / (Mathf.PI * 2f) + 0.5f,
                     Mathf.Asin(direction.y) / Mathf.PI + 0.5f));
             }
-            _triangles.AddRange(triangles);
+            _triangles.AddRange(topology.Triangles);
         }
 
-        private static void BuildIcosphereTopology(
-            int subdivisions,
-            out List<Vector3> vertices,
-            out List<int> triangles)
+        private static IcosphereTopology GetIcosphereTopology(int subdivisions)
+        {
+            if (IcosphereTopologyCache.TryGetValue(subdivisions, out IcosphereTopology cached))
+                return cached;
+
+            IcosphereTopology generated = GenerateIcosphereTopology(subdivisions);
+            IcosphereTopologyCache.Add(subdivisions, generated);
+            return generated;
+        }
+
+        private static IcosphereTopology GenerateIcosphereTopology(int subdivisions)
         {
             float t = (1f + Mathf.Sqrt(5f)) * 0.5f;
             var generatedVertices = new List<Vector3>
@@ -248,8 +283,24 @@ namespace Aetherin
                 generatedTriangles = subdivided;
             }
 
-            vertices = generatedVertices;
-            triangles = generatedTriangles;
+            var edges = new HashSet<ulong>();
+            var generatedEdges = new List<IcosphereEdge>(generatedTriangles.Count / 2);
+            for (int i = 0; i < generatedTriangles.Count; i += 3)
+            {
+                AddEdge(generatedTriangles[i], generatedTriangles[i + 1]);
+                AddEdge(generatedTriangles[i + 1], generatedTriangles[i + 2]);
+                AddEdge(generatedTriangles[i + 2], generatedTriangles[i]);
+            }
+
+            return new IcosphereTopology(
+                generatedVertices.ToArray(), generatedTriangles.ToArray(), generatedEdges.ToArray());
+
+            void AddEdge(int a, int b)
+            {
+                uint min = (uint)Mathf.Min(a, b);
+                uint max = (uint)Mathf.Max(a, b);
+                if (edges.Add(((ulong)min << 32) | max)) generatedEdges.Add(new IcosphereEdge(a, b));
+            }
         }
 
         private void BuildCylinder()

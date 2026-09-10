@@ -71,6 +71,7 @@ namespace Aetherin
         private Bounds _geometryBounds;
         private Bounds _wireGeometryBounds;
         private int _geometryHash;
+        private bool _initialized;
 
         private Vector3 _evaluatedPosition;
         private Vector3 _evaluatedRotation;
@@ -155,7 +156,13 @@ namespace Aetherin
             _stage = GetComponentInParent<StageBase>();
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
-            RebuildGeometry();
+            // Instantiate時はAwakeの直後にOnEnableも呼ばれる。両方で高分割Icosphereを
+            // 作り直さないよう、初期化直後のOnEnableでは既存メッシュを再利用する。
+            if (!_initialized)
+            {
+                RebuildGeometry();
+                _initialized = true;
+            }
             ApplyAppearanceAndTransform();
             ApplyLayerState();
         }
