@@ -28,6 +28,10 @@ namespace Aetherin
         {
             _params ??= new ApplicaitonManagerParams();
             _params.TimeScaleCc ??= new MidiCcBinding();
+        }
+
+        private void Start()
+        {
             ApplyFps();
         }
 

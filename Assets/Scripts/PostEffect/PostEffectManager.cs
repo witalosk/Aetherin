@@ -120,19 +120,30 @@ namespace Aetherin
             _params.CurrentVolume ??= new DeckVolumeEffects();
             _params.NextVolume ??= new DeckVolumeEffects();
             UpdateNextToggleButtons();
-            if (currentCamera == null || nextCamera == null) return;
 
             EnsureVolumeProfiles();
             if (_currentVolumeProfile == null || _nextVolumeProfile == null) return;
 
-            var currentContext = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
-            var nextContext = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
-            ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentCamera, currentContext, _currentAutoFocus);
-            ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextCamera, nextContext, _nextAutoFocus);
-            ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
-            ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
+            // Swap直後はNextを段階的に再生成するため、数フレームはnextCameraがnullになる。
+            // それでも昇格したCurrentのCameraには、再分離処理で変更されたVolume用Layerを
+            // 即座に戻す必要がある。両Cameraの存在を必須にすると、この間だけURP Volumeが
+            // 見つからず、Bloom/DoFなどが一瞬消える。
+            if (currentCamera != null)
+            {
+                var currentContext = new ModulationContext(
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
+                ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentCamera, currentContext,
+                    _currentAutoFocus);
+                ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
+            }
+
+            if (nextCamera != null)
+            {
+                var nextContext = new ModulationContext(
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
+                ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextCamera, nextContext, _nextAutoFocus);
+                ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
+            }
         }
 
         private void UpdateNextToggleButtons()
@@ -510,6 +521,9 @@ namespace Aetherin
             depthOfField.focalLength.value = Mathf.Clamp(settings.FocalLength.Evaluate(context), 1f, 300f);
         }
 
+        private static readonly List<FocusRay> _rays = new();
+        private static float _gizmoRayLength;
+
         private static float EvaluateFocusDistance(
             DeckVolumeEffects settings, Camera camera, in ModulationContext context, AutoFocusState state)
         {
@@ -519,15 +533,18 @@ namespace Aetherin
                 state.Initialized = false;
                 return manualDistance;
             }
+            _rays.Clear();  
 
             int hitCount = 0;
             float maxDistance = Mathf.Max(0.1f, settings.AutoFocusMaxDistance.Evaluate(context));
+            _gizmoRayLength = maxDistance;
             for (int y = 0; y < 3; y++)
             {
                 for (int x = 0; x < 3; x++)
                 {
                     Ray ray = camera.ViewportPointToRay(new Vector3(x * 0.5f, y * 0.5f, 0f));
                     float distance = FindFocusDistance(ray, camera, maxDistance);
+                    _rays.Add(new FocusRay(ray, distance));
                     if (distance >= 0f) state.HitDistances[hitCount++] = distance;
                 }
             }
@@ -591,6 +608,30 @@ namespace Aetherin
             }
             if (Application.isPlaying) Destroy(profile);
             else DestroyImmediate(profile);
+        }
+
+        private void OnDrawGizmos()
+        {
+            // rayを表示
+            foreach (FocusRay focusRay in _rays)
+            {
+                bool hit = focusRay.Distance >= 0f;
+                Gizmos.color = hit ? Color.green : Color.red;
+                float length = hit ? focusRay.Distance : _gizmoRayLength;
+                Gizmos.DrawRay(focusRay.Ray.origin, focusRay.Ray.direction * length);
+            }
+        }
+
+        private readonly struct FocusRay
+        {
+            public readonly Ray Ray;
+            public readonly float Distance;
+
+            public FocusRay(Ray ray, float distance)
+            {
+                Ray = ray;
+                Distance = distance;
+            }
         }
 
         private sealed class StackRuntime : IDisposable

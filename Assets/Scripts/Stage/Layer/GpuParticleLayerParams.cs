@@ -8,6 +8,7 @@ namespace Aetherin
     {
         IndirectQuad,
         VfxGraph,
+        Trail,
     }
 
     public enum ParticleRenderShape
@@ -33,6 +34,8 @@ namespace Aetherin
         SizeOverLife,
         ApplyLorenzAttractor,
         ApplyVortex,
+        ClampVelocity,
+        ApplyBoids,
     }
 
     public enum ParticleModulationTarget
@@ -40,6 +43,12 @@ namespace Aetherin
         Position,
         Velocity,
         Size,
+    }
+
+    public enum BoidsNeighborSearchMode
+    {
+        Sampled,
+        Exhaustive,
     }
 
     [Serializable]
@@ -87,6 +96,21 @@ namespace Aetherin
         public FloatParameter Scale = new(1f);
         public FloatParameter Speed = new(1f);
         public FloatParameter Secondary = new(1f);
+        [Tooltip("Boids用。X=Separation、Y=Alignment、Z=Cohesion の近傍半径")]
+        public Vector3Parameter BoidsNeighborRadii = new(new Vector3(2f, 2f, 2f));
+        [Tooltip("Boids用。X=Separation、Y=Alignment、Z=Cohesion の重み")]
+        public Vector3Parameter BoidsWeights = new(new Vector3(1.5f, 0.75f, 0.5f));
+        [Tooltip("Boids用。X=Separation、Y=Alignment、Z=Cohesion の最大ステアリング力")]
+        public Vector3Parameter BoidsMaxForces = new(new Vector3(2f, 1f, 1f));
+        public FloatParameter BoidsMaxSpeed = new(2f);
+        public FloatParameter BoidsMaxAcceleration = new(4f);
+        [Tooltip("Sampled は軽量な近傍サンプル、Exhaustive は全粒子を探索します")]
+        public BoidsNeighborSearchMode BoidsNeighborSearch = BoidsNeighborSearchMode.Sampled;
+        [Range(1, 32)] public int BoidsNeighborSamples = 12;
+        [Tooltip("Boids用。進行方向を中心とする近傍の視野角（度、360で全方向）")]
+        public FloatParameter BoidsFieldOfView = new(360f);
+        [Tooltip("有効時はSeparationにも視野角を適用します。無効時は衝突回避のため全方位を参照します")]
+        public bool BoidsSeparationUsesFieldOfView;
         [Tooltip("OverLifeモジュールが寿命比率(0..1)から値をサンプリングするカーブ")]
         public AnimationCurve OverLifeCurve = AnimationCurve.Linear(0f, 1f, 1f, 0f);
         public ParticleModulationTarget Target;
@@ -99,6 +123,13 @@ namespace Aetherin
             Scale ??= new FloatParameter(1f);
             Speed ??= new FloatParameter(1f);
             Secondary ??= new FloatParameter(1f);
+            BoidsNeighborRadii ??= new Vector3Parameter(new Vector3(2f, 2f, 2f));
+            BoidsWeights ??= new Vector3Parameter(new Vector3(1.5f, 0.75f, 0.5f));
+            BoidsMaxForces ??= new Vector3Parameter(new Vector3(2f, 1f, 1f));
+            BoidsMaxSpeed ??= new FloatParameter(2f);
+            BoidsMaxAcceleration ??= new FloatParameter(4f);
+            BoidsFieldOfView ??= new FloatParameter(360f);
+            BoidsNeighborSamples = Mathf.Clamp(BoidsNeighborSamples, 1, 32);
             OverLifeCurve ??= CreateDefaultOverLifeCurve(Type);
         }
 
@@ -116,6 +147,9 @@ namespace Aetherin
         public ParticleRenderBackend RenderBackend;
         [Tooltip("CameraStageのVFX Graph Libraryに登録したキー")]
         public string VfxGraphKey;
+        [Range(2, 64)] public int TrailLength = 12;
+        [Min(0f)] public float TrailWidth = 1f;
+        [Range(0f, 1f)] public float TrailTailWidth = 0.1f;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -161,6 +195,9 @@ namespace Aetherin
 
         public void EnsureInitialized()
         {
+            TrailLength = Mathf.Clamp(TrailLength, 2, 64);
+            TrailWidth = Mathf.Max(0f, TrailWidth);
+            TrailTailWidth = Mathf.Clamp01(TrailTailWidth);
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
             Scale ??= new Vector3Parameter(Vector3.one);

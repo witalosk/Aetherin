@@ -40,6 +40,7 @@ Shader "Aetherin/GPU Particle"
                 float3 angularVelocity;
                 uint alive;
                 uint seed;
+                uint generation;
             };
 
             StructuredBuffer<ParticleData> _Particles;

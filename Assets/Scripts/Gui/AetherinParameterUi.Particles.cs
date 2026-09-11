@@ -38,6 +38,12 @@ namespace Aetherin
                         UI.DynamicElementIf(
                             () => p.RenderBackend == ParticleRenderBackend.VfxGraph,
                             () => vfxGraphSelector),
+                        UI.DynamicElementIf(
+                            () => p.RenderBackend == ParticleRenderBackend.Trail,
+                            () => UI.Column(
+                                UI.Field("Trail Length", () => p.TrailLength, value => p.TrailLength = value),
+                                UI.Field("Trail Width", () => p.TrailWidth, value => p.TrailWidth = value),
+                                UI.Field("Trail Tail Width", () => p.TrailTailWidth, value => p.TrailTailWidth = value))),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                         Param("Opacity", p.Opacity),
                         UI.Field("Order", () => p.Order, value => p.Order = value))),
@@ -110,6 +116,19 @@ namespace Aetherin
                     module.Scale.BaseValue = 0.25f;
                     module.Speed.BaseValue = 0f;
                     break;
+                case ParticleSimulationModuleType.ClampVelocity:
+                    module.Strength.BaseValue = 2f;
+                    break;
+                case ParticleSimulationModuleType.ApplyBoids:
+                    module.BoidsNeighborRadii.BaseValue = new UnityEngine.Vector3(2f, 2f, 2f);
+                    module.BoidsWeights.BaseValue = new UnityEngine.Vector3(1.5f, 0.75f, 0.5f);
+                    module.BoidsMaxForces.BaseValue = new UnityEngine.Vector3(2f, 1f, 1f);
+                    module.BoidsMaxSpeed.BaseValue = 2f;
+                    module.BoidsMaxAcceleration.BaseValue = 4f;
+                    module.BoidsNeighborSamples = 12;
+                    module.BoidsFieldOfView.BaseValue = 360f;
+                    module.BoidsSeparationUsesFieldOfView = false;
+                    break;
                 case ParticleSimulationModuleType.ColorOverLife:
                 case ParticleSimulationModuleType.SizeOverLife:
                     module.OverLifeCurve = ParticleSimulationModule.CreateDefaultOverLifeCurve(type);
@@ -172,6 +191,25 @@ namespace Aetherin
                     yield return Param("Orbit Force", module.Strength);
                     yield return Param("Radial Pull", module.Scale);
                     yield return Param("Falloff", module.Speed);
+                    break;
+                case ParticleSimulationModuleType.ClampVelocity:
+                    yield return Param("Max Speed", module.Strength);
+                    break;
+                case ParticleSimulationModuleType.ApplyBoids:
+                    yield return Param("Max Speed", module.BoidsMaxSpeed);
+                    yield return Param("Max Acceleration", module.BoidsMaxAcceleration);
+                    yield return Param("Neighbor Radii (Separation, Alignment, Cohesion)", module.BoidsNeighborRadii);
+                    yield return Param("Weights (Separation, Alignment, Cohesion)", module.BoidsWeights);
+                    yield return Param("Max Forces (Separation, Alignment, Cohesion)", module.BoidsMaxForces);
+                    yield return Param("Field of View (Degrees)", module.BoidsFieldOfView);
+                    yield return UI.Toggle("Apply FOV to Separation", () => module.BoidsSeparationUsesFieldOfView,
+                        value => module.BoidsSeparationUsesFieldOfView = value);
+                    yield return UI.Field("Neighbor Search", () => module.BoidsNeighborSearch,
+                        value => module.BoidsNeighborSearch = value);
+                    yield return UI.DynamicElementIf(
+                        () => module.BoidsNeighborSearch == BoidsNeighborSearchMode.Sampled,
+                        () => UI.Field("Neighbor Samples", () => module.BoidsNeighborSamples,
+                            value => module.BoidsNeighborSamples = value));
                     break;
             }
         }

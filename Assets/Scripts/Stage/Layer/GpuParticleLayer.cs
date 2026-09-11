@@ -12,7 +12,7 @@ namespace Aetherin
     public sealed class GpuParticleLayer : StageLayer
     {
         private const int ThreadGroupSize = 256;
-        private const int ParticleStride = 88;
+        private const int ParticleStride = 92;
         private const int OverLifeCurveSampleCount = 64;
         private static readonly int ParticlesId = Shader.PropertyToID("_Particles");
         private static readonly int CapacityId = Shader.PropertyToID("_ParticleCapacity");
@@ -47,6 +47,22 @@ namespace Aetherin
         private static readonly int PaletteRandomModeId = Shader.PropertyToID("_PaletteRandomMode");
         private static readonly int PaletteRandomSeedId = Shader.PropertyToID("_PaletteRandomSeed");
         private static readonly int[] PaletteColorIds = CreatePropertyIds("_PaletteColor", 6);
+        private static readonly int TrailSamplesId = Shader.PropertyToID("_TrailSamples");
+        private static readonly int TrailLengthId = Shader.PropertyToID("_TrailLength");
+        private static readonly int TrailFrameIndexId = Shader.PropertyToID("_TrailFrameIndex");
+        private static readonly int TrailWidthId = Shader.PropertyToID("_TrailWidth");
+        private static readonly int TrailTailWidthId = Shader.PropertyToID("_TrailTailWidth");
+        private static readonly int BoidParticlesId = Shader.PropertyToID("_BoidParticles");
+        private static readonly int BoidNeighborRadiiId = Shader.PropertyToID("_BoidNeighborRadii");
+        private static readonly int BoidNeighborSearchModeId = Shader.PropertyToID("_BoidNeighborSearchMode");
+        private static readonly int BoidFieldOfViewId = Shader.PropertyToID("_BoidFieldOfView");
+        private static readonly int BoidWeightsId = Shader.PropertyToID("_BoidWeights");
+        private static readonly int BoidMaxForcesId = Shader.PropertyToID("_BoidMaxForces");
+        private static readonly int BoidMaxSpeedId = Shader.PropertyToID("_BoidMaxSpeed");
+        private static readonly int BoidMaxAccelerationId = Shader.PropertyToID("_BoidMaxAcceleration");
+        private static readonly int BoidNeighborSamplesId = Shader.PropertyToID("_BoidNeighborSamples");
+        private static readonly int BoidSeparationUsesFieldOfViewId =
+            Shader.PropertyToID("_BoidSeparationUsesFieldOfView");
 
         [SerializeField] private GpuParticleLayerParams _params = new();
         [SerializeField] private ComputeShader _simulationShader;
@@ -54,13 +70,25 @@ namespace Aetherin
 
         private GraphicsBuffer _particles;
         private GraphicsBuffer _args;
+        private GraphicsBuffer _trailSamples;
+        private GraphicsBuffer _trailArgs;
+        private GraphicsBuffer _boidParticles;
         private Mesh _quad;
         private Material _material;
+        private Material _trailMaterial;
         private ComputeShader _compute;
         private VisualEffect _visualEffect;
         private int _resetKernel;
         private int _moduleKernel;
+        private int _initializeTrailsKernel;
+        private int _recordTrailsKernel;
+        private int _copyBoidSnapshotKernel;
+        private int _applyBoidsKernel;
         private int _allocatedCapacity;
+        private int _trailAllocatedCapacity;
+        private int _trailAllocatedLength;
+        private int _trailFrameIndex;
+        private bool _kernelsInitialized;
         private bool _renderEnabled = true;
         private double _lastEditorTime;
         private readonly float[] _overLifeCurveSamples = new float[OverLifeCurveSampleCount];
@@ -130,6 +158,15 @@ namespace Aetherin
             var context = CreateModulationContext(now, _audio, _beat, Application.isPlaying);
             float deltaTime = rawDelta * Mathf.Max(0f, _params.SimulationSpeed?.Evaluate(context) ?? 1f);
             DispatchModules(context, deltaTime, now);
+            if (_params.RenderBackend == ParticleRenderBackend.Trail)
+            {
+                EnsureTrailResources();
+                RecordTrails();
+            }
+            else
+            {
+                ReleaseTrailResources();
+            }
             ApplyRendering(context);
         }
 
@@ -140,10 +177,15 @@ namespace Aetherin
                 : Instantiate(Resources.Load<ComputeShader>("ParticleSimulation"));
             if (_compute == null) return;
 
-            if (_resetKernel == 0 && _moduleKernel == 0)
+            if (!_kernelsInitialized)
             {
                 _resetKernel = _compute.FindKernel("ResetParticles");
                 _moduleKernel = _compute.FindKernel("ApplyModule");
+                _initializeTrailsKernel = _compute.FindKernel("InitializeTrails");
+                _recordTrailsKernel = _compute.FindKernel("RecordTrails");
+                _copyBoidSnapshotKernel = _compute.FindKernel("CopyBoidSnapshot");
+                _applyBoidsKernel = _compute.FindKernel("ApplyBoids");
+                _kernelsInitialized = true;
             }
 
             int capacity = Mathf.Clamp(_params.Capacity, 1, 262144);
@@ -186,6 +228,17 @@ namespace Aetherin
         private void DispatchModules(in ModulationContext context, float deltaTime, double now)
         {
             if (deltaTime <= 0f || _params.Modules == null) return;
+            bool hasBoids = false;
+            foreach (var module in _params.Modules)
+            {
+                if (module != null && module.Enabled && module.Type == ParticleSimulationModuleType.ApplyBoids)
+                {
+                    hasBoids = true;
+                    break;
+                }
+            }
+            if (hasBoids) EnsureBoidBuffer();
+            else ReleaseBoidResources();
             _compute.SetBuffer(_moduleKernel, ParticlesId, _particles);
             _compute.SetInt(CapacityId, _allocatedCapacity);
             _compute.SetFloat(DeltaTimeId, deltaTime);
@@ -196,6 +249,8 @@ namespace Aetherin
             foreach (var module in _params.Modules)
             {
                 if (module == null || !module.Enabled) continue;
+                if (module.Type == ParticleSimulationModuleType.ApplyBoids)
+                    CopyBoidSnapshot();
                 _compute.SetInt(ModuleTypeId, (int)module.Type);
                 _compute.SetFloat(StrengthId, module.Strength?.Evaluate(context) ?? 1f);
                 _compute.SetVector(VectorId, module.Vector?.Evaluate(context) ?? Vector3.zero);
@@ -203,12 +258,56 @@ namespace Aetherin
                 _compute.SetFloat(ScaleValueId, module.Scale?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SpeedId, module.Speed?.Evaluate(context) ?? 1f);
                 _compute.SetFloat(SecondaryId, module.Secondary?.Evaluate(context) ?? 1f);
+                _compute.SetVector(BoidNeighborRadiiId,
+                    module.BoidsNeighborRadii?.Evaluate(context) ?? Vector3.one);
+                _compute.SetInt(BoidNeighborSearchModeId, (int)module.BoidsNeighborSearch);
+                _compute.SetFloat(BoidFieldOfViewId, module.BoidsFieldOfView?.Evaluate(context) ?? 360f);
+                _compute.SetVector(BoidWeightsId,
+                    module.BoidsWeights?.Evaluate(context) ?? new Vector3(1.5f, 0.75f, 0.5f));
+                _compute.SetVector(BoidMaxForcesId,
+                    module.BoidsMaxForces?.Evaluate(context) ?? new Vector3(2f, 1f, 1f));
+                _compute.SetFloat(BoidMaxSpeedId, module.BoidsMaxSpeed?.Evaluate(context) ?? 2f);
+                _compute.SetFloat(BoidMaxAccelerationId,
+                    module.BoidsMaxAcceleration?.Evaluate(context) ?? 4f);
+                _compute.SetInt(BoidNeighborSamplesId, Mathf.Clamp(module.BoidsNeighborSamples, 1, 32));
+                _compute.SetInt(BoidSeparationUsesFieldOfViewId,
+                    module.BoidsSeparationUsesFieldOfView ? 1 : 0);
                 if (module.Type is ParticleSimulationModuleType.ColorOverLife
                     or ParticleSimulationModuleType.SizeOverLife)
                     SetOverLifeCurve(module.OverLifeCurve);
                 _compute.SetInt(TargetId, (int)module.Target);
-                _compute.Dispatch(_moduleKernel, Groups, 1, 1);
+                if (module.Type == ParticleSimulationModuleType.ApplyBoids)
+                {
+                    _compute.SetBuffer(_applyBoidsKernel, ParticlesId, _particles);
+                    _compute.SetBuffer(_applyBoidsKernel, BoidParticlesId, _boidParticles);
+                    _compute.Dispatch(_applyBoidsKernel, Groups, 1, 1);
+                }
+                else
+                {
+                    _compute.Dispatch(_moduleKernel, Groups, 1, 1);
+                }
             }
+        }
+
+        private void CopyBoidSnapshot()
+        {
+            if (_particles == null || _compute == null) return;
+            EnsureBoidBuffer();
+
+            _compute.SetBuffer(_copyBoidSnapshotKernel, ParticlesId, _particles);
+            _compute.SetBuffer(_copyBoidSnapshotKernel, BoidParticlesId, _boidParticles);
+            _compute.SetInt(CapacityId, _allocatedCapacity);
+            _compute.Dispatch(_copyBoidSnapshotKernel, Groups, 1, 1);
+        }
+
+        private void EnsureBoidBuffer()
+        {
+            if (_boidParticles != null && _boidParticles.count == _allocatedCapacity) return;
+            _boidParticles?.Release();
+            _boidParticles = new GraphicsBuffer(GraphicsBuffer.Target.Structured, _allocatedCapacity, ParticleStride)
+            {
+                name = $"{name} Boid Snapshot"
+            };
         }
 
         private void SetOverLifeCurve(AnimationCurve curve)
@@ -244,6 +343,8 @@ namespace Aetherin
             EnsureVfxGraph();
             bool useVfxGraph = _params.RenderBackend == ParticleRenderBackend.VfxGraph &&
                                _visualEffect != null && _visualEffect.visualEffectAsset != null;
+            bool useTrail = _params.RenderBackend == ParticleRenderBackend.Trail &&
+                            _trailSamples != null && _trailArgs != null && _trailMaterial != null;
             if (_visualEffect != null) _visualEffect.enabled = _renderEnabled && useVfxGraph;
             if (!_renderEnabled) return;
 
@@ -260,6 +361,12 @@ namespace Aetherin
             if (useVfxGraph)
             {
                 SetVfxGraphProperties(layerMatrix, color, particleSize, opacity);
+                return;
+            }
+
+            if (useTrail)
+            {
+                DrawTrails(layerMatrix, color, particleSize, opacity, scale, context);
                 return;
             }
 
@@ -282,6 +389,84 @@ namespace Aetherin
             var bounds = new Bounds(layerMatrix.MultiplyPoint3x4(emitterOffset), extent * 2f);
 #pragma warning disable 0618
             Graphics.DrawMeshInstancedIndirect(_quad, 0, _material, bounds, _args, 0, null,
+                ShadowCastingMode.Off, false, gameObject.layer);
+#pragma warning restore 0618
+        }
+
+        private void EnsureTrailResources()
+        {
+            if (_particles == null || _compute == null) return;
+            int length = Mathf.Clamp(_params.TrailLength, 2, 64);
+            if (_trailSamples != null && _trailAllocatedCapacity == _allocatedCapacity && _trailAllocatedLength == length)
+                return;
+
+            ReleaseTrailResources();
+            _trailAllocatedCapacity = _allocatedCapacity;
+            _trailAllocatedLength = length;
+            _trailFrameIndex = 0;
+            _trailSamples = new GraphicsBuffer(GraphicsBuffer.Target.Structured, _allocatedCapacity * length, 16)
+            {
+                name = $"{name} Trail Samples"
+            };
+            _trailArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 5, sizeof(uint))
+            {
+                name = $"{name} Trail Args"
+            };
+            EnsureQuad();
+            _trailArgs.SetData(new uint[]
+            {
+                _quad.GetIndexCount(0), (uint)(_allocatedCapacity * (length - 1)), 0, 0, 0
+            });
+            Shader shader = Shader.Find("Aetherin/GPU Particle Trail");
+            if (shader != null) _trailMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+
+            _compute.SetBuffer(_initializeTrailsKernel, ParticlesId, _particles);
+            _compute.SetBuffer(_initializeTrailsKernel, TrailSamplesId, _trailSamples);
+            _compute.SetInt(CapacityId, _allocatedCapacity);
+            _compute.SetInt(TrailLengthId, length);
+            _compute.Dispatch(_initializeTrailsKernel, Mathf.CeilToInt(_allocatedCapacity * length / (float)ThreadGroupSize), 1, 1);
+        }
+
+        private void RecordTrails()
+        {
+            if (_trailSamples == null || _trailAllocatedLength < 2) return;
+            _compute.SetBuffer(_recordTrailsKernel, ParticlesId, _particles);
+            _compute.SetBuffer(_recordTrailsKernel, TrailSamplesId, _trailSamples);
+            _compute.SetInt(CapacityId, _allocatedCapacity);
+            _compute.SetInt(TrailLengthId, _trailAllocatedLength);
+            _compute.SetInt(TrailFrameIndexId, _trailFrameIndex);
+            _compute.Dispatch(_recordTrailsKernel, Groups, 1, 1);
+            _trailFrameIndex = _trailFrameIndex == int.MaxValue ? 0 : _trailFrameIndex + 1;
+        }
+
+        private void DrawTrails(
+            Matrix4x4 layerMatrix,
+            in EvaluatedPaletteColor color,
+            float particleSize,
+            float opacity,
+            Vector3 scale,
+            in ModulationContext context)
+        {
+            _trailMaterial.SetBuffer(ParticlesId, _particles);
+            _trailMaterial.SetBuffer(TrailSamplesId, _trailSamples);
+            _trailMaterial.SetMatrix(LayerMatrixId, layerMatrix);
+            _trailMaterial.SetColor(ColorAId, color.ColorA);
+            _trailMaterial.SetColor(ColorBId, color.ColorB);
+            _trailMaterial.SetFloat(ParticleSizeId, particleSize);
+            _trailMaterial.SetFloat(OpacityId, opacity);
+            _trailMaterial.SetInt(TrailLengthId, _trailAllocatedLength);
+            _trailMaterial.SetInt(TrailFrameIndexId, _trailFrameIndex - 1);
+            _trailMaterial.SetFloat(TrailWidthId, _params.TrailWidth);
+            _trailMaterial.SetFloat(TrailTailWidthId, _params.TrailTailWidth);
+            ApplyPaletteRandom(_trailMaterial, color);
+            LayerMaterialUtility.ApplyBlendMode(_trailMaterial, _params.BlendMode);
+
+            Vector3 extent = Vector3.Scale(_params.EmitterSize?.Evaluate(context) ?? Vector3.one,
+                new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z))) * 2f + Vector3.one * 8f;
+            Vector3 emitterOffset = _params.EmitterOffset?.Evaluate(context) ?? Vector3.zero;
+            var bounds = new Bounds(layerMatrix.MultiplyPoint3x4(emitterOffset), extent * 2f);
+#pragma warning disable 0618
+            Graphics.DrawMeshInstancedIndirect(_quad, 0, _trailMaterial, bounds, _trailArgs, 0, null,
                 ShadowCastingMode.Off, false, gameObject.layer);
 #pragma warning restore 0618
         }
@@ -376,11 +561,32 @@ namespace Aetherin
 
         private void ReleaseBuffers()
         {
+            ReleaseTrailResources();
+            ReleaseBoidResources();
             _particles?.Release();
             _args?.Release();
             _particles = null;
             _args = null;
             _allocatedCapacity = 0;
+        }
+
+        private void ReleaseBoidResources()
+        {
+            _boidParticles?.Release();
+            _boidParticles = null;
+        }
+
+        private void ReleaseTrailResources()
+        {
+            _trailSamples?.Release();
+            _trailArgs?.Release();
+            DestroyResource(_trailMaterial);
+            _trailSamples = null;
+            _trailArgs = null;
+            _trailMaterial = null;
+            _trailAllocatedCapacity = 0;
+            _trailAllocatedLength = 0;
+            _trailFrameIndex = 0;
         }
 
         private void OnDisable() => ReleaseResources();

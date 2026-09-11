@@ -1,5 +1,9 @@
 #pragma kernel ResetParticles
 #pragma kernel ApplyModule
+#pragma kernel InitializeTrails
+#pragma kernel RecordTrails
+#pragma kernel CopyBoidSnapshot
+#pragma kernel ApplyBoids
 
 #include "../Shaders/Includes/AetherinCurlNoise.hlsl"
 
@@ -16,10 +20,22 @@ struct ParticleData
     float3 angularVelocity;
     uint alive;
     uint seed;
+    uint generation;
 };
 
 RWStructuredBuffer<ParticleData> _Particles;
+RWStructuredBuffer<ParticleData> _BoidParticles;
+
+struct TrailSample
+{
+    float3 position;
+    uint seed;
+};
+
+RWStructuredBuffer<TrailSample> _TrailSamples;
 int _ParticleCapacity;
+int _TrailLength;
+int _TrailFrameIndex;
 int _ModuleType;
 int _Target;
 int _Seed;
@@ -31,6 +47,15 @@ float3 _Axis;
 float _ScaleValue;
 float _Speed;
 float _Secondary;
+float3 _BoidNeighborRadii;
+int _BoidNeighborSearchMode;
+float _BoidFieldOfView;
+float3 _BoidWeights;
+float3 _BoidMaxForces;
+float _BoidMaxSpeed;
+float _BoidMaxAcceleration;
+int _BoidNeighborSamples;
+int _BoidSeparationUsesFieldOfView;
 float _OverLifeCurve[64];
 float3 _EmitterOffset;
 float3 _EmitterSize;
@@ -86,6 +111,7 @@ float EvaluateOverLifeCurve(float t)
 
 void Respawn(inout ParticleData particle, uint id, float ageOffset)
 {
+    particle.generation += 1u;
     uint state = Hash(id + (uint)_Seed * 747796405u + 2891336453u);
     particle.position = _EmitterOffset +
         (float3(Random01(state), Random01(state), Random01(state)) - 0.5) * _EmitterSize;
@@ -157,12 +183,15 @@ void ApplyModule(uint id : SV_DispatchThreadID)
     else if (_ModuleType == 6) // Wrap bounds
     {
         float3 size = max(abs(_Vector), 0.0001);
+        float3 positionBeforeWrap = particle.position;
         float3 relative = particle.position - _EmitterOffset + size * 0.5;
         // HLSL fmod keeps the dividend's sign. The previous fixed +8-cell offset
         // therefore stopped wrapping particles that travelled farther in the
         // negative direction, allowing them to reach and cross the camera.
         relative -= floor(relative / size) * size;
         particle.position = _EmitterOffset + relative - size * 0.5;
+        if (any(abs(particle.position - positionBeforeWrap) > 0.0001))
+            particle.generation += 1u;
     }
     else if (_ModuleType == 7) // Color / opacity over life
     {
@@ -202,6 +231,159 @@ void ApplyModule(uint id : SV_DispatchThreadID)
             particle.velocity += force * (falloff * _DeltaTime);
         }
     }
+    else if (_ModuleType == 11) // Clamp velocity magnitude
+    {
+        float maxSpeed = max(0.0, _Strength);
+        float speedSq = dot(particle.velocity, particle.velocity);
+        if (speedSq > maxSpeed * maxSpeed && speedSq > 0.0000001)
+            particle.velocity *= maxSpeed * rsqrt(speedSq);
+    }
+    _Particles[id] = particle;
+}
+
+float3 ClampVectorMagnitude(float3 value, float maximum)
+{
+    maximum = max(0.0, maximum);
+    float lengthSq = dot(value, value);
+    if (lengthSq > maximum * maximum && lengthSq > 0.0000001)
+        return value * (maximum * rsqrt(lengthSq));
+    return value;
+}
+
+float3 DirectionSteering(float3 direction, float3 currentVelocity, float maxSpeed, float maxForce)
+{
+    float lengthSq = dot(direction, direction);
+    if (lengthSq <= 0.0000001) return 0.0;
+    float3 desiredVelocity = direction * (maxSpeed * rsqrt(lengthSq));
+    return ClampVectorMagnitude(desiredVelocity - currentVelocity, maxForce);
+}
+
+[numthreads(256, 1, 1)]
+void ApplyBoids(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCapacity) return;
+    ParticleData particle = _Particles[id];
+    if (particle.alive == 0u) return;
+
+    float3 radii = max(abs(_BoidNeighborRadii), 0.0);
+    float maxRadius = max(radii.x, max(radii.y, radii.z));
+    float maxRadiusSq = maxRadius * maxRadius;
+    uint sampleCount = (uint)clamp(_BoidNeighborSamples, 1, 32);
+    uint candidateCount = _BoidNeighborSearchMode == 1 ? (uint)_ParticleCapacity : sampleCount;
+    float3 separation = 0.0;
+    float3 alignment = 0.0;
+    float3 cohesion = 0.0;
+    uint separationNeighbors = 0u;
+    uint alignmentNeighbors = 0u;
+    uint cohesionNeighbors = 0u;
+    uint state = Hash(particle.seed ^ (id * 747796405u) ^ (uint)_TimeValue);
+    float speedSq = dot(particle.velocity, particle.velocity);
+    float minViewDot = cos(radians(clamp(_BoidFieldOfView, 0.0, 360.0) * 0.5));
+    bool hasViewDirection = speedSq > 0.0000001 && _BoidFieldOfView < 359.999;
+
+    for (uint sample = 0u; sample < candidateCount; sample++)
+    {
+        uint neighborIndex;
+        if (_BoidNeighborSearchMode == 1)
+        {
+            neighborIndex = sample;
+        }
+        else
+        {
+            state = Hash(state + sample * 2891336453u);
+            neighborIndex = state % (uint)_ParticleCapacity;
+        }
+        if (neighborIndex == id) continue;
+        ParticleData neighbor = _BoidParticles[neighborIndex];
+        if (neighbor.alive == 0u) continue;
+        float3 delta = neighbor.position - particle.position;
+        float distanceSq = dot(delta, delta);
+        if (distanceSq < 0.0000001 || distanceSq > maxRadiusSq) continue;
+
+        float distance = sqrt(distanceSq);
+        bool inView = !hasViewDirection || dot(particle.velocity, delta) / sqrt(speedSq * distanceSq) >= minViewDot;
+        if (distance <= radii.x && (_BoidSeparationUsesFieldOfView == 0 || inView))
+        {
+            separation -= delta / distanceSq;
+            separationNeighbors++;
+        }
+        if (inView && distance <= radii.y)
+        {
+            alignment += neighbor.velocity;
+            alignmentNeighbors++;
+        }
+        if (inView && distance <= radii.z)
+        {
+            cohesion += delta;
+            cohesionNeighbors++;
+        }
+    }
+
+    if (separationNeighbors > 0u || alignmentNeighbors > 0u || cohesionNeighbors > 0u)
+    {
+        float maxSpeed = max(0.0, _BoidMaxSpeed);
+        float3 maxForces = max(_BoidMaxForces, 0.0);
+        float3 weights = max(_BoidWeights, 0.0);
+        float3 separationForce = 0.0;
+        float3 alignmentForce = 0.0;
+        float3 cohesionForce = 0.0;
+
+        if (separationNeighbors > 0u)
+            separationForce = DirectionSteering(
+                separation / separationNeighbors, particle.velocity, maxSpeed, maxForces.x);
+        if (alignmentNeighbors > 0u)
+        {
+            float3 averageVelocity = alignment / alignmentNeighbors;
+            float averageSpeedSq = dot(averageVelocity, averageVelocity);
+            float3 desiredVelocity = averageSpeedSq > 0.0000001
+                ? averageVelocity * (maxSpeed * rsqrt(averageSpeedSq))
+                : 0.0;
+            alignmentForce = ClampVectorMagnitude(desiredVelocity - particle.velocity, maxForces.y);
+        }
+        if (cohesionNeighbors > 0u)
+            cohesionForce = DirectionSteering(
+                cohesion / cohesionNeighbors, particle.velocity, maxSpeed, maxForces.z);
+
+        float3 acceleration = separationForce * weights.x +
+            alignmentForce * weights.y + cohesionForce * weights.z;
+        acceleration = ClampVectorMagnitude(acceleration, _BoidMaxAcceleration);
+        particle.velocity += acceleration * _DeltaTime;
+    }
+
+    particle.velocity = ClampVectorMagnitude(particle.velocity, _BoidMaxSpeed);
 
     _Particles[id] = particle;
+}
+
+[numthreads(256, 1, 1)]
+void CopyBoidSnapshot(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCapacity) return;
+    _BoidParticles[id] = _Particles[id];
+}
+
+[numthreads(256, 1, 1)]
+void InitializeTrails(uint id : SV_DispatchThreadID)
+{
+    uint total = (uint)(_ParticleCapacity * _TrailLength);
+    if (id >= total) return;
+    uint particleIndex = id / (uint)_TrailLength;
+    ParticleData particle = _Particles[particleIndex];
+    TrailSample sample;
+    sample.position = particle.position;
+    sample.seed = particle.generation;
+    _TrailSamples[id] = sample;
+}
+
+[numthreads(256, 1, 1)]
+void RecordTrails(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCapacity) return;
+    ParticleData particle = _Particles[id];
+    uint slot = (uint)_TrailFrameIndex % (uint)_TrailLength;
+    uint sampleIndex = id * (uint)_TrailLength + slot;
+    TrailSample sample;
+    sample.position = particle.position;
+    sample.seed = particle.generation;
+    _TrailSamples[sampleIndex] = sample;
 }
