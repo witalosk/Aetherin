@@ -44,6 +44,20 @@ namespace Aetherin
                                 UI.Field("Trail Length", () => p.TrailLength, value => p.TrailLength = value),
                                 UI.Field("Trail Width", () => p.TrailWidth, value => p.TrailWidth = value),
                                 UI.Field("Trail Tail Width", () => p.TrailTailWidth, value => p.TrailTailWidth = value))),
+                        UI.DynamicElementIf(
+                            () => p.RenderBackend == ParticleRenderBackend.Plexus,
+                            () => UI.Column(
+                                Param("Connection Distance", p.PlexusConnectionDistance),
+                                UI.Field("Max Connections", () => p.PlexusMaxConnections,
+                                    value => p.PlexusMaxConnections = value),
+                                UI.Field("Neighbor Search", () => p.PlexusNeighborSearch,
+                                    value => p.PlexusNeighborSearch = value),
+                                UI.DynamicElementIf(
+                                    () => p.PlexusNeighborSearch == BoidsNeighborSearchMode.Sampled,
+                                    () => UI.Field("Neighbor Samples", () => p.PlexusNeighborSamples,
+                                        value => p.PlexusNeighborSamples = value)),
+                                UI.Field("Line Width", () => p.PlexusLineWidth,
+                                    value => p.PlexusLineWidth = value))),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
                         Param("Opacity", p.Opacity),
                         UI.Field("Order", () => p.Order, value => p.Order = value))),

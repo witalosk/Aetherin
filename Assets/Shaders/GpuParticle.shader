@@ -136,10 +136,23 @@ Shader "Aetherin/GPU Particle"
             {
                 float2 p = input.uv * 2.0 - 1.0;
                 float alpha;
+                float radialDistance = length(p);
+                float edge = max(fwidth(radialDistance), 0.001);
                 if (_ParticleShape == 0)
                 {
                     alpha = saturate(1.0 - dot(p, p));
                     alpha *= alpha;
+                }
+                else if (_ParticleShape == 1)
+                {
+                    alpha = 1.0 - smoothstep(1.0 - edge, 1.0 + edge, radialDistance);
+                }
+                else if (_ParticleShape == 2)
+                {
+                    const float outlineCenter = 0.88;
+                    const float outlineHalfWidth = 0.12;
+                    alpha = 1.0 - smoothstep(outlineHalfWidth - edge, outlineHalfWidth + edge,
+                        abs(radialDistance - outlineCenter));
                 }
                 else
                 {
@@ -148,8 +161,8 @@ Shader "Aetherin/GPU Particle"
                     float angle = atan2(p.y, p.x) + HALF_PI;
                     float polygonDistance = cos(floor(0.5 + angle / sector) * sector - angle) * length(p);
                     float radius = cos(PI / sides);
-                    float edge = max(fwidth(polygonDistance), 0.001);
-                    alpha = 1.0 - smoothstep(radius - edge, radius + edge, polygonDistance);
+                    float polygonEdge = max(fwidth(polygonDistance), 0.001);
+                    alpha = 1.0 - smoothstep(radius - polygonEdge, radius + polygonEdge, polygonDistance);
                 }
                 half4 color = input.color;
                 color.a *= alpha;

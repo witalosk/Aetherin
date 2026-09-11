@@ -9,11 +9,14 @@ namespace Aetherin
         IndirectQuad,
         VfxGraph,
         Trail,
+        Plexus,
     }
 
     public enum ParticleRenderShape
     {
         Circle = 0,
+        SolidCircle = 1,
+        CircleOutline = 2,
         Triangle = 3,
         Square = 4,
         Pentagon = 5,
@@ -150,6 +153,11 @@ namespace Aetherin
         [Range(2, 64)] public int TrailLength = 12;
         [Min(0f)] public float TrailWidth = 1f;
         [Range(0f, 1f)] public float TrailTailWidth = 0.1f;
+        public FloatParameter PlexusConnectionDistance = new(2f);
+        [Range(1, 16)] public int PlexusMaxConnections = 4;
+        public BoidsNeighborSearchMode PlexusNeighborSearch = BoidsNeighborSearchMode.Sampled;
+        [Range(1, 32)] public int PlexusNeighborSamples = 16;
+        [Min(0f)] public float PlexusLineWidth = 0.02f;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
@@ -198,6 +206,10 @@ namespace Aetherin
             TrailLength = Mathf.Clamp(TrailLength, 2, 64);
             TrailWidth = Mathf.Max(0f, TrailWidth);
             TrailTailWidth = Mathf.Clamp01(TrailTailWidth);
+            PlexusConnectionDistance ??= new FloatParameter(2f);
+            PlexusMaxConnections = Mathf.Clamp(PlexusMaxConnections, 1, 16);
+            PlexusNeighborSamples = Mathf.Clamp(PlexusNeighborSamples, 1, 32);
+            PlexusLineWidth = Mathf.Max(0f, PlexusLineWidth);
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
             Scale ??= new Vector3Parameter(Vector3.one);

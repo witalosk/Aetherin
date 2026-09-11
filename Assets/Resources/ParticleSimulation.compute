@@ -4,6 +4,7 @@
 #pragma kernel RecordTrails
 #pragma kernel CopyBoidSnapshot
 #pragma kernel ApplyBoids
+#pragma kernel BuildPlexusEdges
 
 #include "../Shaders/Includes/AetherinCurlNoise.hlsl"
 
@@ -25,6 +26,14 @@ struct ParticleData
 
 RWStructuredBuffer<ParticleData> _Particles;
 RWStructuredBuffer<ParticleData> _BoidParticles;
+
+struct PlexusEdge
+{
+    uint startIndex;
+    uint endIndex;
+};
+
+AppendStructuredBuffer<PlexusEdge> _PlexusEdges;
 
 struct TrailSample
 {
@@ -56,6 +65,10 @@ float _BoidMaxSpeed;
 float _BoidMaxAcceleration;
 int _BoidNeighborSamples;
 int _BoidSeparationUsesFieldOfView;
+float _PlexusConnectionDistance;
+int _PlexusMaxConnections;
+int _PlexusNeighborSearchMode;
+int _PlexusNeighborSamples;
 float _OverLifeCurve[64];
 float3 _EmitterOffset;
 float3 _EmitterSize;
@@ -360,6 +373,49 @@ void CopyBoidSnapshot(uint id : SV_DispatchThreadID)
 {
     if (id >= (uint)_ParticleCapacity) return;
     _BoidParticles[id] = _Particles[id];
+}
+
+[numthreads(256, 1, 1)]
+void BuildPlexusEdges(uint id : SV_DispatchThreadID)
+{
+    if (id >= (uint)_ParticleCapacity) return;
+    ParticleData particle = _Particles[id];
+    if (particle.alive == 0u) return;
+
+    float distance = max(0.0001, _PlexusConnectionDistance);
+    float distanceSq = distance * distance;
+    uint candidateCount = _PlexusNeighborSearchMode == 1
+        ? (uint)_ParticleCapacity
+        : (uint)clamp(_PlexusNeighborSamples, 1, 32);
+    uint connections = 0u;
+    uint state = Hash(particle.seed ^ (id * 747796405u) ^ (uint)_TimeValue);
+
+    for (uint candidate = 0u; candidate < candidateCount && connections < (uint)_PlexusMaxConnections; candidate++)
+    {
+        uint neighborIndex;
+        if (_PlexusNeighborSearchMode == 1)
+        {
+            neighborIndex = candidate;
+            if (neighborIndex <= id) continue;
+        }
+        else
+        {
+            state = Hash(state + candidate * 2891336453u);
+            neighborIndex = state % (uint)_ParticleCapacity;
+            if (neighborIndex == id) continue;
+        }
+
+        ParticleData neighbor = _Particles[neighborIndex];
+        if (neighbor.alive == 0u) continue;
+        float3 delta = neighbor.position - particle.position;
+        if (dot(delta, delta) > distanceSq) continue;
+
+        PlexusEdge edge;
+        edge.startIndex = id;
+        edge.endIndex = neighborIndex;
+        _PlexusEdges.Append(edge);
+        connections++;
+    }
 }
 
 [numthreads(256, 1, 1)]

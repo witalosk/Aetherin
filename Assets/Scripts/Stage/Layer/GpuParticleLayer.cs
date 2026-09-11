@@ -63,6 +63,12 @@ namespace Aetherin
         private static readonly int BoidNeighborSamplesId = Shader.PropertyToID("_BoidNeighborSamples");
         private static readonly int BoidSeparationUsesFieldOfViewId =
             Shader.PropertyToID("_BoidSeparationUsesFieldOfView");
+        private static readonly int PlexusEdgesId = Shader.PropertyToID("_PlexusEdges");
+        private static readonly int PlexusConnectionDistanceId = Shader.PropertyToID("_PlexusConnectionDistance");
+        private static readonly int PlexusMaxConnectionsId = Shader.PropertyToID("_PlexusMaxConnections");
+        private static readonly int PlexusNeighborSearchModeId = Shader.PropertyToID("_PlexusNeighborSearchMode");
+        private static readonly int PlexusNeighborSamplesId = Shader.PropertyToID("_PlexusNeighborSamples");
+        private static readonly int PlexusLineWidthId = Shader.PropertyToID("_PlexusLineWidth");
 
         [SerializeField] private GpuParticleLayerParams _params = new();
         [SerializeField] private ComputeShader _simulationShader;
@@ -73,9 +79,12 @@ namespace Aetherin
         private GraphicsBuffer _trailSamples;
         private GraphicsBuffer _trailArgs;
         private GraphicsBuffer _boidParticles;
+        private GraphicsBuffer _plexusEdges;
+        private GraphicsBuffer _plexusArgs;
         private Mesh _quad;
         private Material _material;
         private Material _trailMaterial;
+        private Material _plexusMaterial;
         private ComputeShader _compute;
         private VisualEffect _visualEffect;
         private int _resetKernel;
@@ -84,10 +93,13 @@ namespace Aetherin
         private int _recordTrailsKernel;
         private int _copyBoidSnapshotKernel;
         private int _applyBoidsKernel;
+        private int _buildPlexusEdgesKernel;
         private int _allocatedCapacity;
         private int _trailAllocatedCapacity;
         private int _trailAllocatedLength;
         private int _trailFrameIndex;
+        private int _plexusAllocatedCapacity;
+        private int _plexusAllocatedMaxConnections;
         private bool _kernelsInitialized;
         private bool _renderEnabled = true;
         private double _lastEditorTime;
@@ -167,6 +179,15 @@ namespace Aetherin
             {
                 ReleaseTrailResources();
             }
+            if (_params.RenderBackend == ParticleRenderBackend.Plexus)
+            {
+                EnsurePlexusResources();
+                BuildPlexusEdges(context);
+            }
+            else
+            {
+                ReleasePlexusResources();
+            }
             ApplyRendering(context);
         }
 
@@ -185,6 +206,7 @@ namespace Aetherin
                 _recordTrailsKernel = _compute.FindKernel("RecordTrails");
                 _copyBoidSnapshotKernel = _compute.FindKernel("CopyBoidSnapshot");
                 _applyBoidsKernel = _compute.FindKernel("ApplyBoids");
+                _buildPlexusEdgesKernel = _compute.FindKernel("BuildPlexusEdges");
                 _kernelsInitialized = true;
             }
 
@@ -345,6 +367,8 @@ namespace Aetherin
                                _visualEffect != null && _visualEffect.visualEffectAsset != null;
             bool useTrail = _params.RenderBackend == ParticleRenderBackend.Trail &&
                             _trailSamples != null && _trailArgs != null && _trailMaterial != null;
+            bool usePlexus = _params.RenderBackend == ParticleRenderBackend.Plexus &&
+                             _plexusEdges != null && _plexusArgs != null && _plexusMaterial != null;
             if (_visualEffect != null) _visualEffect.enabled = _renderEnabled && useVfxGraph;
             if (!_renderEnabled) return;
 
@@ -369,6 +393,9 @@ namespace Aetherin
                 DrawTrails(layerMatrix, color, particleSize, opacity, scale, context);
                 return;
             }
+
+            if (usePlexus)
+                DrawPlexus(layerMatrix, color, opacity, scale, context);
 
             if (_quad == null || _args == null || _material == null) return;
 
@@ -425,6 +452,77 @@ namespace Aetherin
             _compute.SetInt(CapacityId, _allocatedCapacity);
             _compute.SetInt(TrailLengthId, length);
             _compute.Dispatch(_initializeTrailsKernel, Mathf.CeilToInt(_allocatedCapacity * length / (float)ThreadGroupSize), 1, 1);
+        }
+
+        private void EnsurePlexusResources()
+        {
+            if (_particles == null || _compute == null) return;
+            int maxConnections = Mathf.Clamp(_params.PlexusMaxConnections, 1, 16);
+            if (_plexusEdges != null && _plexusAllocatedCapacity == _allocatedCapacity &&
+                _plexusAllocatedMaxConnections == maxConnections)
+                return;
+
+            ReleasePlexusResources();
+            _plexusAllocatedCapacity = _allocatedCapacity;
+            _plexusAllocatedMaxConnections = maxConnections;
+            _plexusEdges = new GraphicsBuffer(GraphicsBuffer.Target.Append, _allocatedCapacity * maxConnections, 8)
+            {
+                name = $"{name} Plexus Edges"
+            };
+            _plexusArgs = new GraphicsBuffer(GraphicsBuffer.Target.IndirectArguments, 5, sizeof(uint))
+            {
+                name = $"{name} Plexus Args"
+            };
+            EnsureQuad();
+            _plexusArgs.SetData(new uint[] { _quad.GetIndexCount(0), 0, 0, 0, 0 });
+            Shader shader = Shader.Find("Aetherin/GPU Particle Plexus");
+            if (shader != null) _plexusMaterial = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+        }
+
+        private void BuildPlexusEdges(in ModulationContext context)
+        {
+            if (_plexusEdges == null || _plexusArgs == null) return;
+            _plexusEdges.SetCounterValue(0);
+            _compute.SetBuffer(_buildPlexusEdgesKernel, ParticlesId, _particles);
+            _compute.SetBuffer(_buildPlexusEdgesKernel, PlexusEdgesId, _plexusEdges);
+            _compute.SetInt(CapacityId, _allocatedCapacity);
+            _compute.SetFloat(PlexusConnectionDistanceId,
+                Mathf.Max(0f, _params.PlexusConnectionDistance?.Evaluate(context) ?? 2f));
+            _compute.SetInt(PlexusMaxConnectionsId, _plexusAllocatedMaxConnections);
+            _compute.SetInt(PlexusNeighborSearchModeId, (int)_params.PlexusNeighborSearch);
+            _compute.SetInt(PlexusNeighborSamplesId, Mathf.Clamp(_params.PlexusNeighborSamples, 1, 32));
+            _compute.SetFloat(TimeValueId, (float)context.Time);
+            _compute.Dispatch(_buildPlexusEdgesKernel, Groups, 1, 1);
+            GraphicsBuffer.CopyCount(_plexusEdges, _plexusArgs, sizeof(uint));
+        }
+
+        private void DrawPlexus(
+            Matrix4x4 layerMatrix,
+            in EvaluatedPaletteColor color,
+            float opacity,
+            Vector3 scale,
+            in ModulationContext context)
+        {
+            float connectionDistance = Mathf.Max(0f, _params.PlexusConnectionDistance?.Evaluate(context) ?? 2f);
+            _plexusMaterial.SetBuffer(ParticlesId, _particles);
+            _plexusMaterial.SetBuffer(PlexusEdgesId, _plexusEdges);
+            _plexusMaterial.SetMatrix(LayerMatrixId, layerMatrix);
+            _plexusMaterial.SetColor(ColorAId, color.ColorA);
+            _plexusMaterial.SetColor(ColorBId, color.ColorB);
+            _plexusMaterial.SetFloat(OpacityId, opacity);
+            _plexusMaterial.SetFloat(PlexusConnectionDistanceId, connectionDistance);
+            _plexusMaterial.SetFloat(PlexusLineWidthId, _params.PlexusLineWidth);
+            ApplyPaletteRandom(_plexusMaterial, color);
+            LayerMaterialUtility.ApplyBlendMode(_plexusMaterial, _params.BlendMode);
+
+            Vector3 extent = Vector3.Scale(_params.EmitterSize?.Evaluate(context) ?? Vector3.one,
+                new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z))) * 1.5f + Vector3.one * 4f;
+            Vector3 emitterOffset = _params.EmitterOffset?.Evaluate(context) ?? Vector3.zero;
+            var bounds = new Bounds(layerMatrix.MultiplyPoint3x4(emitterOffset), extent * 2f);
+#pragma warning disable 0618
+            Graphics.DrawMeshInstancedIndirect(_quad, 0, _plexusMaterial, bounds, _plexusArgs, 0, null,
+                ShadowCastingMode.Off, false, gameObject.layer);
+#pragma warning restore 0618
         }
 
         private void RecordTrails()
@@ -562,6 +660,7 @@ namespace Aetherin
         private void ReleaseBuffers()
         {
             ReleaseTrailResources();
+            ReleasePlexusResources();
             ReleaseBoidResources();
             _particles?.Release();
             _args?.Release();
@@ -574,6 +673,18 @@ namespace Aetherin
         {
             _boidParticles?.Release();
             _boidParticles = null;
+        }
+
+        private void ReleasePlexusResources()
+        {
+            _plexusEdges?.Release();
+            _plexusArgs?.Release();
+            DestroyResource(_plexusMaterial);
+            _plexusEdges = null;
+            _plexusArgs = null;
+            _plexusMaterial = null;
+            _plexusAllocatedCapacity = 0;
+            _plexusAllocatedMaxConnections = 0;
         }
 
         private void ReleaseTrailResources()
