@@ -28,6 +28,8 @@ namespace Aetherin
         private string _loadedFontStyle;
         private string _fontRequestKey;
         private bool _ownsFontAsset;
+        private string _resolvedText = string.Empty;
+        private float _smoothedFps;
 
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
@@ -79,6 +81,7 @@ namespace Aetherin
             _params ??= new TextLayerParams();
             _params.EnsureInitialized();
             _params.GetAvailableFontAssetKeys = _cameraStage != null ? _cameraStage.GetFontAssetKeys : null;
+            _params.GetAvailableTextManagerKeys = () => TextManager.Active?.Keys ?? Array.Empty<string>();
             var keys = _params.GetAvailableFontAssetKeys?.Invoke();
             if (string.IsNullOrWhiteSpace(_params.FontAssetKey) && keys != null && keys.Count > 0)
                 _params.FontAssetKey = keys[0];
@@ -98,6 +101,7 @@ namespace Aetherin
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 _audio, _beat, Application.isPlaying);
+            _resolvedText = ResolveText(context);
             EvaluateLayout(context);
             ApplyCharacterAnimators(context);
             ApplyTransform(context);
@@ -178,7 +182,7 @@ namespace Aetherin
         {
             if (_fontAsset == null) return;
             if (_ownsFontAsset) _fontAsset.hideFlags = HideFlags.HideAndDontSave;
-            _fontAsset.TryAddCharacters(_params.Text ?? string.Empty, out _);
+            _fontAsset.TryAddCharacters(_resolvedText ?? string.Empty, out _);
             _text.font = _fontAsset;
             _material = new Material(_fontAsset.material) { hideFlags = HideFlags.HideAndDontSave };
             _text.fontSharedMaterial = _material;
@@ -194,8 +198,8 @@ namespace Aetherin
             int hash = CalculateLayoutHash(fontSize, characterSpacing, wordSpacing, lineSpacing);
             if (hash == _layoutHash && _baseVertices != null) return;
 
-            _fontAsset.TryAddCharacters(_params.Text ?? string.Empty, out _);
-            _text.text = _params.Text ?? string.Empty;
+            _fontAsset.TryAddCharacters(_resolvedText ?? string.Empty, out _);
+            _text.text = _resolvedText ?? string.Empty;
             _text.fontSize = fontSize;
             _text.characterSpacing = characterSpacing;
             _text.wordSpacing = wordSpacing;
@@ -212,7 +216,7 @@ namespace Aetherin
         {
             unchecked
             {
-                int hash = _params.Text?.GetHashCode() ?? 0;
+                int hash = _resolvedText?.GetHashCode() ?? 0;
                 hash = hash * 31 + (_params.FontFamily?.GetHashCode() ?? 0);
                 hash = hash * 31 + (_params.FontStyle?.GetHashCode() ?? 0);
                 hash = hash * 31 + fontSize.GetHashCode();
@@ -221,6 +225,46 @@ namespace Aetherin
                 hash = hash * 31 + lineSpacing.GetHashCode();
                 hash = hash * 31 + (int)_params.Alignment;
                 return hash == 0 ? 1 : hash;
+            }
+        }
+
+        private string ResolveText(in ModulationContext context)
+        {
+            switch (_params.Source)
+            {
+                case TextSource.TextManager:
+                {
+                    IReadOnlyList<string> texts = TextManager.Active?.GetTexts(_params.TextManagerKey);
+                    if (texts == null || texts.Count == 0) return string.Empty;
+                    int index = _params.TextManagerIndex?.Evaluate(context) ?? 0;
+                    index = ((index % texts.Count) + texts.Count) % texts.Count;
+                    return texts[index] ?? string.Empty;
+                }
+                case TextSource.LocalClock:
+                    try { return DateTime.Now.ToString(_params.ClockFormat); }
+                    catch (FormatException) { return DateTime.Now.ToString("HH:mm:ss"); }
+                case TextSource.Timecode:
+                {
+                    double seconds = Math.Max(0d, context.Time);
+                    int decimals = Mathf.Clamp(_params.TimecodeDecimals, 0, 3);
+                    TimeSpan span = TimeSpan.FromSeconds(seconds);
+                    string baseText = $"{(int)span.TotalHours:00}:{span.Minutes:00}:{span.Seconds:00}";
+                    if (decimals == 0) return baseText;
+                    int fraction = (int)(span.Milliseconds / Math.Pow(10, 3 - decimals));
+                    return $"{baseText}.{fraction.ToString().PadLeft(decimals, '0')}";
+                }
+                case TextSource.BeatCounter:
+                    return _beat == null ? "-- BPM" : $"{_beat.Bpm:0.0} BPM  {_beat.BeatInBar + 1}/{Mathf.Max(1, _beat.BeatsPerBar)}";
+                case TextSource.InputVolume:
+                    return $"INPUT {Mathf.Clamp01(_audio?.InputVolume ?? 0f) * 100f:000}";
+                case TextSource.Fps:
+                {
+                    float instant = Time.unscaledDeltaTime > 0f ? 1f / Time.unscaledDeltaTime : 0f;
+                    _smoothedFps = _smoothedFps <= 0f ? instant : Mathf.Lerp(_smoothedFps, instant, 0.08f);
+                    return $"{_smoothedFps:0.0} FPS";
+                }
+                default:
+                    return _params.Text ?? string.Empty;
             }
         }
 
@@ -279,7 +323,7 @@ namespace Aetherin
                     float phase = animator.AnimationPhaseOffset?.Evaluate(baseContext) ?? 0f;
                     ModulationContext context = baseContext.WithAnimationPhaseOffset(phase * characterIndex);
                     float weight = TextSelectorUtility.Evaluate(
-                        animator.Selector, info, characterIndex, _params.Text, context);
+                        animator.Selector, info, characterIndex, _resolvedText, context);
                     if (Mathf.Approximately(weight, 0f)) continue;
 
                     Vector3 position = (animator.Position?.Evaluate(context) ?? Vector3.zero) * weight;

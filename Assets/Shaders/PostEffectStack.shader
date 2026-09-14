@@ -14,6 +14,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             #pragma vertex vert
             #pragma fragment frag
             #include "UnityCG.cginc"
+            #include "Includes/Pcg.hlsl"
 
             struct appdata { float4 vertex : POSITION; float2 uv : TEXCOORD0; };
             struct v2f { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; };
@@ -80,6 +81,15 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 float vertical = bottomLeft + 2.0 * bottom + bottomRight - topLeft - 2.0 * top - topRight;
                 return length(float2(horizontal, vertical));
             }
+            
+            float2 CurveUV(float2 uv, float bendAmount)
+            {
+                uv = uv * 2.0 - 1.0;
+                float2 offset = abs(uv.yx) / float2(bendAmount + 1, bendAmount + 1);
+                uv = uv + uv * offset * offset;
+                uv = uv * 0.5 + 0.5;
+                return uv;
+            }
 
             float4 frag(v2f i) : SV_Target
             {
@@ -92,24 +102,27 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float2 dir = uv - 0.5;
                     float2 offset = dir * _Amount;
                     fx = float4(tex2D(_MainTex, uv + offset).r, src.g, tex2D(_MainTex, uv - offset).b, src.a);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 1) // Previous frame blend
                 {
                     float2 drift = float2(cos(_TimeValue * _Speed), sin(_TimeValue * _Speed)) * _Amount;
-                    fx = lerp(src, tex2D(_HistoryTex, uv + drift), saturate(_Secondary));
+                    fx = lerp(src, tex2D(_HistoryTex, (((uv - 0.5) * 2.0) / _Scale * 0.5 + 0.5) + drift), saturate(_Secondary));
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 2) // Domain warp
                 {
                     float scale = max(0.01, abs(_Scale));
                     float2 q = float2(noise21(uv * scale + _TimeValue * _Speed),
                                       noise21(uv * scale + 17.3 - _TimeValue * _Speed));
-                    fx = tex2D(_MainTex, uv + (q - 0.5) * _Amount);
+                    fx = tex2D(_MainTex, uv + (q - 0.5) * _Amount * _Strength);
                 }
                 else if (_EffectType == 3) // Screen shake
                 {
                     float frame = floor(_TimeValue * max(1.0, abs(_Speed)) * 12.0);
                     float2 shake = float2(hash21(float2(frame, 1.2)), hash21(float2(frame, 8.7))) - 0.5;
                     fx = tex2D(_MainTex, uv + shake * _Amount);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 4) // Kaleidoscope
                 {
@@ -120,28 +133,40 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float wedge = 6.2831853 / sectors;
                     angle = abs(fmod(angle + wedge * 0.5, wedge) - wedge * 0.5);
                     fx = tex2D(_MainTex, 0.5 + radius * float2(cos(angle), sin(angle)));
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 5) // Pixelate
                 {
                     float pixels = max(2.0, abs(_Scale));
                     float2 aspect = float2(pixels, pixels * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
                     fx = tex2D(_MainTex, (floor(uv * aspect) + 0.5) / aspect);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 6) // Scanline / horizontal glitch
                 {
+                    float2 curvedUV = CurveUV(uv, _Value);
                     float scanWave = sin((uv.y * max(1.0, _Scale) + _TimeValue * _Speed) * 6.2831853);
                     float band = step(1.0 - saturate(_Secondary), hash21(float2(floor(uv.y * _Scale), floor(_TimeValue * _Speed * 8.0))));
-                    fx = tex2D(_MainTex, uv + float2(scanWave * _Amount * band, 0));
+                    fx = tex2D(_MainTex, curvedUV + float2(scanWave * _Amount * band, 0));
                     fx.rgb *= 1.0 - saturate(_Amount) * 0.5 * (scanWave * 0.5 + 0.5);
+                    float scanline = sin(curvedUV.y * 800.0) * 0.5 + 0.5;
+                    fx.rgb *= 1.0 - (scanline * 0.2);
+                    float2 vignetteUV = curvedUV * (1.0 - curvedUV.yx);
+                    float vignette = vignetteUV.x * vignetteUV.y * 15.0;
+                    vignette = saturate(pow(vignette, 1.0));
+                    fx.rgb *= vignette;
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 7) // Posterize
                 {
                     float levels = max(2.0, round(abs(_Scale)));
                     fx.rgb = floor(src.rgb * levels) / (levels - 1.0);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 8) // Invert
                 {
                     fx.rgb = 1.0 - src.rgb;
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 9) // Bloom
                 {
@@ -156,6 +181,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     bloom += bloomSample(uv + float2( offset.x, -offset.y));
                     bloom += bloomSample(uv + float2(-offset.x, -offset.y));
                     fx.rgb = src.rgb + bloom * (max(0.0, _Amount) / 16.0);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 10) // LED display
                 {
@@ -166,6 +192,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float dot = 1.0 - smoothstep(dotRadius * 0.82, dotRadius, length(cell));
                     float2 sampleUv = (floor(uv * grid) + 0.5) / grid;
                     fx = tex2D(_MainTex, sampleUv) * dot;
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 11) // Horizontal fold
                 {
@@ -174,23 +201,29 @@ Shader "Hidden/Aetherin/PostEffectStack"
                         (((_Amount > 0.25 && _Amount < 0.5) || _Amount > 0.75) && uv.y < 0.5) ? 1.0 - uv.y : uv.y
                     );
                     fx = tex2D(_MainTex, foldedUv);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 12) // Hash-selected invert blocks
                 {
-                    float cells = max(1.0, round(abs(_Scale)));
-                    float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
-                    float frame = floor(_TimeValue * max(0.0, abs(_Speed)));
-                    float selected = step(hash21(floor(uv * grid) + frame * 19.17), saturate(_Amount));
-                    fx.rgb = lerp(src.rgb, 1.0 - src.rgb, selected);
+                    int cells = (int)max(1.0, round(abs(_Scale * _Strength)));
+                    bool inverted = false;
+                    for (int i = 0; i < cells; ++i)
+                    {
+                        float2 center = Pcg2d01(uint2((uint)_Amount, (uint)i));
+                        float2 size = Pcg2d01(uint2((uint)_Amount + 999, (uint)i + 9999)) * 0.5;
+                        float2 min = center - size * 0.5;
+                        float2 max = center + size * 0.5;
+                        if (uv.x >= min.x && uv.x <= max.x && uv.y >= min.y && uv.y <= max.y)
+                        {
+                            inverted = inverted != true;
+                        }
+                    }
+                    fx = inverted ? float4(1.0 - src.rgb, src.a) : src;
                 }
                 else if (_EffectType == 13) // Grid
                 {
-                    float cells = max(1.0, abs(_Scale));
-                    float2 grid = float2(cells, cells * _MainTex_TexelSize.w / _MainTex_TexelSize.z);
-                    float2 l = abs(frac(uv * grid) - 0.5); 
-                    float width = lerp(0.002, 0.18, saturate(_Amount));
-                    float gridLine = step(0.5 - width, max(l.x, l.y)); 
-                    fx.rgb *= 1.0 - gridLine;
+                    float cells = floor(max(1.0, abs(_Scale * _Strength)));
+                    fx = tex2D(_MainTex, frac(uv * cells));
                 }
                 else if (_EffectType == 14) // Noise
                 {
@@ -198,6 +231,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float frame = floor(_TimeValue * max(0.0, abs(_Speed)) * 30.0);
                     float noise = hash21(floor(uv * grain) + frame * 7.31) * 2.0 - 1.0;
                     fx.rgb = saturate(src.rgb + noise * _Amount);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 15) // Block glitch
                 {
@@ -208,6 +242,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float active = step(1.0 - saturate(_Secondary), hash21(block + frame * 13.37));
                     float offset = (hash21(block + frame * 31.73) * 2.0 - 1.0) * _Amount * active;
                     fx = tex2D(_MainTex, uv + float2(offset, 0.0));
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 16) // HSV levels
                 {
@@ -220,6 +255,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     hsv.y = saturate(hsv.y * max(0.0, _Saturation));
                     hsv.z = saturate(hsv.z * max(0.0, _Value));
                     fx.rgb = hsvToRgb(hsv);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 17) // Shutter
                 {
@@ -240,6 +276,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                         openMask = 1.0 - step(0.75 * (1.0 - close), distanceFromCenter);
                     }
                     fx.rgb = src.rgb * openMask;
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 18) // Hand-drawn ink and hatching
                 {
@@ -270,6 +307,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float ink = saturate(max(edgeInk, hatchInk));
                     float3 sourceColor = tex2D(_MainTex, sketchUv).rgb;
                     fx = float4(sourceColor * (1.0 - ink), src.a);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 19) // Light leak
                 {
@@ -284,9 +322,10 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float leak = radialLeak * (0.65 + directionalLeak * 0.35) * max(0.0, _Amount);
                     float3 leakColor = lerp(float3(1.0, 0.18, 0.03), float3(1.0, 0.82, 0.32), radialLeak);
                     fx.rgb = 1.0 - (1.0 - src.rgb) * (1.0 - leakColor * leak);
+                    fx = lerp(src, fx, saturate(_Strength));
                 }
 
-                return lerp(src, fx, saturate(_Strength));
+                return fx;
             }
             ENDHLSL
         }

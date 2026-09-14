@@ -115,6 +115,7 @@ namespace Aetherin
                     yield return Param("Feedback", module.Secondary);
                     yield return Param("Drift", module.Amount);
                     yield return Param("Drift Speed", module.Speed);
+                    yield return Param("Zoom", module.Scale);
                     break;
                 case PostEffectType.DomainWarp:
                     yield return Param("Warp", module.Amount);
@@ -133,7 +134,8 @@ namespace Aetherin
                     yield return Param("Pixels", module.Scale);
                     break;
                 case PostEffectType.Scanline:
-                    yield return Param("Displacement", module.Amount);
+                    yield return Param("Bend", module.Value);
+                    yield return Param("Wave Displacement", module.Amount);
                     yield return Param("Lines", module.Scale);
                     yield return Param("Speed", module.Speed);
                     yield return Param("Glitch Chance", module.Secondary);
@@ -154,12 +156,10 @@ namespace Aetherin
                     yield return Param("Fold Amount", module.Amount);
                     break;
                 case PostEffectType.HashInvertBlocks:
-                    yield return Param("Coverage", module.Amount);
-                    yield return Param("Grid", module.Scale);
-                    yield return Param("Change Speed", module.Speed);
+                    yield return Param("Num", module.Scale);
+                    yield return Param("Seed", module.Amount);
                     break;
                 case PostEffectType.Grid:
-                    yield return Param("Line Width", module.Amount);
                     yield return Param("Cells", module.Scale);
                     break;
                 case PostEffectType.Noise:

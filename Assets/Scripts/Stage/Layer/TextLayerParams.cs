@@ -29,6 +29,17 @@ namespace Aetherin
         Arc,
     }
 
+    public enum TextSource
+    {
+        Manual,
+        TextManager,
+        LocalClock,
+        Timecode,
+        BeatCounter,
+        InputVolume,
+        Fps,
+    }
+
     [Serializable]
     public sealed class TextRangeSelectorParams
     {
@@ -77,7 +88,16 @@ namespace Aetherin
     {
         public bool ScreenSpace;
 
+        public TextSource Source;
         [TextArea] public string Text = "Aetherin";
+        [Tooltip("TextManagerに登録したテキストリストのキー")]
+        public string TextManagerKey = "default";
+        [Tooltip("TextManagerのリストから選ぶindex。Modulationで切り替えられます")]
+        public IntParameter TextManagerIndex = new(0);
+        [Tooltip("Local Clock用のDateTime書式")]
+        public string ClockFormat = "HH:mm:ss";
+        [Tooltip("Timecodeの小数秒桁数")]
+        [Range(0, 3)] public int TimecodeDecimals = 2;
         [Tooltip("CameraStageのFont Asset Libraryに登録したキー")]
         public string FontAssetKey;
         [Tooltip("OSにインストールされたフォントファミリー名")]
@@ -119,10 +139,14 @@ namespace Aetherin
         };
 
         [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableFontAssetKeys;
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableTextManagerKeys;
 
         public void EnsureInitialized()
         {
             Text ??= string.Empty;
+            TextManagerKey ??= string.Empty;
+            TextManagerIndex ??= new IntParameter(0);
+            ClockFormat ??= "HH:mm:ss";
             FontFamily ??= "Arial";
             FontStyle ??= "Regular";
             FontSize ??= new FloatParameter(1f);

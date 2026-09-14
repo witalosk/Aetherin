@@ -23,6 +23,17 @@ namespace Aetherin
                     }, value => p.FontAssetKey = fontAssetKeys[value], fontAssetKeys)
                 : UI.Field("Font Asset Key", () => p.FontAssetKey, value => p.FontAssetKey = value);
 
+            var textKeys = p.GetAvailableTextManagerKeys?.Invoke();
+            Element textKeySelector = textKeys != null && textKeys.Count > 0
+                ? UI.Dropdown("Text Key", () =>
+                    {
+                        int index = -1;
+                        for (int i = 0; i < textKeys.Count; i++)
+                            if (textKeys[i] == p.TextManagerKey) { index = i; break; }
+                        return index < 0 ? 0 : index;
+                    }, value => p.TextManagerKey = textKeys[value], textKeys)
+                : UI.Field("Text Key", () => p.TextManagerKey, value => p.TextManagerKey = value);
+
             var animatorListOption = new ListViewOption(
                     reorderable: true, fixedSize: false, header: true, suppressAutoIndent: true)
                 .OfType(p.Animators)
@@ -31,7 +42,15 @@ namespace Aetherin
             return UI.Column(
                 UI.Tabs(
                     ("Text", UI.Column(
-                        UI.Field("Text", () => p.Text, value => p.Text = value),
+                        UI.Field("Source", () => p.Source, value => p.Source = value),
+                        UI.DynamicElementIf(() => p.Source == TextSource.Manual,
+                            () => UI.Field("Text", () => p.Text, value => p.Text = value)),
+                        UI.DynamicElementIf(() => p.Source == TextSource.TextManager,
+                            () => UI.Column(textKeySelector, Param("Text Index", p.TextManagerIndex))),
+                        UI.DynamicElementIf(() => p.Source == TextSource.LocalClock,
+                            () => UI.Field("Clock Format", () => p.ClockFormat, value => p.ClockFormat = value)),
+                        UI.DynamicElementIf(() => p.Source == TextSource.Timecode,
+                            () => UI.Field("Decimals", () => p.TimecodeDecimals, value => p.TimecodeDecimals = value)),
                         fontSelector,
                         UI.DynamicElementIf(
                             () => string.IsNullOrWhiteSpace(p.FontAssetKey),
