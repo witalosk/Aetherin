@@ -32,6 +32,10 @@ namespace Aetherin
         [Tooltip("中心を見る姿勢を基準に、カメラのローカル軸で加える回転。Y ±90°で周回の接線方向、Y 180°で外側を向く")]
         public Vector3Parameter AimRotation = new(Vector3.zero);
         public Vector3Parameter OrbitRotation = new(Vector3.zero);
+        [Tooltip("Follow時に追尾する、同じCameraStage内のLayer ID")]
+        public string FollowTargetLayerId;
+        [Tooltip("Follow対象Layerからの相対Transformパス。空ならLayer自身")]
+        public string FollowTargetPath;
         public FloatParameter FieldOfView = new(60f);
         public FloatParameter Speed = new(1f);
         public FloatParameter Radius = new(5f);
@@ -184,6 +188,12 @@ namespace Aetherin
                     position = lookAt + position + orbitOffset;
                     break;
                 case CameraWorkType.Follow:
+                    Transform followTarget = ResolveLayerTarget(recipe.FollowTargetLayerId, recipe.FollowTargetPath);
+                    if (followTarget != null)
+                    {
+                        position = transform.InverseTransformPoint(followTarget.TransformPoint(position));
+                        lookAt = transform.InverseTransformPoint(followTarget.TransformPoint(lookAt));
+                    }
                     if (!_followInitialized)
                     {
                         _followPosition = position;

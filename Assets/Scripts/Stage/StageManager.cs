@@ -161,6 +161,7 @@ namespace Aetherin
                     continue;
                 }
                 template.EnsureStageId();
+                if (template is CameraStage cameraTemplate) cameraTemplate.EnsureLayerIds();
                 StageBase current = CloneStage(template, StageDeck.Current, _currentSlotOffset, template.name);
                 StageBase next = CloneStage(template, StageDeck.Next, _nextSlotOffset, template.name);
                 if (current is CameraStage currentCamera) currentCamera.ConfigureCinemachineChannel(i * 2);
@@ -424,21 +425,25 @@ namespace Aetherin
         private void UpdateStageSelect()
         {
             int count = Mathf.Min(_stages.Count, _params.StageSelectButtons.Count);
+            if (count == 0) return;
 
             for (int i = 0; i < count; i++)
             {
                 var button = _params.StageSelectButtons[i];
-                if (button.WasNoteOn && _params.NextStageIndex != i)
+                if (button.WasNoteOn)
                 {
-                    _params.NextStageIndex = i;
+                    int selectedPadIndex = _params.NextStageIndex % count;
+                    _params.NextStageIndex = selectedPadIndex == i
+                        ? (_params.NextStageIndex + count) % _stages.Count
+                        : i;
                     // MIDI選択とStage編集UIの選択対象を常に一致させる。
-                    _selectedStageUiIndex = i;
+                    _selectedStageUiIndex = _params.NextStageIndex;
                     _deckRevision++;
                 }
 
                 var ledColor = StageLedColor * 0.15f;
-                if (i == _params.NextStageIndex) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
-                else if (i == _params.CurrentStageIndex) ledColor = StageLedColor;
+                if (i == _params.NextStageIndex % count) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
+                else if (i == _params.CurrentStageIndex % count) ledColor = StageLedColor;
                 button.SetLed(ledColor);
             }
         }
@@ -1010,8 +1015,10 @@ namespace Aetherin
                 UI.Button("Delete", () => RemoveCameraWork(stage, deckIndex, recipeIndex, recipe)));
         }
 
-        private static IEnumerable<Element> CreateCameraWorkParameterFields(CameraWorkRecipe recipe)
+        private static IEnumerable<Element> CreateCameraWorkParameterFields(CameraStage stage, CameraWorkRecipe recipe)
         {
+            if (recipe.Type == CameraWorkType.Follow)
+                yield return CreateFollowTargetField(stage, recipe);
             yield return UI.Field("Position", Binder.Create(recipe.Position, typeof(Vector3Parameter)));
             yield return UI.Field("Look At", Binder.Create(recipe.LookAt, typeof(Vector3Parameter)));
             yield return UI.Field("Aim Rotation", Binder.Create(recipe.AimRotation, typeof(Vector3Parameter)));
@@ -1024,6 +1031,86 @@ namespace Aetherin
                 yield return UI.Field("Radius", Binder.Create(recipe.Radius, typeof(FloatParameter)));
             if (recipe.Type == CameraWorkType.Handheld)
                 yield return UI.Field("Noise Amount", Binder.Create(recipe.NoiseAmount, typeof(FloatParameter)));
+        }
+
+        private static Element CreateFollowTargetField(CameraStage stage, CameraWorkRecipe recipe)
+        {
+            List<CameraFollowTargetOption> options = BuildCameraFollowTargetOptions(stage);
+            int selectedIndex = options.FindIndex(option =>
+                option.LayerId == recipe.FollowTargetLayerId && option.ObjectPath == recipe.FollowTargetPath);
+            if (selectedIndex < 0 && !string.IsNullOrEmpty(recipe.FollowTargetLayerId))
+            {
+                options.Add(new CameraFollowTargetOption(
+                    recipe.FollowTargetLayerId,
+                    recipe.FollowTargetPath,
+                    $"Missing: {recipe.FollowTargetLayerId}/{recipe.FollowTargetPath}"));
+                selectedIndex = options.Count - 1;
+            }
+
+            string[] labels = options.Select(option => option.Label).ToArray();
+            return UI.Dropdown("Follow Target",
+                () => Mathf.Clamp(selectedIndex, 0, options.Count - 1),
+                value =>
+                {
+                    int index = Mathf.Clamp(value, 0, options.Count - 1);
+                    recipe.FollowTargetLayerId = options[index].LayerId;
+                    recipe.FollowTargetPath = options[index].ObjectPath;
+                    selectedIndex = index;
+                },
+                labels);
+        }
+
+        private static List<CameraFollowTargetOption> BuildCameraFollowTargetOptions(CameraStage stage)
+        {
+            var options = new List<CameraFollowTargetOption>
+            {
+                new(string.Empty, string.Empty, "None (use stage coordinates)")
+            };
+            if (stage == null) return options;
+
+            StageLayer[] layers = stage.GetComponentsInChildren<StageLayer>(true)
+                .Where(layer => layer != null && layer.gameObject.activeSelf)
+                .OrderBy(layer => GetRelativeTransformPath(stage.transform, layer.transform))
+                .ToArray();
+            foreach (StageLayer layer in layers)
+            {
+                string layerPath = GetRelativeTransformPath(stage.transform, layer.transform);
+                foreach (Transform target in layer.GetComponentsInChildren<Transform>(true))
+                {
+                    if (target.GetComponentInParent<StageLayer>() != layer) continue;
+                    string objectPath = GetRelativeTransformPath(layer.transform, target);
+                    string label = string.IsNullOrEmpty(objectPath) ? layerPath : $"{layerPath} / {objectPath}";
+                    options.Add(new CameraFollowTargetOption(layer.LayerId, objectPath, label));
+                }
+            }
+            return options;
+        }
+
+        private static string GetRelativeTransformPath(Transform root, Transform target)
+        {
+            if (root == null || target == null || target == root) return string.Empty;
+            var names = new Stack<string>();
+            Transform current = target;
+            while (current != null && current != root)
+            {
+                names.Push(current.name);
+                current = current.parent;
+            }
+            return current == root ? string.Join("/", names) : target.name;
+        }
+
+        private sealed class CameraFollowTargetOption
+        {
+            public readonly string LayerId;
+            public readonly string ObjectPath;
+            public readonly string Label;
+
+            public CameraFollowTargetOption(string layerId, string objectPath, string label)
+            {
+                LayerId = layerId;
+                ObjectPath = objectPath;
+                Label = label;
+            }
         }
 
         private Element CreateLayerListElement(int stageIndex)
@@ -1200,7 +1287,7 @@ namespace Aetherin
                 UI.Field("Type", () => recipe.Type, value => recipe.Type = value),
                 UI.DynamicElementOnStatusChanged(
                     () => recipe.Type,
-                    _ => UI.Column(CreateCameraWorkParameterFields(recipe)))
+                    _ => UI.Column(CreateCameraWorkParameterFields(_inspectedCameraWorkStage, recipe)))
             );
         }
 

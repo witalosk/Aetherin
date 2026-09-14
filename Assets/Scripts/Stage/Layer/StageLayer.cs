@@ -78,9 +78,18 @@ namespace Aetherin
     /// </summary>
     public abstract class StageLayer : MonoBehaviour, IStageLayer, ISaveTarget
     {
+        [SerializeField, HideInInspector] private string _layerId;
         private bool _elapsedTimeActive;
         private double _elapsedTimeStart;
         public abstract IParams Params { get; }
+        public string LayerId
+        {
+            get
+            {
+                EnsureLayerId();
+                return _layerId;
+            }
+        }
         public bool Visible
         {
             get => LayerParams.Visible;
@@ -107,6 +116,16 @@ namespace Aetherin
         /// <summary>通常Rendererを持たないGPU/VFXレイヤーではnullでよい。</summary>
         protected virtual Renderer LayerRenderer => null;
 
+        public void EnsureLayerId()
+        {
+            if (string.IsNullOrEmpty(_layerId)) _layerId = Guid.NewGuid().ToString("N");
+        }
+
+        internal void SetLayerId(string layerId)
+        {
+            _layerId = string.IsNullOrEmpty(layerId) ? Guid.NewGuid().ToString("N") : layerId;
+        }
+
         protected virtual void LateUpdate()
         {
             ApplyLayerState();
@@ -114,6 +133,7 @@ namespace Aetherin
 
         protected virtual void OnValidate()
         {
+            EnsureLayerId();
             ApplyLayerState();
         }
 

@@ -184,12 +184,33 @@ namespace Aetherin
         /// <summary>子にあるレイヤーを、非アクティブなものも含めて描画順に収集する。</summary>
         public void RefreshLayers()
         {
+            EnsureLayerIds();
             _layers = GetComponentsInChildren<StageLayer>(true)
                 .Where(layer => layer != null && layer.gameObject.activeSelf && layer.transform.parent == transform)
                 .ToArray();
             Array.Sort(_layers, (a, b) => a.Order.CompareTo(b.Order));
             _layersInitialized = true;
             LayerRevision++;
+        }
+
+        public void EnsureLayerIds()
+        {
+            foreach (StageLayer layer in GetComponentsInChildren<StageLayer>(true))
+                if (layer != null && layer.gameObject.activeSelf) layer.EnsureLayerId();
+        }
+
+        public StageLayer ResolveLayer(string layerId)
+        {
+            if (string.IsNullOrEmpty(layerId)) return null;
+            return GetComponentsInChildren<StageLayer>(true)
+                .FirstOrDefault(layer => layer != null && layer.gameObject.activeSelf && layer.LayerId == layerId);
+        }
+
+        public Transform ResolveLayerTarget(string layerId, string objectPath)
+        {
+            StageLayer layer = ResolveLayer(layerId);
+            if (layer == null) return null;
+            return string.IsNullOrEmpty(objectPath) ? layer.transform : layer.transform.Find(objectPath);
         }
 
         private void EnsureLayersInitialized()
@@ -476,7 +497,17 @@ namespace Aetherin
         public CameraStageLayerSaveData CopyLayer(StageLayer layer)
         {
             if (layer == null || layer.GetComponentInParent<CameraStage>() != this) return null;
-            return JsonUtility.FromJson<CameraStageLayerSaveData>(JsonUtility.ToJson(CaptureLayer(layer)));
+            CameraStageLayerSaveData copy = JsonUtility.FromJson<CameraStageLayerSaveData>(JsonUtility.ToJson(CaptureLayer(layer)));
+            ClearLayerIds(copy);
+            return copy;
+        }
+
+        private static void ClearLayerIds(CameraStageLayerSaveData layer)
+        {
+            if (layer == null) return;
+            layer.LayerId = null;
+            foreach (CameraStageLayerSaveData child in layer.Children ?? new List<CameraStageLayerSaveData>())
+                ClearLayerIds(child);
         }
 
         public StageLayer PasteLayer(CameraStageLayerSaveData clipboard, Transform parent, int orderAfter)
@@ -496,6 +527,7 @@ namespace Aetherin
 
         private static CameraStageLayerSaveData CaptureLayer(StageLayer layer) => new()
         {
+            LayerId = layer.LayerId,
             Type = layer switch
             {
                 ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", SpriteSheetLayer => "sprite-sheet", LightLayer => "light",
@@ -550,6 +582,7 @@ namespace Aetherin
                     RuntimeShaderLayer => "Runtime Shader Layer", GroupLayer => "Group Layer",
                     _ => "Layer",
                 };
+            layer.SetLayerId(savedLayer.LayerId);
             layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;
             if (!string.IsNullOrEmpty(savedLayer.ParamsJson)) JsonUtility.FromJsonOverwrite(savedLayer.ParamsJson, layer.Params);
             if (layer is GroupLayer)
@@ -567,6 +600,7 @@ namespace Aetherin
     [Serializable]
     public sealed class CameraStageLayerSaveData
     {
+        public string LayerId;
         public string Type;
         public string Name;
         public string ParamsJson;
