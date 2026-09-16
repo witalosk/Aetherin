@@ -433,8 +433,9 @@ namespace Aetherin
                 if (button.WasNoteOn)
                 {
                     int selectedPadIndex = _params.NextStageIndex % count;
+                    int nextStageIndex = _params.NextStageIndex + count;
                     _params.NextStageIndex = selectedPadIndex == i
-                        ? (_params.NextStageIndex + count) % _stages.Count
+                        ? nextStageIndex < _stages.Count ? nextStageIndex : i
                         : i;
                     // MIDI選択とStage編集UIの選択対象を常に一致させる。
                     _selectedStageUiIndex = _params.NextStageIndex;

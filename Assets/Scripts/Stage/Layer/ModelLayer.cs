@@ -227,7 +227,7 @@ namespace Aetherin
                 SkinnedMeshRenderer skinned => skinned.sharedMesh,
                 _ => null,
             };
-            if (sourceMesh == null || _wireShader == null) return;
+            if (sourceMesh == null || !sourceMesh.isReadable || _wireShader == null) return;
 
             var wireObject = new GameObject($"{sourceRenderer.name} Wire");
             wireObject.transform.SetParent(sourceRenderer.transform, false);
@@ -397,11 +397,6 @@ namespace Aetherin
             _wireMeshes.Clear();
             _surfaceRenderers.Clear();
             _wireRenderers.Clear();
-        }
-
-        private void OnDisable()
-        {
-            if (Application.isPlaying) ClearModel();
         }
 
         private void OnDestroy() => ClearModel();

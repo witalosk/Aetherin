@@ -2257,6 +2257,8 @@ MonoBehaviour:
     FontAsset: {fileID: 11400000, guid: 1900fa20b652fa546a404bc51be1dcb2, type: 2}
   - Key: NotoSerif
     FontAsset: {fileID: 11400000, guid: 8274bf08699cf7c45aaac21e4684a23d, type: 2}
+  - Key: BeHance
+    FontAsset: {fileID: 11400000, guid: b053dc8ef5aecb44eb326c29016da4f5, type: 2}
 --- !u!4 &2093487958
 Transform:
   m_ObjectHideFlags: 0
