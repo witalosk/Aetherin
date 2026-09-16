@@ -1331,12 +1331,17 @@ namespace Aetherin
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(16f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(16f)
             );
-            return UI.Popup(header, () => new[]
+            return UI.Popup(header, () =>
             {
-                new MenuItem("Copy", () => _layerClipboard = stage.CopyLayer(layer)),
-                new MenuItem("Paste", () => PasteLayer(stage, layer)) { isEnable = _layerClipboard != null },
-                new MenuItem("Delete", () => RemoveLayer(stage, layer)),
-                insideGroup ? new MenuItem("Out", () => stage.MoveLayerOutOfGroup(layer)) : null
+                var menuItems = new List<IMenuItem>
+                {
+                    new MenuItem("Copy", () => _layerClipboard = stage.CopyLayer(layer)),
+                    new MenuItem("Paste", () => PasteLayer(stage, layer)) { isEnable = _layerClipboard != null },
+                    new MenuItem("Delete", () => RemoveLayer(stage, layer)),
+                };
+                if (insideGroup)
+                    menuItems.Add(new MenuItem("Out", () => stage.MoveLayerOutOfGroup(layer)));
+                return menuItems;
             });
         }
 

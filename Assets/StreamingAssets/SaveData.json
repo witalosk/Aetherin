@@ -675,7 +675,7 @@
         "StageTimeSpeedCcMax": 8.0,
         "UiRowNum": 8,
         "CurrentStageIndex": 7,
-        "NextStageIndex": 9,
+        "NextStageIndex": 8,
         "NextStageOffset": {
           "x": 0.0,
           "y": 0.0,
@@ -7709,14 +7709,14 @@
             "StageName": "Cellmarching",
             "RuntimeCreated": true,
             "StageIndex": 9,
-            "BackgroundMode": 0,
+            "BackgroundMode": 1,
             "BackgroundColor": 0,
             "Layers": [
               {
                 "LayerId": "3ff423c571634e188ac24c3cc20983e6",
                 "Type": "runtime-shader",
                 "Name": "Cellmarching Copy",
-                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":2,\"ScreenSpace\":true,\"PixelPerUnit\":125.0,\"ProvidePreviousFrameTexture\":false,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":10.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":20.0,\"y\":20.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"UserFloat0\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat1\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat2\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat3\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserVector0\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"UserVector1\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ShaderCode\":\"cbuffer AetherinGlobals : register(b0)\\r\\n{\\r\\n    float4 _Time;       // time, deltaTime, sin(time), cos(time)\\r\\n    float4 _Frame;      // frame, timeScale, unscaledTime, unscaledDeltaTime\\r\\n    float4 _Resolution; // width, height, 1/width, 1/height\\r\\n    float4 _Audio;      // volume, kick, snare/clap, audio trigger\\r\\n    float4 _Beat;       // phase, count, beat in bar, beat trigger\\r\\n    float4 _Bar;        // phase, count, beats per bar, bar trigger\\r\\n    float4 _BackgroundColor1;\\r\\n    float4 _BackgroundColor2;\\r\\n    float4 _AccentColor1;\\r\\n    float4 _AccentColor2;\\r\\n    float4 _SubAccentColor1;\\r\\n    float4 _SubAccentColor2;\\r\\n    float4 _UserFloat;  // UserFloat 0..3\\r\\n    float4 _UserVector0;\\r\\n    float4 _UserVector1;\\r\\n};\\r\\n\\r\\nTexture2D _WaveformTexture : register(t0);\\nTexture2D _SpectrumTexture : register(t1);\\nTexture2D _PreviousFrameTexture : register(t2);\\nSamplerState _WaveformTextureSampler : register(s0);\\nSamplerState _SpectrumTextureSampler : register(s1);\\nSamplerState _PreviousFrameTextureSampler : register(s2);\\n\\nfloat2 Rotate(float2 p, float angle)\\r\\n{\\r\\n    float c = cos(angle);\\r\\n    float s = sin(angle);\\r\\n    return float2(c * p.x - s * p.y, s * p.x + c * p.y);\\r\\n}\\r\\n\\r\\nfloat3 Mod(float3 x, float y)\\r\\n{\\r\\n    return x - y * floor(x / y);\\r\\n}\\r\\n\\r\\nfloat SdOctahedron(float3 p, float s)\\r\\n{\\r\\n    p = abs(p);\\r\\n    return (p.x + p.y + p.z - s) * 0.57735027;\\r\\n}\\r\\n\\r\\nfloat SdBox(float3 p, float3 b)\\r\\n{\\r\\n    float3 q = abs(p) - b;\\r\\n    return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0);\\r\\n}\\r\\n\\r\\nfloat MainDist(float3 p, float time, float loopIndex)\\r\\n{\\r\\n    p.xy = Rotate(p.xy, p.z * 0.3);\\r\\n    p.z += time;\\r\\n\\r\\n    float3 grid = Mod(p, 2.0) - 1.0;\\r\\n\\r\\n    time += p.z * 0.025;\\r\\n    float t = _Beat.x * 0.5 + pow(frac(_Beat.x * 0.5), 0.8);\\r\\n\\r\\n    float octa = SdOctahedron(\\r\\n        grid,\\r\\n        sin(time * 0.1 + loopIndex * 0.5) + 1.5\\r\\n    );\\r\\n\\r\\n    float sphere = length(grid) - 0.5 * (1.0 - fmod(t, 1.0));\\r\\n    float octaSphere = min(octa, sphere);\\r\\n\\r\\n    return min(\\r\\n        min(\\r\\n            min(\\r\\n                octaSphere,\\r\\n                SdBox(grid, float3(0.01, 0.01, 1.0))\\r\\n            ),\\r\\n            SdBox(grid, float3(1.0, 0.01, 0.01))\\r\\n        ),\\r\\n        SdBox(grid, float3(0.01, 1.0, 0.01))\\r\\n    );\\r\\n}\\r\\n\\r\\n// ピクセルシェーダー\\r\\nfloat4 Frag(VsOutput input) : SV_TARGET\\r\\n{\\r\\n    float time = _Time.x;\\r\\n    float3 col = 0.0;\\r\\n\\r\\n    // UVからアスペクト比補正座標を算出\\r\\n    float2 p = input.uv * 2.0 - 1.0;\\r\\n    p.y *= _Resolution.y / _Resolution.x;\\r\\n\\r\\n    float radius = 0.5;\\r\\n    float phi = time * 0.2;\\r\\n\\r\\n    float3 ro = float3(cos(phi) * radius, 0.0, sin(phi) * radius);\\r\\n    float3 target = float3(0.0, 0.0, 0.0);\\r\\n    float3 camdir = normalize(target - ro);\\r\\n    float3 side = cross(camdir, float3(0.0, 1.0, 0.0));\\r\\n    float3 up = cross(side, camdir);\\r\\n    float fov = 0.4;\\r\\n\\r\\n    float3 rdir = normalize(p.x * side + p.y * up + camdir * fov);\\r\\n\\r\\n    float sum = 0.0;\\r\\n    float3 cpos = ro;\\r\\n\\r\\n    [loop]\\r\\n    for (int i = 0; i < 30; i++)\\r\\n    {\\r\\n        float d = MainDist(cpos, time, (float)i);\\r\\n        sum += abs(d);\\r\\n\\r\\n        float stepsize = max(0.04, d) + abs(cpos.y) * 0.01;\\r\\n\\r\\n        [unroll]\\r\\n        for (int j = 0; j < 10; j++)\\r\\n        {\\r\\n            float dir = (j % 2) != 0 ? 1.0 : -1.0;\\r\\n            float3 phase =\\r\\n                float3(0.2, 1.5, 2.5) +\\r\\n                (float3(time * dir, time * dir, time * 3.0) + cpos) * j;\\r\\n\\r\\n            col += exp(1.0 - sum * 0.2) / stepsize *\\r\\n                (cos(phase) + 0.5);\\r\\n        }\\r\\n\\r\\n        col += clamp(0.2 / abs(d), 0.0, 150.0);\\r\\n        cpos += rdir * stepsize;\\r\\n    }\\r\\n\\r\\n    col = pow(col / 4000.0, 1.8);\\r\\n    col *= float3(0.8, 0.9, 1.1);\\r\\n\\r\\n    // --- Background Color の適用 ---\\r\\n    // Y座標に基づいて _BackgroundColor1（上部）と _BackgroundColor2（下部）を補間\\r\\n    float3 bgColor = lerp(_BackgroundColor2.rgb, _BackgroundColor1.rgb, input.uv.y);\\r\\n\\r\\n    // 発光オブジェクト（col）を背景色に加算合成\\r\\n    float3 finalColor = bgColor + col;\\r\\n\\r\\n    return float4(finalColor, 1.0);\\r\\n}\"}",
+                "ParamsJson": "{\"Visible\":true,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":2,\"ScreenSpace\":true,\"PixelPerUnit\":10.0,\"ProvidePreviousFrameTexture\":false,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":9.949999809265137},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":80.0,\"y\":80.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"UserFloat0\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat1\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat2\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat3\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserVector0\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"UserVector1\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ShaderCode\":\"cbuffer AetherinGlobals : register(b0)\\r\\n{\\r\\n    float4 _Time;\\r\\n    float4 _Frame;\\r\\n    float4 _Resolution;\\r\\n    float4 _Audio;\\r\\n    float4 _Beat;\\r\\n    float4 _Bar;\\r\\n\\r\\n    float4 _BackgroundColor1;\\r\\n    float4 _BackgroundColor2;\\r\\n    float4 _AccentColor1;\\r\\n    float4 _AccentColor2;\\r\\n    float4 _SubAccentColor1;\\r\\n    float4 _SubAccentColor2;\\r\\n\\r\\n    float4 _UserFloat;\\r\\n    float4 _UserVector0;\\r\\n    float4 _UserVector1;\\r\\n\\r\\n    // Unityワールド座標でのカメラ位置\\r\\n    float4 _CameraPositionWS;\\r\\n\\r\\n    // Quadローカル座標 → Unityワールド座標\\r\\n    column_major float4x4 _QuadLocalToWorld;\\r\\n\\r\\n    // Unityワールド座標 → CameraStageローカル座標\\r\\n    // この空間をレイマーチングのワールド空間として使用する\\r\\n    column_major float4x4 _QuadWorldToLocal;\\r\\n};\\r\\n\\r\\nTexture2D _WaveformTexture : register(t0);\\r\\nTexture2D _SpectrumTexture : register(t1);\\r\\nTexture2D _PreviousFrameTexture : register(t2);\\r\\n\\r\\nSamplerState _WaveformTextureSampler : register(s0);\\r\\nSamplerState _SpectrumTextureSampler : register(s1);\\r\\nSamplerState _PreviousFrameTextureSampler : register(s2);\\r\\n\\r\\nfloat2 Rotate(float2 p, float angle)\\r\\n{\\r\\n    float c = cos(angle);\\r\\n    float s = sin(angle);\\r\\n\\r\\n    return float2(\\r\\n        c * p.x - s * p.y,\\r\\n        s * p.x + c * p.y\\r\\n    );\\r\\n}\\r\\n\\r\\nfloat3 Mod(float3 x, float y)\\r\\n{\\r\\n    return x - y * floor(x / y);\\r\\n}\\r\\n\\r\\nfloat SdOctahedron(float3 p, float s)\\r\\n{\\r\\n    p = abs(p);\\r\\n    return (p.x + p.y + p.z - s) * 0.57735027;\\r\\n}\\r\\n\\r\\nfloat SdBox(float3 p, float3 b)\\r\\n{\\r\\n    float3 q = abs(p) - b;\\r\\n\\r\\n    return length(max(q, 0.0))\\r\\n        + min(max(q.x, max(q.y, q.z)), 0.0);\\r\\n}\\r\\n\\r\\nfloat MainDist(float3 p, float time, float loopIndex)\\r\\n{\\r\\n    p.xy = Rotate(p.xy, p.z * 0.3);\\r\\n    p.z += time;\\r\\n\\r\\n    float3 grid = Mod(p, 2.0) - 1.0;\\r\\n\\r\\n    time += p.z * 0.025;\\r\\n\\r\\n    float t =\\r\\n        _Beat.x * 0.5\\r\\n        + pow(frac(_Beat.x * 0.5), 0.8);\\r\\n\\r\\n    float octa = SdOctahedron(\\r\\n        grid,\\r\\n        sin(time * 0.1 + loopIndex * 0.5) + 1.5\\r\\n    );\\r\\n\\r\\n    float sphere =\\r\\n        length(grid)\\r\\n        - 0.5 * (1.0 - fmod(t, 1.0));\\r\\n\\r\\n    float octaSphere = min(octa, sphere);\\r\\n\\r\\n    return min(\\r\\n        min(\\r\\n            min(\\r\\n                octaSphere,\\r\\n                SdBox(grid, float3(0.01, 0.01, 1.0))\\r\\n            ),\\r\\n            SdBox(grid, float3(1.0, 0.01, 0.01))\\r\\n        ),\\r\\n        SdBox(grid, float3(0.01, 1.0, 0.01))\\r\\n    );\\r\\n}\\r\\n\\r\\nfloat4 Frag(VsOutput input) : SV_TARGET\\r\\n{\\r\\n    float time = _Time.x;\\r\\n\\r\\n    /*\\r\\n     * Quadはローカル座標で\\r\\n     * X: -0.5 ～ 0.5\\r\\n     * Y: -0.5 ～ 0.5\\r\\n     *\\r\\n     * なのでUVからQuad上のローカル位置を復元する。\\r\\n     */\\r\\n    float3 quadPositionLS = float3(\\r\\n        input.uv.x - 0.5,\\r\\n        input.uv.y - 0.5,\\r\\n        0.0\\r\\n    );\\r\\n\\r\\n    /*\\r\\n     * Quad上のピクセル位置をUnityワールド座標へ変換。\\r\\n     *\\r\\n     * QuadのPosition、Rotation、Scale、Sizeが\\r\\n     * すべてここに反映される。\\r\\n     */\\r\\n    float3 pixelPositionWS = mul(\\r\\n        _QuadLocalToWorld,\\r\\n        float4(quadPositionLS, 1.0)\\r\\n    ).xyz;\\r\\n\\r\\n    /*\\r\\n     * CameraStageローカル座標を\\r\\n     * レイマーチングのワールド空間として使用する。\\r\\n     */\\r\\n    float3 cameraPositionRS = mul(\\r\\n        _QuadWorldToLocal,\\r\\n        _CameraPositionWS\\r\\n    ).xyz;\\r\\n\\r\\n    float3 pixelPositionRS = mul(\\r\\n        _QuadWorldToLocal,\\r\\n        float4(pixelPositionWS, 1.0)\\r\\n    ).xyz;\\r\\n\\r\\n    /*\\r\\n     * Unityカメラから、実際のQuad上のピクセルへ向かうRay。\\r\\n     *\\r\\n     * これによりUnityカメラの位置・回転・FOVに追従する。\\r\\n     */\\r\\n    float3 rayOrigin = cameraPositionRS;\\r\\n\\r\\n    float3 rayDirection = normalize(\\r\\n        pixelPositionRS - cameraPositionRS\\r\\n    );\\r\\n\\r\\n    float3 col = 0.0;\\r\\n    float sum = 0.0;\\r\\n    float3 currentPosition = rayOrigin;\\r\\n\\r\\n    [loop]\\r\\n    for (int i = 0; i < 30; i++)\\r\\n    {\\r\\n        float d = MainDist(\\r\\n            currentPosition,\\r\\n            time,\\r\\n            (float)i\\r\\n        );\\r\\n\\r\\n        sum += abs(d);\\r\\n\\r\\n        float stepSize =\\r\\n            max(0.04, d)\\r\\n            + abs(currentPosition.y) * 0.01;\\r\\n\\r\\n        [unroll]\\r\\n        for (int j = 0; j < 10; j++)\\r\\n        {\\r\\n            float dir =\\r\\n                (j % 2) != 0\\r\\n                ? 1.0\\r\\n                : -1.0;\\r\\n\\r\\n            float3 phase =\\r\\n                float3(0.2, 1.5, 2.5)\\r\\n                + (\\r\\n                    float3(\\r\\n                        time * dir,\\r\\n                        time * dir,\\r\\n                        time * 3.0\\r\\n                    )\\r\\n                    + currentPosition\\r\\n                ) * j;\\r\\n\\r\\n            col +=\\r\\n                exp(1.0 - sum * 0.2)\\r\\n                / max(stepSize, 0.0001)\\r\\n                * (cos(phase) + 0.5);\\r\\n        }\\r\\n\\r\\n        col += clamp(\\r\\n            0.2 / max(abs(d), 0.0001),\\r\\n            0.0,\\r\\n            150.0\\r\\n        );\\r\\n\\r\\n        currentPosition += rayDirection * stepSize;\\r\\n    }\\r\\n\\r\\n    col = pow(max(col / 4000.0, 0.0), 1.8);\\r\\n    col *= float3(0.8, 0.9, 1.1);\\r\\n\\r\\n    float3 backgroundColor = lerp(\\r\\n        _BackgroundColor2.rgb,\\r\\n        _BackgroundColor1.rgb,\\r\\n        input.uv.y\\r\\n    );\\r\\n\\r\\n    float3 finalColor =\\r\\n        backgroundColor + col;\\r\\n\\r\\n    return float4(finalColor, 1.0);\\r\\n}\"}",
                 "Children": []
               }
             ],
@@ -7725,13 +7725,241 @@
                 "Name": "Deck 1",
                 "Recipes": [
                   {
-                    "Name": "Camera Work 1",
+                    "Name": "Camera Work 4",
                     "Type": 0,
                     "Position": {
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.0,
-                        "z": -16.0
+                        "z": -7.0199999809265137
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 0,
+                            "Operation": 0,
+                            "Amount": 4.059999942779541,
+                            "Offset": 0.0,
+                            "LfoFrequency": 0.10000000149011612,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 0,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 1.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "YModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 0,
+                            "Operation": 0,
+                            "Amount": 4.0,
+                            "Offset": 0.0,
+                            "LfoFrequency": 0.079999998211860657,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 0,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 1.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "ZModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 0,
+                            "Operation": 0,
+                            "Amount": 4.0,
+                            "Offset": 0.0,
+                            "LfoFrequency": 0.090000003576278687,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 0,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 1.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FollowTargetLayerId": "",
+                    "FollowTargetPath": "",
+                    "FieldOfView": {
+                      "BaseValue": 60.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "DepthOfFieldEnabled": false,
+                    "FocusDistance": {
+                      "BaseValue": 10.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Aperture": {
+                      "BaseValue": 5.5999999046325684,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FocalLength": {
+                      "BaseValue": 50.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  },
+                  {
+                    "Name": "Camera Work 1",
+                    "Type": 0,
+                    "Position": {
+                      "BaseValue": {
+                        "x": -1.6799999475479126,
+                        "y": 0.0,
+                        "z": -36.0
                       },
                       "ApplyXModulationToAllAxes": false,
                       "XModulation": {
@@ -7798,7 +8026,198 @@
                     "FollowTargetLayerId": "",
                     "FollowTargetPath": "",
                     "FieldOfView": {
-                      "BaseValue": 27.5,
+                      "BaseValue": 120.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "DepthOfFieldEnabled": false,
+                    "FocusDistance": {
+                      "BaseValue": 10.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Aperture": {
+                      "BaseValue": 5.5999999046325684,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FocalLength": {
+                      "BaseValue": 50.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  },
+                  {
+                    "Name": "Camera Work 3",
+                    "Type": 1,
+                    "Position": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 268.60000610351563,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": true,
+                      "XModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 6,
+                            "Operation": 0,
+                            "Amount": 50.0,
+                            "Offset": 0.0,
+                            "LfoFrequency": 1.0,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 0,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 1.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "YModulation": {
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 6,
+                            "Operation": 0,
+                            "Amount": 50.0,
+                            "Offset": 0.0,
+                            "LfoFrequency": 1.0,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 0,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 1.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FollowTargetLayerId": "",
+                    "FollowTargetPath": "",
+                    "FieldOfView": {
+                      "BaseValue": 60.0,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -7848,7 +8267,7 @@
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.0,
-                        "z": -1.2899999618530273
+                        "z": 0.0
                       },
                       "ApplyXModulationToAllAxes": false,
                       "XModulation": {
@@ -7858,14 +8277,51 @@
                         "Modulators": []
                       },
                       "ZModulation": {
-                        "Modulators": []
+                        "Modulators": [
+                          {
+                            "Enabled": true,
+                            "Source": 6,
+                            "Operation": 0,
+                            "Amount": 1.0,
+                            "Offset": 0.0,
+                            "LfoFrequency": 0.0099999997764825821,
+                            "LfoPhase": 0.0,
+                            "LfoWaveform": 0,
+                            "LfoUnipolar": false,
+                            "ElapsedTimeCurve": 0,
+                            "ElapsedTimeCurveValue": 2.0,
+                            "ElapsedTimeReset": 0,
+                            "ElapsedTimeResetAfterEvents": 4,
+                            "ElapsedTimeLimit": 2,
+                            "ElapsedTimeMin": 0.0,
+                            "ElapsedTimeMax": 9.0,
+                            "BeatPulseSharpness": 3.0,
+                            "CounterValueMode": 0,
+                            "CounterMin": 0.0,
+                            "CounterMax": 1.0,
+                            "CounterRepeatMod": 4.0,
+                            "CounterPulseDuration": 0.5,
+                            "Midi": {
+                              "_ccNumber": -1
+                            },
+                            "AccumulatorInitialValue": 0.0,
+                            "AccumulatorReset": 0,
+                            "AccumulatorResetAfterEvents": 4,
+                            "AccumulatorLimit": 0,
+                            "AccumulatorMin": 0.0,
+                            "AccumulatorMax": 1.0,
+                            "AccumulatorTransition": 0,
+                            "AccumulatorTransitionDuration": 0.15000000596046448,
+                            "AccumulatorTransitionSharpness": 3.0
+                          }
+                        ]
                       }
                     },
                     "LookAt": {
                       "BaseValue": {
                         "x": 0.0,
                         "y": 0.0,
-                        "z": 0.0
+                        "z": 100.0
                       },
                       "ApplyXModulationToAllAxes": false,
                       "XModulation": {
@@ -7915,7 +8371,7 @@
                     "FollowTargetLayerId": "",
                     "FollowTargetPath": "",
                     "FieldOfView": {
-                      "BaseValue": 30.0,
+                      "BaseValue": 107.40000152587891,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -7952,7 +8408,7 @@
                       }
                     },
                     "FocalLength": {
-                      "BaseValue": 50.0,
+                      "BaseValue": 1.0,
                       "Modulation": {
                         "Modulators": []
                       }

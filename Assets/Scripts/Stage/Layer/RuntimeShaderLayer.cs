@@ -276,9 +276,13 @@ namespace Aetherin
         {
             ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette ?? PaletteColorParameter.FallbackPalette;
             float time = (float)context.Time;
-            Camera camera = GetComponentInParent<CameraStage>()?.StageCamera;
+            CameraStage cameraStage = GetComponentInParent<CameraStage>();
+            Camera camera = cameraStage?.StageCamera;
             Vector3 cameraPosition = camera != null ? camera.transform.position : Vector3.zero;
             Matrix4x4 quadLocalToWorld = transform.localToWorldMatrix;
+            Matrix4x4 raymarchWorldToLocal = cameraStage != null
+                ? cameraStage.transform.worldToLocalMatrix
+                : Matrix4x4.identity;
             return new RuntimeShaderConstant
             {
                 Time = new Vector4(time, _stage != null ? _stage.StageDeltaTime : Time.unscaledDeltaTime, Mathf.Sin(time), Mathf.Cos(time)),
@@ -297,6 +301,10 @@ namespace Aetherin
                 QuadLocalToWorld1 = quadLocalToWorld.GetColumn(1),
                 QuadLocalToWorld2 = quadLocalToWorld.GetColumn(2),
                 QuadLocalToWorld3 = quadLocalToWorld.GetColumn(3),
+                QuadWorldToLocal0 = raymarchWorldToLocal.GetColumn(0),
+                QuadWorldToLocal1 = raymarchWorldToLocal.GetColumn(1),
+                QuadWorldToLocal2 = raymarchWorldToLocal.GetColumn(2),
+                QuadWorldToLocal3 = raymarchWorldToLocal.GetColumn(3),
             };
         }
 
@@ -390,6 +398,10 @@ namespace Aetherin
             public Vector4 QuadLocalToWorld1;
             public Vector4 QuadLocalToWorld2;
             public Vector4 QuadLocalToWorld3;
+            public Vector4 QuadWorldToLocal0;
+            public Vector4 QuadWorldToLocal1;
+            public Vector4 QuadWorldToLocal2;
+            public Vector4 QuadWorldToLocal3;
         }
     }
 }

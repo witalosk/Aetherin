@@ -25,6 +25,7 @@ namespace Aetherin
     float4 _UserVector1;
     float4 _CameraPositionWS;             // Unity camera position in world space (w = 1)
     column_major float4x4 _QuadLocalToWorld; // RuntimeShaderLayer quad local -> world
+    column_major float4x4 _QuadWorldToLocal; // Unity world -> CameraStage-local raymarch space
 };
 
 Texture2D _WaveformTexture : register(t0);
