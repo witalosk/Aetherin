@@ -101,6 +101,8 @@ namespace Aetherin
                         Param("Opacity", p.Opacity),
                         Param("Intensity", p.Intensity),
                         UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value),
+                        UI.Toggle("Texture", () => p.TextureEnabled, value => p.TextureEnabled = value),
+                        UI.DynamicElementIf(() => p.TextureEnabled, () => CreateShapeTextureElement(p)),
                         UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
                         UI.DynamicElementIf(() => p.MaterialMode == ShapeLayerMaterialMode.Lit,
                             () => UI.Row(Param("Metallic", p.Metallic), Param("Smoothness", p.Smoothness))),
@@ -133,6 +135,10 @@ namespace Aetherin
                 _ => null,
             };
         }
+
+        private static Element CreateShapeTextureElement(ShapeLayerParams p) =>
+            CreateTextureElement(() => p.TextureKey, value => p.TextureKey = value,
+                p.GetAvailableTextureKeys, p.TextureScale, p.TextureOffset);
 
         /// <summary>
         /// Enabledのときだけ中身を並べる (Foldを増やさずに済ませる)
@@ -281,6 +287,8 @@ namespace Aetherin
                             () => p.MaterialMode != Primitive3DMaterialMode.Glass,
                             () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
                         UI.Field("Material", () => p.MaterialMode, value => p.MaterialMode = value),
+                        UI.Toggle("Texture", () => p.TextureEnabled, value => p.TextureEnabled = value),
+                        UI.DynamicElementIf(() => p.TextureEnabled, () => CreatePrimitiveTextureElement(p)),
                         UI.DynamicElementOnStatusChanged(
                             readStatus: () => p.MaterialMode,
                             build: mode => mode == Primitive3DMaterialMode.Glass
@@ -326,6 +334,29 @@ namespace Aetherin
             UI.DynamicElementIf(
                 () => p.ColorMode == Primitive3DColorMode.ToonTwoTone,
                 () => Param("Toon Threshold", p.ToonThreshold)));
+
+        private static Element CreatePrimitiveTextureElement(Primitive3DLayerParams p) =>
+            CreateTextureElement(() => p.TextureKey, value => p.TextureKey = value,
+                p.GetAvailableTextureKeys, p.TextureScale, p.TextureOffset);
+
+        private static Element CreateTextureElement(
+            Func<string> readKey, Action<string> writeKey,
+            Func<IReadOnlyList<string>> getKeys,
+            Vector2Parameter scale, Vector2Parameter offset)
+        {
+            IReadOnlyList<string> keys = getKeys?.Invoke();
+            Element selector = keys != null && keys.Count > 0
+                ? UI.Dropdown("Texture", () => IndexOfKey(keys, readKey()),
+                    value => writeKey(keys[value]), keys)
+                : UI.Field("Texture Key", readKey, writeKey);
+            return UI.Column(selector, Param("Texture Scale", scale), Param("Texture Offset", offset));
+        }
+
+        private static int IndexOfKey(IReadOnlyList<string> keys, string key)
+        {
+            for (int i = 0; i < keys.Count; i++) if (keys[i] == key) return i;
+            return 0;
+        }
 
         private static Element CreateGlassMaterialElement(Primitive3DLayerParams p) => UI.Column(
             UI.Field("Tint Color", () => p.ColorA, value => p.ColorA = value),

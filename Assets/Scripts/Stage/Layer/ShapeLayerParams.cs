@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Aetherin
@@ -51,6 +52,12 @@ namespace Aetherin
         public int EllipseSegments = 64;
 
         public PaletteColorParameter FillColor = new();
+        public bool TextureEnabled;
+        [Tooltip("Texture Library に登録したキー")]
+        public string TextureKey;
+        public Vector2Parameter TextureScale = new(Vector2.one);
+        public Vector2Parameter TextureOffset = new(Vector2.zero);
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableTextureKeys;
         [Tooltip("Fill と Stroke の色に共通して掛ける強度。1を超えるとHDRとして扱われる")]
         public FloatParameter Intensity = new(1f);
 

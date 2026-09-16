@@ -7,6 +7,10 @@ Shader "Aetherin/Shape Fill"
         // xy: グラデーションの向き / z: オフセット / w: 横切る幅
         _GradientParams ("Gradient Params", Vector) = (1, 0, 0, 2)
         [Toggle] _UseGradient ("Use Gradient", Float) = 0
+        _MainTex ("Texture", 2D) = "white" {}
+        [HideInInspector] _UseTexture ("Use Texture", Float) = 0
+        [HideInInspector] _TextureTransform ("Texture Transform", Vector) = (1,1,0,0)
+        [HideInInspector] _ShapeSize ("Shape Size", Vector) = (1,1,0,0)
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
@@ -43,6 +47,8 @@ Shader "Aetherin/Shape Fill"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Includes/AetherinNoise.hlsl"
 
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
+
             struct Attributes
             {
                 float4 positionOS : POSITION;
@@ -56,6 +62,7 @@ Shader "Aetherin/Shape Fill"
                 float2 shapePositionXY : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float3 normalWS : TEXCOORD2;
+                float2 shapeLocalXY : TEXCOORD3;
             };
 
             CBUFFER_START(UnityPerMaterial)
@@ -76,6 +83,9 @@ Shader "Aetherin/Shape Fill"
                 float _MaterialMode;
                 float _Metallic;
                 float _Smoothness;
+                float _UseTexture;
+                float4 _TextureTransform;
+                float4 _ShapeSize;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
                 float _VertexNoiseAmount;
@@ -104,6 +114,7 @@ Shader "Aetherin/Shape Fill"
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.color = input.color;
                 output.shapePositionXY = shapePosition.xy;
+                output.shapeLocalXY = input.positionOS.xy;
                 output.positionWS = TransformObjectToWorld(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;
@@ -159,6 +170,13 @@ Shader "Aetherin/Shape Fill"
                 }
 
                 color.a *= input.color.a;
+                if (_UseTexture > 0.5)
+                {
+                    float2 safeSize = max(_ShapeSize.xy, float2(0.0001, 0.0001));
+                    float2 textureUv = (input.shapeLocalXY / safeSize + 0.5) *
+                                       _TextureTransform.xy + _TextureTransform.zw;
+                    color *= SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, textureUv);
+                }
 
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;

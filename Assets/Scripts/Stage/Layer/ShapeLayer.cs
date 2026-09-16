@@ -29,6 +29,10 @@ namespace Aetherin
         private static readonly int MaterialModeId = Shader.PropertyToID("_MaterialMode");
         private static readonly int MetallicId = Shader.PropertyToID("_Metallic");
         private static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private static readonly int UseTextureId = Shader.PropertyToID("_UseTexture");
+        private static readonly int TextureTransformId = Shader.PropertyToID("_TextureTransform");
+        private static readonly int ShapeSizeId = Shader.PropertyToID("_ShapeSize");
         private static readonly int VertexNoiseEnabledId = Shader.PropertyToID("_VertexNoiseEnabled");
         private static readonly int VertexNoiseTypeId = Shader.PropertyToID("_VertexNoiseType");
         private static readonly int VertexNoiseAmountId = Shader.PropertyToID("_VertexNoiseAmount");
@@ -60,6 +64,8 @@ namespace Aetherin
         private Vector3 _evaluatedScale;
         private Vector3 _evaluatedAnchor;
         private Vector2 _evaluatedSize;
+        private Vector2 _evaluatedTextureScale = Vector2.one;
+        private Vector2 _evaluatedTextureOffset;
         private int _evaluatedPoints;
         private float _evaluatedInnerRadius;
         private float _evaluatedTrimStart;
@@ -118,12 +124,14 @@ namespace Aetherin
             _deckStateProvider = deckStateProvider;
             _stage = GetComponentInParent<StageBase>();
             _cameraStage = GetComponentInParent<CameraStage>();
+            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
         }
 
         private void Awake()
         {
             _stage = GetComponentInParent<StageBase>();
             _cameraStage = GetComponentInParent<CameraStage>();
+            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -135,6 +143,7 @@ namespace Aetherin
         {
             _stage = GetComponentInParent<StageBase>();
             _cameraStage = GetComponentInParent<CameraStage>();
+            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -176,6 +185,9 @@ namespace Aetherin
             _params.StrokeTrim.End ??= new FloatParameter(1f);
             _params.StrokeTrim.Offset ??= new FloatParameter(0f);
             _params.FillColor ??= new PaletteColorParameter();
+            _params.TextureKey ??= string.Empty;
+            _params.TextureScale ??= new Vector2Parameter(Vector2.one);
+            _params.TextureOffset ??= new Vector2Parameter(Vector2.zero);
             _params.Intensity ??= new FloatParameter(1f);
             _params.Metallic ??= new FloatParameter(0f);
             _params.Smoothness ??= new FloatParameter(0.5f);
@@ -312,17 +324,31 @@ namespace Aetherin
 
             ApplyColor(_fillMaterial, _evaluatedFillColor);
             ApplyColor(_strokeMaterial, _evaluatedStrokeColor);
-            ApplyMaterial(_fillMaterial);
-            ApplyMaterial(_strokeMaterial);
+            ApplyMaterial(_fillMaterial, true);
+            ApplyMaterial(_strokeMaterial, false);
             LayerMaterialUtility.ApplyBlendMode(_fillMaterial, _params.BlendMode);
             LayerMaterialUtility.ApplyBlendMode(_strokeMaterial, _params.BlendMode);
         }
 
-        private void ApplyMaterial(Material material)
+        private void ApplyMaterial(Material material, bool allowTexture)
         {
             material.SetFloat(MaterialModeId, (float)_params.MaterialMode);
             material.SetFloat(MetallicId, _evaluatedMetallic);
             material.SetFloat(SmoothnessId, _evaluatedSmoothness);
+            bool useTexture = allowTexture && _params.TextureEnabled;
+            _cameraStage ??= GetComponentInParent<CameraStage>();
+            if (useTexture && string.IsNullOrWhiteSpace(_params.TextureKey) && _cameraStage != null)
+            {
+                IReadOnlyList<string> keys = _cameraStage.GetTextureKeys();
+                if (keys.Count > 0) _params.TextureKey = keys[0];
+            }
+            Texture2D texture = useTexture ? _cameraStage?.ResolveTexture(_params.TextureKey) : null;
+            material.SetTexture(MainTexId, texture != null ? texture : Texture2D.whiteTexture);
+            material.SetFloat(UseTextureId, texture != null ? 1f : 0f);
+            material.SetVector(TextureTransformId, new Vector4(
+                _evaluatedTextureScale.x, _evaluatedTextureScale.y,
+                _evaluatedTextureOffset.x, _evaluatedTextureOffset.y));
+            material.SetVector(ShapeSizeId, new Vector4(_evaluatedSize.x, _evaluatedSize.y, 0f, 0f));
             bool enabled = _params.VertexNoise?.Enabled == true && _evaluatedVertexNoiseAmount > 0f;
             material.SetFloat(VertexNoiseEnabledId, enabled ? 1f : 0f);
             material.SetFloat(VertexNoiseTypeId, (float)(_params.VertexNoise?.Type ?? VertexNoiseType.Simplex));
@@ -397,6 +423,8 @@ namespace Aetherin
             _evaluatedSize = _params.Size?.Evaluate(context) ?? Vector2.zero;
             _evaluatedSize.x = Mathf.Max(0f, _evaluatedSize.x);
             _evaluatedSize.y = Mathf.Max(0f, _evaluatedSize.y);
+            _evaluatedTextureScale = _params.TextureScale?.Evaluate(context) ?? Vector2.one;
+            _evaluatedTextureOffset = _params.TextureOffset?.Evaluate(context) ?? Vector2.zero;
             _evaluatedPoints = Mathf.Max(3, _params.Points?.Evaluate(context) ?? 3);
             _evaluatedInnerRadius = Mathf.Clamp01(_params.InnerRadius?.Evaluate(context) ?? 0.5f);
             _evaluatedTrimStart = _params.StrokeTrim?.Start?.Evaluate(context) ?? 0f;

@@ -4,6 +4,9 @@ Shader "Aetherin/Primitive 3D Unlit"
     {
         [HDR] _BaseColor ("Color A", Color) = (1, 1, 1, 1)
         [HDR] _ColorB ("Color B", Color) = (0.5, 0.5, 0.5, 1)
+        _MainTex ("Texture", 2D) = "white" {}
+        [HideInInspector] _UseTexture ("Use Texture", Float) = 0
+        [HideInInspector] _TextureTransform ("Texture Transform", Vector) = (1,1,0,0)
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
@@ -43,6 +46,8 @@ Shader "Aetherin/Primitive 3D Unlit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
             #include "Includes/AetherinNoise.hlsl"
+
+            TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
 
             struct Attributes
             {
@@ -147,9 +152,14 @@ Shader "Aetherin/Primitive 3D Unlit"
             {
                 half4 color = _BaseColor;
                 if (_UsePaletteRandom > 0.5) color = PaletteColorForCopy(input.color.r);
+                float2 textureUv = input.uv * _TextureTransform.xy + _TextureTransform.zw;
+                half4 mappedTexture = _UseTexture > 0.5
+                    ? SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, textureUv)
+                    : half4(1, 1, 1, 1);
 
                 if (_MaterialMode > 0.5 && _MaterialMode < 1.5)
                 {
+                    color *= mappedTexture;
                     float2 screenUv = GetNormalizedScreenSpaceUV(input.positionCS);
                     float3 normalWS = normalize(input.normalWS);
                     float3 normalVS = mul((float3x3)GetWorldToViewMatrix(), normalWS);
@@ -198,6 +208,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                     float t = _ColorMode > 2.5 ? step(_ToonThreshold, lighting) : lighting;
                     color = lerp(_BaseColor, _ColorB, t);
                 }
+
+                color *= mappedTexture;
 
                 if (_MaterialMode < 0.5 || _MaterialMode > 1.5)
                 {
@@ -283,6 +295,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4x4 _ShapeNormalMatrix;
                 float _MaterialMode;
                 float _Smoothness;
+                float _UseTexture;
+                float4 _TextureTransform;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
                 float _VertexNoiseAmount;

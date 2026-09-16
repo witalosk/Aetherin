@@ -46,6 +46,9 @@ namespace Aetherin
         private static readonly int VertexNoiseDirectionId = Shader.PropertyToID("_VertexNoiseDirection");
         private static readonly int ReflectionSourceId = Shader.PropertyToID("_ReflectionSource");
         private static readonly int SolidReflectionColorId = Shader.PropertyToID("_SolidReflectionColor");
+        private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
+        private static readonly int UseTextureId = Shader.PropertyToID("_UseTexture");
+        private static readonly int TextureTransformId = Shader.PropertyToID("_TextureTransform");
 
         [SerializeField] private Primitive3DLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -84,6 +87,8 @@ namespace Aetherin
         private float _evaluatedAlpha = 1f;
         private float _evaluatedUvScale = 1f;
         private float _evaluatedUvOffset;
+        private Vector2 _evaluatedTextureScale = Vector2.one;
+        private Vector2 _evaluatedTextureOffset;
         private float _evaluatedPatternAngle = 45f;
         private Vector3 _evaluatedLightDirection = Vector3.up;
         private float _evaluatedToonThreshold = 0.5f;
@@ -111,6 +116,7 @@ namespace Aetherin
         private IBeatManager _beatManager;
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
+        private CameraStage _cameraStage;
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -155,6 +161,8 @@ namespace Aetherin
         {
             _stage = GetComponentInParent<StageBase>();
             EnsureResources();
+            _cameraStage = GetComponentInParent<CameraStage>();
+            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
             EvaluateParameters(Application.isPlaying);
             // Instantiate時はAwakeの直後にOnEnableも呼ばれる。両方で高分割Icosphereを
             // 作り直さないよう、初期化直後のOnEnableでは既存メッシュを再利用する。
@@ -215,6 +223,9 @@ namespace Aetherin
             _params.WireAlpha ??= new FloatParameter(1f);
             _params.UvScale ??= new FloatParameter(1f);
             _params.UvOffset ??= new FloatParameter(0f);
+            _params.TextureKey ??= string.Empty;
+            _params.TextureScale ??= new Vector2Parameter(Vector2.one);
+            _params.TextureOffset ??= new Vector2Parameter(Vector2.zero);
             _params.PatternAngle ??= new FloatParameter(45f);
             _params.LightDirection ??= new Vector3Parameter(new Vector3(0.3f, 0.8f, -0.5f));
             _params.ToonThreshold ??= new FloatParameter(0.5f);
@@ -371,6 +382,8 @@ namespace Aetherin
             _evaluatedWireWidth = Mathf.Max(0.0001f, _params.WireWidth?.Evaluate(context) ?? 0.015f);
             _evaluatedUvScale = _params.UvScale?.Evaluate(context) ?? 1f;
             _evaluatedUvOffset = _params.UvOffset?.Evaluate(context) ?? 0f;
+            _evaluatedTextureScale = _params.TextureScale?.Evaluate(context) ?? Vector2.one;
+            _evaluatedTextureOffset = _params.TextureOffset?.Evaluate(context) ?? Vector2.zero;
             _evaluatedPatternAngle = _params.PatternAngle?.Evaluate(context) ?? 45f;
             _evaluatedLightDirection = _params.LightDirection?.Evaluate(context) ?? Vector3.up;
             if (_evaluatedLightDirection.sqrMagnitude < 0.000001f) _evaluatedLightDirection = Vector3.up;
@@ -434,6 +447,18 @@ namespace Aetherin
             _material.SetFloat(ToonThresholdId, _evaluatedToonThreshold);
             _material.SetFloat(MetallicId, _evaluatedMetallic);
             _material.SetFloat(SmoothnessId, _evaluatedSmoothness);
+            _cameraStage ??= GetComponentInParent<CameraStage>();
+            if (_params.TextureEnabled && string.IsNullOrWhiteSpace(_params.TextureKey) && _cameraStage != null)
+            {
+                IReadOnlyList<string> keys = _cameraStage.GetTextureKeys();
+                if (keys.Count > 0) _params.TextureKey = keys[0];
+            }
+            Texture2D texture = _params.TextureEnabled ? _cameraStage?.ResolveTexture(_params.TextureKey) : null;
+            _material.SetTexture(MainTexId, texture != null ? texture : Texture2D.whiteTexture);
+            _material.SetFloat(UseTextureId, texture != null ? 1f : 0f);
+            _material.SetVector(TextureTransformId, new Vector4(
+                _evaluatedTextureScale.x, _evaluatedTextureScale.y,
+                _evaluatedTextureOffset.x, _evaluatedTextureOffset.y));
             bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
             bool lit = _params.MaterialMode == Primitive3DMaterialMode.Lit;
             _material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
@@ -497,6 +522,7 @@ namespace Aetherin
                     ? LayerBlendMode.Transparent
                     : _params.BlendMode);
             _wireMaterial.SetFloat(UsePaletteRandomId, 0f);
+            _wireMaterial.SetFloat(UseTextureId, 0f);
             _wireMaterial.SetMatrix(ShapeMatrixId, matrix);
             _wireMaterial.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
             ApplyVertexNoise(_wireMaterial);

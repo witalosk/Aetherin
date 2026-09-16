@@ -272,11 +272,15 @@ namespace Aetherin
             return _textureLibrary?.Resolve(key);
         }
 
+        public Texture2D ResolveTexture(string key) => ResolveSpriteSheet(key);
+
         public IReadOnlyList<string> GetSpriteSheetKeys()
         {
             EnsureTextureLibrary();
             return _textureLibrary?.GetKeys() ?? Array.Empty<string>();
         }
+
+        public IReadOnlyList<string> GetTextureKeys() => GetSpriteSheetKeys();
 
         private void EnsureTextureLibrary()
         {

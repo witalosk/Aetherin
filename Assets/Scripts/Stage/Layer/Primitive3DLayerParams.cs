@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Aetherin
@@ -73,6 +74,12 @@ namespace Aetherin
         public int PaletteRandomSeed;
         public FloatParameter ColorIntensity = new(1f);
         public FloatParameter Alpha = new(1f);
+        public bool TextureEnabled;
+        [Tooltip("Texture Library に登録したキー")]
+        public string TextureKey;
+        public Vector2Parameter TextureScale = new(Vector2.one);
+        public Vector2Parameter TextureOffset = new(Vector2.zero);
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableTextureKeys;
 
         [Range(0f, 1f)]
         public FloatParameter Metallic = new(0f);
