@@ -147,7 +147,7 @@ namespace Aetherin
         public MidiBinding ToggleButton = new();
         [Tooltip("押している間だけ最終OutputへこのDeckを適用するPad")]
         public MidiBinding OutputPad = new();
-        [HideInInspector] public float CurrentFaderValue = 1f;
+        [HideInInspector] public float CurrentFaderValue = 0f;
         public System.Collections.Generic.List<PostEffectModule> Modules = new();
 
         public void EnsureInitialized()

@@ -22,6 +22,7 @@ namespace Aetherin
         public MidiBinding RandomLayerHighButton = new();
         public MidiBinding RandomLayerMidButton = new();
         public MidiBinding RandomLayerLowButton = new();
+        public int UiRowNum = 8;
         public int CurrentStageIndex;
         public int NextStageIndex; 
         public Vector3 NextStageOffset = new(0f, 1000f, 0f);
@@ -856,15 +857,28 @@ namespace Aetherin
         {
             _selectedStageUiIndex = Mathf.Clamp(_selectedStageUiIndex, 0, stageNames.Count - 1);
 
-            Element stageColumn = UI.Column(
-                UI.Column(Enumerable.Range(0, stageNames.Count).Select(index =>
-                    UI.DynamicElementOnStatusChanged(() => _selectedStageUiIndex, _ =>
-                        UI.Button(
-                            UI.Label(() => $"{(_selectedStageUiIndex == index ? "▶ " : "  ")}{stageNames[index]}"),
-                            () => _selectedStageUiIndex = index).SetMinWidth(150f).SetHeight(26f).SetFlexGrow(1f).SetBackgroundColor(_selectedStageUiIndex == index ? Color.yellowNice * 0.5f : null)
-                        )
+            var stageColumns = new List<Element>();
+            var stageButtons = new List<Element>();
+            for (int index = 0; index < stageNames.Count; index++)
+            {
+                int stageIndex = index;
+                stageButtons.Add(UI.DynamicElementOnStatusChanged(() => _selectedStageUiIndex, _ =>
+                    UI.Button(
+                        UI.Label(() => $"{stageNames[stageIndex]}"),
+                        () => _selectedStageUiIndex = stageIndex).SetWidth(85f).SetHeight(45f).SetBackgroundColor(_selectedStageUiIndex == stageIndex ? Color.yellowNice * 0.5f : null)
                     )
-                ));
+                );
+                if (index % _params.UiRowNum == _params.UiRowNum - 1)
+                {
+                    stageColumns.Add(UI.Column(stageButtons));
+                    stageButtons.Clear();
+                }
+            }
+            if (stageButtons.Count != 0) stageColumns.Add(UI.Column(stageButtons));
+
+            Element stageColumn = UI.Column(
+                UI.Row(stageColumns)
+            );
 
             Element layerColumn = UI.Box(
                 UI.DynamicElementOnStatusChanged(
@@ -1136,10 +1150,18 @@ namespace Aetherin
 
             var layers = cameraStage.Layers;
             var layerElements = new List<Element>();
+            var column = new List<Element>();
             for (int index = 0; index < layers.Count; index++)
             {
-                if (layers[index] != null) layerElements.Add(CreateLayerElement(cameraStage, layers[index]));
+                if (layers[index] != null) column.Add(CreateLayerElement(cameraStage, layers[index]));
+                if (index % _params.UiRowNum == _params.UiRowNum - 1)
+                {
+                    layerElements.Add(UI.Column(column));
+                    column.Clear();
+                }
             }
+            if (column.Count != 0) layerElements.Add(UI.Column(column));
+            
 
             return UI.Column(
                 UI.Row(
@@ -1153,7 +1175,7 @@ namespace Aetherin
                     UI.Button("+ Text", () => cameraStage.AddTextLayer()),
                     UI.Button("+ Shader", () => cameraStage.AddRuntimeShaderLayer())
                 ),
-                layers.Count == 0 ? UI.Label("No Layers") : UI.Column(layerElements)
+                layers.Count == 0 ? UI.Label("No Layers") : UI.Row(layerElements)
             );
         }
 
@@ -1184,7 +1206,8 @@ namespace Aetherin
                         {
                             if (_inspectedLayer != null) stage.MoveLayerToGroup(_inspectedLayer, group);
                         }),
-                        children.Count == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) });
+                        children.Count == 0 ? UI.Label("グループ内にレイヤーがありません") : UI.Column(children)) }
+                );
             }
 
             return CreateLayerHeader(stage, layer);
@@ -1193,22 +1216,26 @@ namespace Aetherin
         private Element CreateLayerHeader(CameraStage stage, StageLayer layer)
         {
             bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
-            return UI.Row(
+            var header = UI.Row(
                 UI.Space().SetWidth(layer is GroupLayer ? 0f : 18f),
-                UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(18f),
+                UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(8f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
-                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer)).SetMinWidth(250f).SetFlexGrow(1f).SetHeight(30f)
+                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer)).SetMinWidth(150f).SetFlexGrow(1f).SetHeight(30f)
                     .RegisterUpdateCallback(element =>
                     {
                         Color color = GetLayerColor(layer);
                         element.SetBackgroundColor( _inspectedLayer == layer ? color * 0.8f : layer.Visible ? color * 0.5f : color * 0.25f);
                     }),
-                UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(32f),
-                UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(32f),
-                insideGroup ? UI.Button("Out", () => stage.MoveLayerOutOfGroup(layer)).SetWidth(38f) : null,
-                UI.Button("Copy", () => _layerClipboard = stage.CopyLayer(layer)).SetWidth(48f),
-                UI.Button("Paste", () => PasteLayer(stage, layer)).SetWidth(52f),
-                UI.Button("Delete", () => RemoveLayer(stage, layer)));
+                UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(16f),
+                UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(16f)
+            );
+            return UI.Popup(header, () => new[]
+            {
+                new MenuItem("Copy", () => _layerClipboard = stage.CopyLayer(layer)),
+                new MenuItem("Paste", () => PasteLayer(stage, layer)) { isEnable = _layerClipboard != null },
+                new MenuItem("Delete", () => RemoveLayer(stage, layer)),
+                insideGroup ? new MenuItem("Out", () => stage.MoveLayerOutOfGroup(layer)) : null
+            });
         }
 
         private void PasteLayer(CameraStage stage, StageLayer referenceLayer)

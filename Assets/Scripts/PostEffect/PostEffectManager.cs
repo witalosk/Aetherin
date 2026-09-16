@@ -199,7 +199,7 @@ namespace Aetherin
                 {
                     if (deck == null) continue;
                     deck.CurrentFaderValue = deck.Fader?.IsAssigned == true
-                        ? deck.Fader.GetValue(1f)
+                        ? deck.Fader.GetValue(0f)
                         : 1f;
                 }
             }
@@ -273,7 +273,7 @@ namespace Aetherin
                 if (!outputOnly)
                 {
                     deckStrength *= context.AllowMidi
-                        ? deck.Fader?.IsAssigned == true ? deck.Fader.GetValue(1f) : 1f
+                        ? deck.Fader?.IsAssigned == true ? deck.Fader.GetValue(0f) : 1f
                         : deck.CurrentFaderValue;
                 }
                 if (deckStrength <= 0f) continue;
