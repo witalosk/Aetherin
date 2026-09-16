@@ -11,6 +11,7 @@ Shader "Aetherin/Shape Fill"
         [HideInInspector] _UseTexture ("Use Texture", Float) = 0
         [HideInInspector] _TextureTransform ("Texture Transform", Vector) = (1,1,0,0)
         [HideInInspector] _ShapeSize ("Shape Size", Vector) = (1,1,0,0)
+        [HideInInspector] _StageTime ("Stage Time", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
@@ -86,6 +87,7 @@ Shader "Aetherin/Shape Fill"
                 float _UseTexture;
                 float4 _TextureTransform;
                 float4 _ShapeSize;
+                float _StageTime;
                 float _VertexNoiseEnabled;
                 float _VertexNoiseType;
                 float _VertexNoiseAmount;
@@ -103,7 +105,7 @@ Shader "Aetherin/Shape Fill"
                 if (_VertexNoiseEnabled > 0.5)
                 {
                     float4 samplePosition = float4(input.positionOS.xyz * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _Time.y;
+                        0.0) + _VertexNoiseSpeed * _StageTime;
                     float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
@@ -244,6 +246,7 @@ Shader "Aetherin/Shape Fill"
                 float4 _VertexNoiseSpeed;
                 float4 _VertexNoiseOffset;
                 float _VertexNoiseDirection;
+                float _StageTime;
             CBUFFER_END
 
             Varyings DepthNormalsVert(Attributes input)
@@ -254,7 +257,7 @@ Shader "Aetherin/Shape Fill"
                 if (_VertexNoiseEnabled > 0.5)
                 {
                     float4 samplePosition = float4(input.positionOS.xyz * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _Time.y;
+                        0.0) + _VertexNoiseSpeed * _StageTime;
                     float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);

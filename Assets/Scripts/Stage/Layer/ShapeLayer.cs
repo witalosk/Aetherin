@@ -33,6 +33,7 @@ namespace Aetherin
         private static readonly int UseTextureId = Shader.PropertyToID("_UseTexture");
         private static readonly int TextureTransformId = Shader.PropertyToID("_TextureTransform");
         private static readonly int ShapeSizeId = Shader.PropertyToID("_ShapeSize");
+        private static readonly int StageTimeId = Shader.PropertyToID("_StageTime");
         private static readonly int VertexNoiseEnabledId = Shader.PropertyToID("_VertexNoiseEnabled");
         private static readonly int VertexNoiseTypeId = Shader.PropertyToID("_VertexNoiseType");
         private static readonly int VertexNoiseAmountId = Shader.PropertyToID("_VertexNoiseAmount");
@@ -349,6 +350,7 @@ namespace Aetherin
                 _evaluatedTextureScale.x, _evaluatedTextureScale.y,
                 _evaluatedTextureOffset.x, _evaluatedTextureOffset.y));
             material.SetVector(ShapeSizeId, new Vector4(_evaluatedSize.x, _evaluatedSize.y, 0f, 0f));
+            material.SetFloat(StageTimeId, (float)_modulationContext.Time);
             bool enabled = _params.VertexNoise?.Enabled == true && _evaluatedVertexNoiseAmount > 0f;
             material.SetFloat(VertexNoiseEnabledId, enabled ? 1f : 0f);
             material.SetFloat(VertexNoiseTypeId, (float)(_params.VertexNoise?.Type ?? VertexNoiseType.Simplex));

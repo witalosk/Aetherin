@@ -7,6 +7,7 @@ Shader "Aetherin/Primitive 3D Unlit"
         _MainTex ("Texture", 2D) = "white" {}
         [HideInInspector] _UseTexture ("Use Texture", Float) = 0
         [HideInInspector] _TextureTransform ("Texture Transform", Vector) = (1,1,0,0)
+        [HideInInspector] _StageTime ("Stage Time", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
@@ -76,6 +77,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float _ToonThreshold;
                 float _Metallic;
                 float _Smoothness;
+                float _UseTexture;
+                float4 _TextureTransform;
                 float4x4 _ShapeMatrix;
                 float4x4 _ShapeNormalMatrix;
                 float _UsePaletteRandom;
@@ -97,6 +100,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4 _VertexNoiseSpeed;
                 float4 _VertexNoiseOffset;
                 float _VertexNoiseDirection;
+                float _StageTime;
                 half4 _PaletteColor0;
                 half4 _PaletteColor1;
                 half4 _PaletteColor2;
@@ -113,7 +117,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 if (_VertexNoiseEnabled > 0.5)
                 {
                     float4 samplePosition = float4(input.positionOS * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _Time.y;
+                        0.0) + _VertexNoiseSpeed * _StageTime;
                     float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
@@ -163,8 +167,8 @@ Shader "Aetherin/Primitive 3D Unlit"
                     float2 screenUv = GetNormalizedScreenSpaceUV(input.positionCS);
                     float3 normalWS = normalize(input.normalWS);
                     float3 normalVS = mul((float3x3)GetWorldToViewMatrix(), normalWS);
-                    float wave = sin((screenUv.x + _Time.y * 0.07) * _GlassDistortionScale) *
-                                 cos((screenUv.y - _Time.y * 0.05) * _GlassDistortionScale * 1.17);
+                    float wave = sin((screenUv.x + _StageTime * 0.07) * _GlassDistortionScale) *
+                                 cos((screenUv.y - _StageTime * 0.05) * _GlassDistortionScale * 1.17);
                     float2 distortion = normalVS.xy * _GlassRefraction + wave * _GlassDistortion;
                     float2 chroma = normalize(distortion + float2(0.00001, 0.00001)) *
                                     _GlassChromaticAberration;
@@ -304,6 +308,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float4 _VertexNoiseSpeed;
                 float4 _VertexNoiseOffset;
                 float _VertexNoiseDirection;
+                float _StageTime;
             CBUFFER_END
 
             DepthNormalsVaryings DepthNormalsVert(DepthNormalsAttributes input)
@@ -314,7 +319,7 @@ Shader "Aetherin/Primitive 3D Unlit"
                 if (_VertexNoiseEnabled > 0.5)
                 {
                     float4 samplePosition = float4(input.positionOS * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _Time.y;
+                        0.0) + _VertexNoiseSpeed * _StageTime;
                     float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);

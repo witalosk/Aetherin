@@ -49,6 +49,7 @@ namespace Aetherin
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int UseTextureId = Shader.PropertyToID("_UseTexture");
         private static readonly int TextureTransformId = Shader.PropertyToID("_TextureTransform");
+        private static readonly int StageTimeId = Shader.PropertyToID("_StageTime");
 
         [SerializeField] private Primitive3DLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -459,6 +460,7 @@ namespace Aetherin
             _material.SetVector(TextureTransformId, new Vector4(
                 _evaluatedTextureScale.x, _evaluatedTextureScale.y,
                 _evaluatedTextureOffset.x, _evaluatedTextureOffset.y));
+            _material.SetFloat(StageTimeId, (float)_modulationContext.Time);
             bool glass = _params.MaterialMode == Primitive3DMaterialMode.Glass;
             bool lit = _params.MaterialMode == Primitive3DMaterialMode.Lit;
             _material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
@@ -523,6 +525,7 @@ namespace Aetherin
                     : _params.BlendMode);
             _wireMaterial.SetFloat(UsePaletteRandomId, 0f);
             _wireMaterial.SetFloat(UseTextureId, 0f);
+            _wireMaterial.SetFloat(StageTimeId, (float)_modulationContext.Time);
             _wireMaterial.SetMatrix(ShapeMatrixId, matrix);
             _wireMaterial.SetMatrix(ShapeNormalMatrixId, matrix.inverse.transpose);
             ApplyVertexNoise(_wireMaterial);

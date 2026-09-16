@@ -28,6 +28,7 @@ namespace Aetherin
         private int _loadedCameraWork = int.MinValue;
         private string _loadedPath;
         private MoviePathMode _loadedPathMode;
+        private int _stageTimeRevision = -1;
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -111,7 +112,13 @@ namespace Aetherin
                 if (_player != null)
                 {
                     _player.loop = _params.Loop;
-                    _player.speed = _params.PlaybackSpeed;
+                    StageBase stage = GetComponentInParent<StageBase>();
+                    _player.speed = _params.PlaybackSpeed * (stage != null ? stage.StageTimeSpeed : 1f);
+                    if (stage != null && _stageTimeRevision != stage.StageTimeRevision)
+                    {
+                        _stageTimeRevision = stage.StageTimeRevision;
+                        _player.time = 0f;
+                    }
                 }
                 return;
             }
@@ -135,7 +142,9 @@ namespace Aetherin
 
             _player = gameObject.AddComponent<HapPlayer>();
             _player.loop = _params.Loop;
-            _player.speed = _params.PlaybackSpeed;
+            StageBase stage = GetComponentInParent<StageBase>();
+            _player.speed = _params.PlaybackSpeed * (stage != null ? stage.StageTimeSpeed : 1f);
+            _stageTimeRevision = stage != null ? stage.StageTimeRevision : -1;
             _player.Open(path, _params.PathMode == MoviePathMode.StreamingAssets
                 ? HapPlayer.PathMode.StreamingAssets
                 : HapPlayer.PathMode.LocalFileSystem);

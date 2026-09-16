@@ -23,6 +23,8 @@ namespace Aetherin
     float4 _UserFloat;  // UserFloat 0..3
     float4 _UserVector0;
     float4 _UserVector1;
+    float4 _CameraPositionWS;             // Unity camera position in world space (w = 1)
+    column_major float4x4 _QuadLocalToWorld; // RuntimeShaderLayer quad local -> world
 };
 
 Texture2D _WaveformTexture : register(t0);

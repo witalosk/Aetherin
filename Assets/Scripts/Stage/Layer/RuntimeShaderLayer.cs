@@ -276,9 +276,12 @@ namespace Aetherin
         {
             ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette ?? PaletteColorParameter.FallbackPalette;
             float time = (float)context.Time;
+            Camera camera = GetComponentInParent<CameraStage>()?.StageCamera;
+            Vector3 cameraPosition = camera != null ? camera.transform.position : Vector3.zero;
+            Matrix4x4 quadLocalToWorld = transform.localToWorldMatrix;
             return new RuntimeShaderConstant
             {
-                Time = new Vector4(time, Time.unscaledDeltaTime, Mathf.Sin(time), Mathf.Cos(time)),
+                Time = new Vector4(time, _stage != null ? _stage.StageDeltaTime : Time.unscaledDeltaTime, Mathf.Sin(time), Mathf.Cos(time)),
                 Frame = new Vector4(Time.frameCount, Time.timeScale, Time.unscaledTime, Time.unscaledDeltaTime),
                 Resolution = new Vector4(resolution.x, resolution.y, 1f / resolution.x, 1f / resolution.y),
                 Audio = new Vector4(_audio?.InputVolume ?? 0f, _audio?.Kick ?? 0f, _audio?.SnareClap ?? 0f, _audio?.WasKick == true || _audio?.WasSnareClap == true ? 1f : 0f),
@@ -289,6 +292,11 @@ namespace Aetherin
                 SubAccentColor1 = palette.SubAccentColor1.linear, SubAccentColor2 = palette.SubAccentColor2.linear,
                 UserFloat = new Vector4(_params.UserFloat0.Evaluate(context), _params.UserFloat1.Evaluate(context), _params.UserFloat2.Evaluate(context), _params.UserFloat3.Evaluate(context)),
                 UserVector0 = _params.UserVector0.Evaluate(context), UserVector1 = _params.UserVector1.Evaluate(context),
+                CameraPositionWs = new Vector4(cameraPosition.x, cameraPosition.y, cameraPosition.z, 1f),
+                QuadLocalToWorld0 = quadLocalToWorld.GetColumn(0),
+                QuadLocalToWorld1 = quadLocalToWorld.GetColumn(1),
+                QuadLocalToWorld2 = quadLocalToWorld.GetColumn(2),
+                QuadLocalToWorld3 = quadLocalToWorld.GetColumn(3),
             };
         }
 
@@ -377,6 +385,11 @@ namespace Aetherin
             public Vector4 UserFloat;
             public Vector4 UserVector0;
             public Vector4 UserVector1;
+            public Vector4 CameraPositionWs;
+            public Vector4 QuadLocalToWorld0;
+            public Vector4 QuadLocalToWorld1;
+            public Vector4 QuadLocalToWorld2;
+            public Vector4 QuadLocalToWorld3;
         }
     }
 }

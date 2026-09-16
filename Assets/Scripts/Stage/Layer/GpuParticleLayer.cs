@@ -168,8 +168,10 @@ namespace Aetherin
             _lastEditorTime = now;
 
             var context = CreateModulationContext(now, _audio, _beat, Application.isPlaying);
-            float deltaTime = rawDelta * Mathf.Max(0f, _params.SimulationSpeed?.Evaluate(context) ?? 1f);
-            DispatchModules(context, deltaTime, now);
+            StageBase timeStage = GetComponentInParent<StageBase>();
+            float timeDelta = Application.isPlaying && timeStage != null ? timeStage.StageDeltaTime : rawDelta;
+            float deltaTime = timeDelta * Mathf.Max(0f, _params.SimulationSpeed?.Evaluate(context) ?? 1f);
+            DispatchModules(context, deltaTime);
             if (_params.RenderBackend == ParticleRenderBackend.Trail)
             {
                 EnsureTrailResources();
@@ -247,7 +249,7 @@ namespace Aetherin
             _compute.Dispatch(_resetKernel, Groups, 1, 1);
         }
 
-        private void DispatchModules(in ModulationContext context, float deltaTime, double now)
+        private void DispatchModules(in ModulationContext context, float deltaTime)
         {
             if (deltaTime <= 0f || _params.Modules == null) return;
             bool hasBoids = false;
@@ -264,7 +266,7 @@ namespace Aetherin
             _compute.SetBuffer(_moduleKernel, ParticlesId, _particles);
             _compute.SetInt(CapacityId, _allocatedCapacity);
             _compute.SetFloat(DeltaTimeId, deltaTime);
-            _compute.SetFloat(TimeValueId, (float)now);
+            _compute.SetFloat(TimeValueId, (float)context.Time);
             SetSpawnParameters(context);
             _compute.SetInt(SeedId, _params.Seed);
 

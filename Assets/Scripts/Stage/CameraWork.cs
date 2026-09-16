@@ -194,7 +194,8 @@ namespace Aetherin
             recipe.EnsureInitialized();
 
             bool allowMidi = Deck == StageDeck.Next;
-            var context = new ModulationContext(Time.timeAsDouble, _audioFeatureProvider, _beatManager, allowMidi);
+            double stageTime = StageTime;
+            var context = new ModulationContext(stageTime, _audioFeatureProvider, _beatManager, allowMidi);
             Vector3 position = recipe.Position.Evaluate(context);
             Vector3 lookAt = recipe.LookAt.Evaluate(context);
             Vector3 orbitRotation = recipe.OrbitRotation.Evaluate(context);
@@ -225,7 +226,7 @@ namespace Aetherin
                     position = _followPosition;
                     break;
                 case CameraWorkType.Handheld:
-                    float noiseTime = (float)Time.timeAsDouble * Mathf.Max(0.01f, speed);
+                    float noiseTime = (float)stageTime * Mathf.Max(0.01f, speed);
                     position += new Vector3(
                         Mathf.PerlinNoise(noiseTime, 0.17f) - 0.5f,
                         Mathf.PerlinNoise(0.31f, noiseTime) - 0.5f,

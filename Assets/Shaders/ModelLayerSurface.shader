@@ -9,6 +9,7 @@ Shader "Aetherin/Model Layer Surface"
         [HideInInspector] _SrcBlend("Src Blend", Float) = 1
         [HideInInspector] _DstBlend("Dst Blend", Float) = 0
         [HideInInspector] _ZWrite("Z Write", Float) = 1
+        [HideInInspector] _StageTime("Stage Time", Float) = 0
     }
     SubShader
     {
@@ -41,6 +42,7 @@ Shader "Aetherin/Model Layer Surface"
             float _GlassRefraction, _GlassTint, _GlassFresnelPower, _GlassFresnelIntensity;
             float _GlassChromaticAberration, _GlassDistortion, _GlassDistortionScale;
             float _ReflectionSource;
+            float _StageTime;
             half4 _SolidReflectionColor;
             CBUFFER_END
             Varyings vert(Attributes v)
@@ -63,7 +65,7 @@ Shader "Aetherin/Model Layer Surface"
                     float2 screenUv = GetNormalizedScreenSpaceUV(i.positionCS);
                     float3 normalWS = normalize(i.normalWS);
                     float3 normalVS = mul((float3x3)GetWorldToViewMatrix(), normalWS);
-                    float wave = sin((screenUv.x + _Time.y * 0.07) * _GlassDistortionScale) * cos((screenUv.y - _Time.y * 0.05) * _GlassDistortionScale * 1.17);
+                    float wave = sin((screenUv.x + _StageTime * 0.07) * _GlassDistortionScale) * cos((screenUv.y - _StageTime * 0.05) * _GlassDistortionScale * 1.17);
                     float2 distortion = normalVS.xy * _GlassRefraction + wave * _GlassDistortion;
                     float2 chroma = normalize(distortion + float2(0.00001, 0.00001)) * _GlassChromaticAberration;
                     float3 refracted = float3(SampleSceneColor(screenUv + distortion + chroma).r, SampleSceneColor(screenUv + distortion).g, SampleSceneColor(screenUv + distortion - chroma).b);

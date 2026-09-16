@@ -81,6 +81,7 @@ namespace Aetherin
         [SerializeField, HideInInspector] private string _layerId;
         private bool _elapsedTimeActive;
         private double _elapsedTimeStart;
+        private StageBase _timeStage;
         public abstract IParams Params { get; }
         public string LayerId
         {
@@ -172,6 +173,11 @@ namespace Aetherin
         protected ModulationContext CreateModulationContext(
             double time, IAudioFeatureProvider audio, IBeatManager beat, bool allowMidi)
         {
+            if (Application.isPlaying)
+            {
+                _timeStage ??= GetComponentInParent<StageBase>();
+                if (_timeStage != null) time = _timeStage.StageTime;
+            }
             bool active = IsEffectivelyVisible();
             if (active && (!_elapsedTimeActive || time < _elapsedTimeStart)) _elapsedTimeStart = time;
             _elapsedTimeActive = active;

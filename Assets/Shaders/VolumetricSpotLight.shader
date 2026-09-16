@@ -1,6 +1,10 @@
 Shader "Aetherin/Volumetric Spot Light"
 {
-    Properties { _VolumeColor("Color", Color) = (1,1,1,1) }
+    Properties
+    {
+        _VolumeColor("Color", Color) = (1,1,1,1)
+        [HideInInspector] _StageTime("Stage Time", Float) = 0
+    }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent+100" "RenderType"="Transparent" }
@@ -29,6 +33,7 @@ Shader "Aetherin/Volumetric Spot Light"
             float4 _VolumetricLightPositionWS;
             float _VolumetricLightRange;
             float _VolumetricShadowsEnabled;
+            float _StageTime;
             int _Steps;
             CBUFFER_END
             Varyings vert(Attributes input)
@@ -103,7 +108,7 @@ Shader "Aetherin/Volumetric Spot Light"
                         // Sample in world space so the noise reads as smoke fixed
                         // in the scene rather than a pattern attached to the cone.
                         float3 noisePositionWS = TransformObjectToWorld(p);
-                        float fractalNoise = AN_FractalNoise(noisePositionWS * 0.1 + float3(0.0, 0.0, _Time.y * 0.1));
+                        float fractalNoise = AN_FractalNoise(noisePositionWS * 0.1 + float3(0.0, 0.0, _StageTime * 0.1));
                         float noise = lerp(1.0 - _NoiseAmount, 1.0, saturate(fractalNoise));
                         float distanceToLight = distance(noisePositionWS, _VolumetricLightPositionWS.xyz);
                         float rangeFalloff = saturate(1.0 - distanceToLight / max(_VolumetricLightRange, 0.001));

@@ -9,6 +9,13 @@ using UnitySimpleContainer;
 namespace Aetherin
 {
     [Serializable]
+    public sealed class StageTimeSpeedPad
+    {
+        [Min(0f)] public float Speed = 1f;
+        public MidiBinding Pad = new();
+    }
+
+    [Serializable]
     public class StageManagerParams : IParams
     {
         public MidiCcBinding CrossFader = new(ApcMiniMk2.MasterFaderCc);
@@ -22,6 +29,12 @@ namespace Aetherin
         public MidiBinding RandomLayerHighButton = new();
         public MidiBinding RandomLayerMidButton = new();
         public MidiBinding RandomLayerLowButton = new();
+        [Tooltip("選択中Next Stageの時間速度を切り替えるPad。Speed 0で停止、1で等速")]
+        public List<StageTimeSpeedPad> StageTimeSpeedPads = new();
+        [Tooltip("選択中Next Stageの時間速度を連続操作するMIDI CC")]
+        public MidiCcBinding StageTimeSpeedCc = new();
+        [Min(0f)] public float StageTimeSpeedCcMin = 0f;
+        [Min(0f)] public float StageTimeSpeedCcMax = 2f;
         public int UiRowNum = 8;
         public int CurrentStageIndex;
         public int NextStageIndex; 
@@ -116,6 +129,9 @@ namespace Aetherin
         private Texture _nextPostTexture;
         private CameraStageSaveData _pendingCameraStageData;
         private readonly HashSet<string> _runtimeStageIds = new();
+        private StageBase _lastStageTimeCcStage;
+        private int _lastStageTimeCcNumber = MidiCcBinding.Unassigned;
+        private float _lastStageTimeCcValue = float.NaN;
 
         [Inject]
         public void Construct(IContainer container, IApplicationManager applicationManager, IPostEffectManager postEffectManager)
@@ -359,6 +375,8 @@ namespace Aetherin
             if (!_isPreparingNext)
             {
                 UpdateStageSelect();
+                UpdateStageTimeSpeedPads();
+                UpdateStageTimeSpeedCc();
                 UpdateBackgroundToggleButton();
                 UpdateLayerToggleButtons();
                 UpdateRandomLayerButtons();
@@ -435,12 +453,12 @@ namespace Aetherin
                 {
                     int selectedPadIndex = _params.NextStageIndex % count;
                     int nextStageIndex = _params.NextStageIndex + count;
-                    _params.NextStageIndex = selectedPadIndex == i
+                    int selectedIndex = selectedPadIndex == i
                         ? nextStageIndex < _stages.Count ? nextStageIndex : i
                         : i;
+                    SelectNextStage(selectedIndex);
                     // MIDI選択とStage編集UIの選択対象を常に一致させる。
                     _selectedStageUiIndex = _params.NextStageIndex;
-                    _deckRevision++;
                 }
 
                 var ledColor = StageLedColor * 0.15f;
@@ -448,6 +466,79 @@ namespace Aetherin
                 else if (i == _params.CurrentStageIndex % count) ledColor = StageLedColor;
                 button.SetLed(ledColor);
             }
+        }
+
+        private void SelectNextStage(int index)
+        {
+            if (_isPreparingNext || _nextStages == null || _nextStages.Count == 0) return;
+            int selected = Mathf.Clamp(index, 0, _nextStages.Count - 1);
+            _params.NextStageIndex = selected;
+            _nextStages[selected]?.ResetStageTime();
+            _deckRevision++;
+        }
+
+        private void SelectStageFromUi(int index)
+        {
+            if (_isPreparingNext) return;
+            SelectNextStage(index);
+            _selectedStageUiIndex = _params.NextStageIndex;
+        }
+
+        private void SelectCurrentStage(int index)
+        {
+            if (_isPreparingNext || _currentStages == null || _currentStages.Count == 0) return;
+            int selected = Mathf.Clamp(index, 0, _currentStages.Count - 1);
+            _params.CurrentStageIndex = selected;
+            _currentStages[selected]?.ResetStageTime();
+            _deckRevision++;
+        }
+
+        private void UpdateStageTimeSpeedPads()
+        {
+            _params.StageTimeSpeedPads ??= new List<StageTimeSpeedPad>();
+            StageBase stage = _nextStages != null && _nextStages.Count > 0
+                ? _nextStages[Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1)]
+                : null;
+            foreach (StageTimeSpeedPad setting in _params.StageTimeSpeedPads)
+            {
+                if (setting == null) continue;
+                setting.Pad ??= new MidiBinding();
+                float speed = Mathf.Max(0f, setting.Speed);
+                if (stage != null && setting.Pad.WasNoteOn) stage.SetStageTimeSpeed(speed);
+                bool selected = stage != null && Mathf.Approximately(stage.StageTimeSpeed, speed);
+                setting.Pad.SetLed(selected ? Color.green : Color.green * 0.15f);
+            }
+        }
+
+        private void UpdateStageTimeSpeedCc()
+        {
+            _params.StageTimeSpeedCc ??= new MidiCcBinding();
+            if (!_params.StageTimeSpeedCc.IsAssigned)
+            {
+                _lastStageTimeCcStage = null;
+                _lastStageTimeCcNumber = MidiCcBinding.Unassigned;
+                _lastStageTimeCcValue = float.NaN;
+                return;
+            }
+
+            StageBase stage = _nextStages != null && _nextStages.Count > 0
+                ? _nextStages[Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1)]
+                : null;
+            if (stage == null) return;
+
+            float value = _params.StageTimeSpeedCc.GetValue();
+            bool changed = stage != _lastStageTimeCcStage ||
+                           _params.StageTimeSpeedCc.CcNumber != _lastStageTimeCcNumber ||
+                           float.IsNaN(_lastStageTimeCcValue) ||
+                           !Mathf.Approximately(value, _lastStageTimeCcValue);
+            if (!changed) return;
+
+            float min = Mathf.Min(_params.StageTimeSpeedCcMin, _params.StageTimeSpeedCcMax);
+            float max = Mathf.Max(_params.StageTimeSpeedCcMin, _params.StageTimeSpeedCcMax);
+            stage.SetStageTimeSpeed(Mathf.Lerp(min, max, value));
+            _lastStageTimeCcStage = stage;
+            _lastStageTimeCcNumber = _params.StageTimeSpeedCc.CcNumber;
+            _lastStageTimeCcValue = value;
         }
 
         /// <summary>
@@ -660,6 +751,9 @@ namespace Aetherin
             if (shouldAdvanceCameraWork)
                 GetCameraStage(_currentStages, _params.CurrentStageIndex)?.AdvanceCameraWork();
 
+            // 昇格したStageはここから新しい演出時間を開始する。
+            _currentStages[_params.CurrentStageIndex]?.ResetStageTime();
+
             for (int i = 0; i < _currentStages.Count; i++)
             {
                 var stage = _currentStages[i];
@@ -865,7 +959,7 @@ namespace Aetherin
                 stageButtons.Add(UI.DynamicElementOnStatusChanged(() => _selectedStageUiIndex, _ =>
                     UI.Button(
                         UI.Label(() => $"{stageNames[stageIndex]}"),
-                        () => _selectedStageUiIndex = stageIndex).SetWidth(85f).SetHeight(45f).SetBackgroundColor(_selectedStageUiIndex == stageIndex ? Color.yellowNice * 0.5f : null)
+                        () => SelectStageFromUi(stageIndex)).SetWidth(85f).SetHeight(45f).SetBackgroundColor(_selectedStageUiIndex == stageIndex ? Color.deepSkyBlue * 0.5f : null)
                     )
                 );
                 if (index % _params.UiRowNum == _params.UiRowNum - 1)
@@ -925,19 +1019,14 @@ namespace Aetherin
 
         private Element CreateStageManagementElement()
         {
+            _params.StageTimeSpeedCc ??= new MidiCcBinding();
+            _params.StageTimeSpeedPads ??= new List<StageTimeSpeedPad>();
             var stageNames = _stages
                 .Select(GetStageDisplayName)
                 .ToList();
             CameraStage selectedCameraStage = GetCameraStage(_nextStages, _params.NextStageIndex);
 
             return UI.Column(
-                selectedCameraStage == null
-                    ? UI.Label("Background: CameraStageを選択してください")
-                    : UI.Row(
-                        UI.Field("Background", () => selectedCameraStage.BackgroundMode, value => selectedCameraStage.BackgroundMode = value),
-                        UI.Field("Toggle Pad", Binder.Create(_params.BackgroundToggleButton, typeof(MidiBinding))),
-                        UI.DynamicElementIf(() => selectedCameraStage.BackgroundMode == CameraStageBackgroundMode.SolidColor,
-                            () => UI.Field("Color", () => selectedCameraStage.BackgroundColor, value => selectedCameraStage.BackgroundColor = value))),
                 UI.Row(
                     UI.Button("Add New Stage", () => AddCameraStage()),
                     stageNames.Count == 0
@@ -945,13 +1034,23 @@ namespace Aetherin
                         : UI.Column(
                             UI.Dropdown("Current",
                                 () => Mathf.Clamp(_params.CurrentStageIndex, 0, stageNames.Count - 1),
-                                value => _params.CurrentStageIndex = value,
+                                SelectCurrentStage,
                                 stageNames),
                             UI.Dropdown("Next",
                                 () => Mathf.Clamp(_params.NextStageIndex, 0, stageNames.Count - 1),
-                                value => { if (!_isPreparingNext) _params.NextStageIndex = value; },
+                                SelectNextStage,
                                 stageNames)
                         )
+                ),
+                UI.Row(
+                    selectedCameraStage == null
+                        ? UI.Label("Stage Time: -")
+                        : UI.Field("Time Speed", () => selectedCameraStage.StageTimeSpeed,
+                            value => selectedCameraStage.SetStageTimeSpeed(value)),
+                    selectedCameraStage == null
+                        ? UI.Label("Background: CameraStageを選択してください")
+                        : UI.Row(UI.Field("Background", () => selectedCameraStage.BackgroundMode, value => selectedCameraStage.BackgroundMode = value))
+
                 ),
                 CreateStageListElement(stageNames)
             );
@@ -1024,7 +1123,7 @@ namespace Aetherin
             recipe.EnsureInitialized();
             return UI.Row(
                 UI.Button(UI.Label(() => $"{(_inspectedCameraWork == recipe ? "▶ " : "  ")}{recipe.Name}"),
-                    () => InspectCameraWork(stage, recipe))
+                    () => InspectCameraWork(stage, recipe)).SetHeight(25f)
                     .SetFlexGrow(1f)
                     .RegisterUpdateCallback(element =>
                     {
@@ -1035,7 +1134,8 @@ namespace Aetherin
                 UI.Button("Select", () => stage.SelectCameraWork(deckIndex, recipeIndex)),
                 UI.Button("▲", () => stage.MoveCameraWork(deckIndex, recipeIndex, -1)).SetWidth(32f),
                 UI.Button("▼", () => stage.MoveCameraWork(deckIndex, recipeIndex, 1)).SetWidth(32f),
-                UI.Button("Delete", () => RemoveCameraWork(stage, deckIndex, recipeIndex, recipe)));
+                UI.Button("Delete", () => RemoveCameraWork(stage, deckIndex, recipeIndex, recipe))
+            );
         }
 
         private static IEnumerable<Element> CreateCameraWorkParameterFields(CameraStage stage, CameraWorkRecipe recipe)
@@ -1226,7 +1326,7 @@ namespace Aetherin
                     .RegisterUpdateCallback(element =>
                     {
                         Color color = GetLayerColor(layer);
-                        element.SetBackgroundColor( _inspectedLayer == layer ? color * 0.8f : layer.Visible ? color * 0.5f : color * 0.25f);
+                        element.SetBackgroundColor( _inspectedLayer == layer ? color * 1f : layer.Visible ? color * 0.8f : color * 0.5f);
                     }),
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(16f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(16f)

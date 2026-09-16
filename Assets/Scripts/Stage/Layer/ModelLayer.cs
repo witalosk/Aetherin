@@ -29,6 +29,7 @@ namespace Aetherin
         private static readonly int GlassDistortionScaleId = Shader.PropertyToID("_GlassDistortionScale");
         private static readonly int ReflectionSourceId = Shader.PropertyToID("_ReflectionSource");
         private static readonly int SolidReflectionColorId = Shader.PropertyToID("_SolidReflectionColor");
+        private static readonly int StageTimeId = Shader.PropertyToID("_StageTime");
 
         [SerializeField] private ModelLayerParams _params = new();
         [SerializeField] private Shader _surfaceShader;
@@ -319,6 +320,7 @@ namespace Aetherin
                 material.SetColor(ColorBId, b);
                 material.SetFloat(GradientId, color.IsGradient ? 1f : 0f);
                 material.SetVector(GradientParamsId, new Vector4(color.AngleDegrees, color.Offset, color.Scale, 0f));
+                material.SetFloat(StageTimeId, (float)context.Time);
                 if (!wire)
                 {
                     bool glass = _params.MaterialMode == ModelLayerMaterialMode.Glass;
