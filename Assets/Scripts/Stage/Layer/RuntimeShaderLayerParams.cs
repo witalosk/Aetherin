@@ -27,8 +27,10 @@ namespace Aetherin
 
 Texture2D _WaveformTexture : register(t0);
 Texture2D _SpectrumTexture : register(t1);
+Texture2D _PreviousFrameTexture : register(t2);
 SamplerState _WaveformTextureSampler : register(s0);
 SamplerState _SpectrumTextureSampler : register(s1);
+SamplerState _PreviousFrameTextureSampler : register(s2);
 
 float4 Frag(VsOutput input) : SV_TARGET
 {
@@ -40,6 +42,8 @@ float4 Frag(VsOutput input) : SV_TARGET
         public bool ScreenSpace;
         [Tooltip("Runtime Texture の解像度。幅・高さは Size × Pixel Per Unit で決まります")]
         [Min(1f)] public float PixelPerUnit = 125f;
+        [Tooltip("ランタイムシェーダーの t2 (_PreviousFrameTexture) に1フレーム前の出力を渡します")]
+        public bool ProvidePreviousFrameTexture;
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);

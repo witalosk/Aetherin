@@ -40,6 +40,14 @@ namespace Aetherin
         public FloatParameter Speed = new(1f);
         public FloatParameter Radius = new(5f);
         public FloatParameter NoiseAmount = new(0f);
+        [Tooltip("このカメラワークでDepth Of Fieldを有効にする")]
+        public bool DepthOfFieldEnabled = false;
+        [Tooltip("このカメラワークの焦点距離")]
+        public FloatParameter FocusDistance = new(10f);
+        [Tooltip("このカメラワークの絞り値")]
+        public FloatParameter Aperture = new(5.6f);
+        [Tooltip("このカメラワークのレンズ焦点距離")]
+        public FloatParameter FocalLength = new(50f);
 
         public void EnsureInitialized()
         {
@@ -51,6 +59,9 @@ namespace Aetherin
             Speed ??= new FloatParameter(1f);
             Radius ??= new FloatParameter(5f);
             NoiseAmount ??= new FloatParameter(0f);
+            FocusDistance ??= new FloatParameter(10f);
+            Aperture ??= new FloatParameter(5.6f);
+            FocalLength ??= new FloatParameter(50f);
         }
     }
 
@@ -80,6 +91,16 @@ namespace Aetherin
         public int SelectedCameraWorkDeck => _selectedCameraWorkDeck;
         public int CurrentCameraWork => _currentCameraWork;
         public int CinemachineChannelIndex { get; private set; } = -1;
+        public CameraWorkRecipe ActiveCameraWorkRecipe
+        {
+            get
+            {
+                CameraWorkDeck deck = GetSelectedCameraWorkDeck();
+                if (deck?.Recipes == null || deck.Recipes.Count == 0) return null;
+                int index = Mathf.Clamp(_currentCameraWork, 0, deck.Recipes.Count - 1);
+                return deck.Recipes[index];
+            }
+        }
 
         [SerializeField] private List<CameraWorkDeck> _cameraWorkDecks = new();
 

@@ -29,6 +29,7 @@ namespace Aetherin
         private Material _material;
         private ShaderRenderer _runtimeRenderer;
         private RenderTexture _runtimeTexture;
+        private RenderTexture _previousFrameTexture;
         private RenderTexture _waveformTexture;
         private Vector2Int _runtimeResolution;
         private int _shaderCodeHash;
@@ -56,6 +57,20 @@ namespace Aetherin
 
         private void Awake() => InitializeLayer();
         private void OnEnable() => InitializeLayer();
+
+        private void OnDisable()
+        {
+            if (!Application.isPlaying || _runtimeRenderer == null) return;
+
+            // ShaderRenderer starts its render coroutine only in Awake. Unity stops that
+            // coroutine when StageManager deactivates this stage, and enabling the same
+            // component again does not restart it. Recreate the component on the next
+            // activation so rendering resumes.
+            Destroy(_runtimeRenderer);
+            _runtimeRenderer = null;
+            _isShaderCompiled = false;
+            _compileAttempted = false;
+        }
 
         private void InitializeLayer()
         {
@@ -93,9 +108,13 @@ namespace Aetherin
                 _appliedTextureRebuildRevision = _params.TextureRebuildRevision;
             }
             if (_runtimeTexture == null) return;
+            UpdatePreviousFrameTexture();
             _runtimeRenderer.SetConstantBuffer(0, CreateConstantBuffer(context, _runtimeResolution));
             _runtimeRenderer.SetTexture(0, GetWaveformTexture());
             _runtimeRenderer.SetTexture(1, _audio?.SpectrumTexture ?? Texture2D.blackTexture);
+            _runtimeRenderer.SetTexture(2, _params.ProvidePreviousFrameTexture
+                ? _previousFrameTexture
+                : Texture2D.blackTexture);
         }
 
         protected override void LateUpdate()
@@ -143,8 +162,11 @@ namespace Aetherin
                 return;
             }
 
+            bool createRuntimeRenderer = _runtimeRenderer == null;
             _runtimeRenderer ??= GetComponent<ShaderRenderer>() ?? gameObject.AddComponent<ShaderRenderer>();
             _runtimeRenderer.enabled = true;
+            if (createRuntimeRenderer && _runtimeTexture != null)
+                _runtimeRenderer.TargetTexture = _runtimeTexture;
             // UnityRuntimeShader queues this path through GL.IssuePluginEvent at the end
             // of the frame. Do not call BlitNow from Update: it accesses D3D11 directly
             // on the main thread and can race Unity's threaded graphics device.
@@ -185,6 +207,33 @@ namespace Aetherin
             _runtimeRenderer.TargetTexture = texture;
             _material.SetTexture(MainTexId, texture);
             DestroyResource(previousTexture);
+            DestroyResource(_previousFrameTexture);
+            _previousFrameTexture = null;
+        }
+
+        private void UpdatePreviousFrameTexture()
+        {
+            if (!_params.ProvidePreviousFrameTexture)
+            {
+                DestroyResource(_previousFrameTexture);
+                _previousFrameTexture = null;
+                return;
+            }
+
+            if (_previousFrameTexture == null)
+            {
+                _previousFrameTexture = new RenderTexture(
+                    _runtimeResolution.x, _runtimeResolution.y, 0, RenderTextureFormat.ARGB32)
+                {
+                    name = $"{name} Runtime Shader Previous Frame",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.DontSave,
+                };
+                _previousFrameTexture.Create();
+            }
+
+            Graphics.Blit(_runtimeTexture, _previousFrameTexture);
         }
 
         private void ApplyTransform(in ModulationContext context)
@@ -300,6 +349,7 @@ namespace Aetherin
             DestroyResource(_material);
             DestroyResource(_mesh);
             DestroyResource(_runtimeTexture);
+            DestroyResource(_previousFrameTexture);
             DestroyResource(_waveformTexture);
         }
 

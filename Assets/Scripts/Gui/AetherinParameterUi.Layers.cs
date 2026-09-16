@@ -217,6 +217,8 @@ namespace Aetherin
                     ("Texture", UI.Column(
                         UI.Field("Pixel Per Unit", () => p.PixelPerUnit,
                             value => p.PixelPerUnit = Math.Max(1f, value)),
+                        UI.Toggle("Previous Frame Texture", () => p.ProvidePreviousFrameTexture,
+                            value => p.ProvidePreviousFrameTexture = value),
                         UI.Button("Rebuild Texture", p.RequestTextureRebuild))),
                     ("Shader", UI.ScrollViewVertical(500f,
                         UI.TextArea(null, () => p.ShaderCode, value => p.ShaderCode = value)

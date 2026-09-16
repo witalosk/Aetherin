@@ -2340,31 +2340,7 @@ MonoBehaviour:
         BaseValue: 0.5
         Modulation:
           Modulators: []
-      DepthOfFieldEnabled: 1
-      DepthOfFieldToggleButton:
-        _noteNumber: -1
       DepthOfFieldMode: 1
-      FocusDistance:
-        BaseValue: 10
-        Modulation:
-          Modulators: []
-      AutoFocusEnabled: 0
-      AutoFocusMaxDistance:
-        BaseValue: 100
-        Modulation:
-          Modulators: []
-      AutoFocusLerpSpeed:
-        BaseValue: 6
-        Modulation:
-          Modulators: []
-      Aperture:
-        BaseValue: 5.6
-        Modulation:
-          Modulators: []
-      FocalLength:
-        BaseValue: 50
-        Modulation:
-          Modulators: []
     NextVolume:
       BloomEnabled: 1
       BloomToggleButton:
@@ -2381,31 +2357,7 @@ MonoBehaviour:
         BaseValue: 0.5
         Modulation:
           Modulators: []
-      DepthOfFieldEnabled: 1
-      DepthOfFieldToggleButton:
-        _noteNumber: -1
       DepthOfFieldMode: 1
-      FocusDistance:
-        BaseValue: 10
-        Modulation:
-          Modulators: []
-      AutoFocusEnabled: 0
-      AutoFocusMaxDistance:
-        BaseValue: 100
-        Modulation:
-          Modulators: []
-      AutoFocusLerpSpeed:
-        BaseValue: 6
-        Modulation:
-          Modulators: []
-      Aperture:
-        BaseValue: 5.6
-        Modulation:
-          Modulators: []
-      FocalLength:
-        BaseValue: 50
-        Modulation:
-          Modulators: []
 --- !u!1 &2134490627
 GameObject:
   m_ObjectHideFlags: 0

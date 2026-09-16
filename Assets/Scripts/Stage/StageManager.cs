@@ -640,6 +640,9 @@ namespace Aetherin
             if (_isPreparingNext) return;
 
             MidiDiagnostics.RecordCritical("Stage swap begin");
+            bool shouldAdvanceCameraWork =
+                _params.CurrentStageIndex == _params.NextStageIndex &&
+                CurrentCameraWorkTiming == CameraWorkSwitchTiming.Manual;
             // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
             _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
 
@@ -650,6 +653,11 @@ namespace Aetherin
 
             // NextはCurrentの複製として続きを操作するため、選択も昇格したステージと同じものを指し続ける
             _params.CurrentStageIndex = _params.NextStageIndex;
+
+            // 同じステージをManual切替のままSwapした場合は、次のカメラワークへ進める。
+            // 再構築されるNextはこのCurrentから複製されるため、両デッキの進行状態も揃う。
+            if (shouldAdvanceCameraWork)
+                GetCameraStage(_currentStages, _params.CurrentStageIndex)?.AdvanceCameraWork();
 
             for (int i = 0; i < _currentStages.Count; i++)
             {
@@ -1026,6 +1034,11 @@ namespace Aetherin
             if (recipe.Type == CameraWorkType.Orbit)
                 yield return UI.Field("Orbit Rotation", Binder.Create(recipe.OrbitRotation, typeof(Vector3Parameter)));
             yield return UI.Field("Field Of View", Binder.Create(recipe.FieldOfView, typeof(FloatParameter)));
+            yield return UI.Toggle("Depth Of Field", () => recipe.DepthOfFieldEnabled,
+                value => recipe.DepthOfFieldEnabled = value);
+            yield return UI.Field("Focus Distance", Binder.Create(recipe.FocusDistance, typeof(FloatParameter)));
+            yield return UI.Field("Aperture", Binder.Create(recipe.Aperture, typeof(FloatParameter)));
+            yield return UI.Field("Focal Length", Binder.Create(recipe.FocalLength, typeof(FloatParameter)));
             if (recipe.Type is CameraWorkType.Follow or CameraWorkType.Handheld)
                 yield return UI.Field("Speed", Binder.Create(recipe.Speed, typeof(FloatParameter)));
             if (recipe.Type == CameraWorkType.Orbit)

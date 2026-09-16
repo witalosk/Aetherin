@@ -40,6 +40,12 @@ namespace Aetherin
         OutputPad,
     }
 
+    public enum PostEffectEditMode
+    {
+        Next,
+        Immediate,
+    }
+
     public enum VolumeDepthOfFieldMode
     {
         Gaussian,
@@ -60,19 +66,7 @@ namespace Aetherin
         public FloatParameter BloomThreshold = new(0.9f);
         public FloatParameter BloomScatter = new(0.5f);
 
-        public bool DepthOfFieldEnabled = true;
-        [Tooltip("Depth Of Fieldの有効/無効を切り替えるMIDIパッド")]
-        public MidiBinding DepthOfFieldToggleButton = new();
         public VolumeDepthOfFieldMode DepthOfFieldMode = VolumeDepthOfFieldMode.Bokeh;
-        public FloatParameter FocusDistance = new(10f);
-        [Tooltip("画面を3x3に分けてRaycastし、被写体までの距離へ自動でフォーカスします")]
-        public bool AutoFocusEnabled;
-        [Tooltip("自動フォーカスでRaycastする最大距離")]
-        public FloatParameter AutoFocusMaxDistance = new(100f);
-        [Tooltip("自動フォーカスが目標距離へLerpする速さ")]
-        public FloatParameter AutoFocusLerpSpeed = new(6f);
-        public FloatParameter Aperture = new(5.6f);
-        public FloatParameter FocalLength = new(50f);
 
         public void EnsureInitialized()
         {
@@ -80,12 +74,6 @@ namespace Aetherin
             BloomIntensity ??= new FloatParameter(1f);
             BloomThreshold ??= new FloatParameter(0.9f);
             BloomScatter ??= new FloatParameter(0.5f);
-            DepthOfFieldToggleButton ??= new MidiBinding();
-            FocusDistance ??= new FloatParameter(10f);
-            AutoFocusMaxDistance ??= new FloatParameter(100f);
-            AutoFocusLerpSpeed ??= new FloatParameter(6f);
-            Aperture ??= new FloatParameter(5.6f);
-            FocalLength ??= new FloatParameter(50f);
         }
     }
 
@@ -117,6 +105,14 @@ namespace Aetherin
         [Tooltip("HSV Levels: ガンマ")] public FloatParameter Gamma = new(1f);
         [Tooltip("Shutter: 閉じる方向")] public ShutterMode ShutterMode;
         [Tooltip("Hand Drawn: 揺れを量子化するフレームレート")] public FloatParameter HandDrawnFrameRate = new(8f);
+        [Tooltip("Light Leak: 横位置。0で左、1で右。Beat Accumulator の PingPong で左右交互にできます")]
+        public FloatParameter LightLeakPosition = new(0.5f);
+        [Tooltip("Light Leak: 色。パレット参照またはカスタム色を指定できます")]
+        public PaletteColorParameter LightLeakColor = new()
+        {
+            ColorReference = PaletteColorReference.Custom,
+            CustomColor = new Color(1f, 0.32f, 0.06f, 1f),
+        };
 
         public void EnsureInitialized()
         {
@@ -127,6 +123,13 @@ namespace Aetherin
             BlackLevel ??= new FloatParameter(0f); WhiteLevel ??= new FloatParameter(1f);
             Gamma ??= new FloatParameter(1f);
             HandDrawnFrameRate ??= new FloatParameter(8f);
+            LightLeakPosition ??= new FloatParameter(0.5f);
+            LightLeakColor ??= new PaletteColorParameter
+            {
+                ColorReference = PaletteColorReference.Custom,
+                CustomColor = new Color(1f, 0.32f, 0.06f, 1f),
+            };
+            LightLeakColor.EnsureInitialized();
         }
     }
 
@@ -166,6 +169,8 @@ namespace Aetherin
     [Serializable]
     public sealed class PostEffectManagerParams : IParams
     {
+        [Tooltip("Nextは次のデッキだけを編集し、ImmediateはCurrentの出力にも即時反映します")]
+        public PostEffectEditMode EditMode;
         [HideInInspector]
         public PostEffectStack Current = new();
         public PostEffectStack Next = new();

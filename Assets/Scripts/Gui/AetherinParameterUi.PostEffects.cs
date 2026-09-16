@@ -33,19 +33,7 @@ namespace Aetherin
                     Param("Threshold", effects.BloomThreshold),
                     Param("Scatter", effects.BloomScatter))),
                 UI.Fold("Depth Of Field", UI.Column(
-                    UI.Toggle("Enabled", () => effects.DepthOfFieldEnabled, value => effects.DepthOfFieldEnabled = value),
-                    UI.Field("Toggle Pad", Binder.Create(effects.DepthOfFieldToggleButton, typeof(MidiBinding))),
-                    UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value),
-                    Param("Focus Distance", effects.FocusDistance),
-                    UI.Toggle("Auto Focus (3x3 Rays)", () => effects.AutoFocusEnabled,
-                        value => effects.AutoFocusEnabled = value),
-                    UI.DynamicElementIf(
-                        () => effects.AutoFocusEnabled,
-                        () => UI.Column(
-                            Param("Auto Focus Max Distance", effects.AutoFocusMaxDistance),
-                            Param("Auto Focus Lerp Speed", effects.AutoFocusLerpSpeed))),
-                    Param("Aperture", effects.Aperture),
-                    Param("Focal Length", effects.FocalLength))));
+                    UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value))));
         }
 
         private static Element CreatePostEffectStackElement(LabelElement label, IBinder<PostEffectStack> binder)
@@ -197,6 +185,8 @@ namespace Aetherin
                     yield return Param("Size", module.Scale);
                     yield return Param("Drift Speed", module.Speed);
                     yield return Param("Angle", module.Secondary);
+                    yield return Param("Position (Left - Right)", module.LightLeakPosition);
+                    yield return Param("Color", module.LightLeakColor);
                     break;
             }
         }

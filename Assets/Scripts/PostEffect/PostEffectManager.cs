@@ -38,6 +38,8 @@ namespace Aetherin
         private static readonly int GammaId = Shader.PropertyToID("_Gamma");
         private static readonly int ShutterModeId = Shader.PropertyToID("_ShutterMode");
         private static readonly int HandDrawnFrameRateId = Shader.PropertyToID("_HandDrawnFrameRate");
+        private static readonly int LightLeakPositionId = Shader.PropertyToID("_LightLeakPosition");
+        private static readonly int LightLeakColorId = Shader.PropertyToID("_LightLeakColor");
 
         private Material _material;
         private StackRuntime _current = new();
@@ -45,8 +47,6 @@ namespace Aetherin
         private StackRuntime _output = new();
         private VolumeProfile _currentVolumeProfile;
         private VolumeProfile _nextVolumeProfile;
-        private readonly AutoFocusState _currentAutoFocus = new();
-        private readonly AutoFocusState _nextAutoFocus = new();
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
         private ICounter _counter;
@@ -85,7 +85,11 @@ namespace Aetherin
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
-            return Process(source, _params.Current, _current, context);
+            _params.Next ??= new PostEffectStack();
+            PostEffectStack stack = _params.EditMode == PostEffectEditMode.Immediate
+                ? _params.Next
+                : _params.Current;
+            return Process(source, stack, _current, context);
         }
 
         public Texture ProcessNext(Texture source) 
@@ -132,8 +136,11 @@ namespace Aetherin
             {
                 var currentContext = new ModulationContext(
                     Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
-                ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume, currentCamera, currentContext,
-                    _currentAutoFocus);
+                DeckVolumeEffects currentSettings = _params.EditMode == PostEffectEditMode.Immediate
+                    ? _params.NextVolume
+                    : _params.CurrentVolume;
+                ApplyVolumeSettings(_currentVolumeProfile, currentSettings,
+                    currentCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, currentContext);
                 ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
             }
 
@@ -141,7 +148,8 @@ namespace Aetherin
             {
                 var nextContext = new ModulationContext(
                     Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
-                ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume, nextCamera, nextContext, _nextAutoFocus);
+                ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume,
+                    nextCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, nextContext);
                 ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
             }
         }
@@ -155,12 +163,8 @@ namespace Aetherin
 
             if (effects.BloomToggleButton.WasNoteOn)
                 effects.BloomEnabled = !effects.BloomEnabled;
-            if (effects.DepthOfFieldToggleButton.WasNoteOn)
-                effects.DepthOfFieldEnabled = !effects.DepthOfFieldEnabled;
 
             effects.BloomToggleButton.SetLed(effects.BloomEnabled ? Color.yellow : Color.yellow * 0.15f);
-            effects.DepthOfFieldToggleButton.SetLed(
-                effects.DepthOfFieldEnabled ? Color.cyan : Color.cyan * 0.15f);
 
             if (_params.Next?.Decks == null) return;
             foreach (PostEffectDeck deck in _params.Next.Decks)
@@ -188,8 +192,7 @@ namespace Aetherin
             _params.Next ??= new PostEffectStack();
             _params.CurrentVolume ??= new DeckVolumeEffects();
             _params.NextVolume ??= new DeckVolumeEffects();
-            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.Next), _params.Current);
-            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.NextVolume), _params.CurrentVolume);
+            CopyNextSettingsToCurrent();
             if (_params.Current.Decks != null)
             {
                 foreach (var deck in _params.Current.Decks)
@@ -206,6 +209,24 @@ namespace Aetherin
             // Deck切り替え後は、Current側のElapsed Timeを切り替え時から数え直す。
             _current.Activations.Clear();
             _next = new StackRuntime();
+        }
+
+        private void SetEditMode(PostEffectEditMode mode)
+        {
+            if (_params.EditMode == mode) return;
+            if (_params.EditMode == PostEffectEditMode.Immediate && mode == PostEffectEditMode.Next)
+                CopyNextSettingsToCurrent();
+            _params.EditMode = mode;
+        }
+
+        private void CopyNextSettingsToCurrent()
+        {
+            _params.Current ??= new PostEffectStack();
+            _params.Next ??= new PostEffectStack();
+            _params.CurrentVolume ??= new DeckVolumeEffects();
+            _params.NextVolume ??= new DeckVolumeEffects();
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.Next), _params.Current);
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.NextVolume), _params.CurrentVolume);
         }
 
         private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context, bool outputOnly = false)
@@ -285,6 +306,12 @@ namespace Aetherin
                     _material.SetFloat(GammaId, module.Gamma?.Evaluate(moduleContext) ?? 1f);
                     _material.SetInt(ShutterModeId, (int)module.ShutterMode);
                     _material.SetFloat(HandDrawnFrameRateId, module.HandDrawnFrameRate?.Evaluate(moduleContext) ?? 8f);
+                    _material.SetFloat(LightLeakPositionId, module.LightLeakPosition?.Evaluate(moduleContext) ?? 0.5f);
+                    ColorPalette palette = _deckStateProvider?.GetState(
+                        context.AllowMidi ? StageDeck.Next : StageDeck.Current)?.Palette;
+                    Color lightLeakColor = EvaluatedPaletteColor.Evaluate(
+                        module.LightLeakColor, palette, moduleContext).ColorA;
+                    _material.SetColor(LightLeakColorId, lightLeakColor);
                     Graphics.Blit(input, target, _material);
                     input = target;
                     wroteAny = true;
@@ -338,19 +365,23 @@ namespace Aetherin
             _params.NextVolume ??= new DeckVolumeEffects();
 
             ClampSelectedEditorItem();
-            return UI.Row(
-                UI.Box(UI.DynamicElementOnStatusChanged(
-                    () => _editorRevision, _ => CreateEditorListElement())).SetWidth(190f).SetFlexShrink(0f),
-                UI.Box(UI.DynamicElementOnStatusChanged(
-                    () => (_selectedEditorItem, _params.Next.Decks.Count),
-                    _ => CreateSelectedEditorElement())).SetMinWidth(420f).SetFlexGrow(1f));
+            return UI.Column(
+                UI.Field("Edit Mode", () => _params.EditMode, SetEditMode),
+                UI.Row(
+                    UI.Box(UI.DynamicElementOnStatusChanged(
+                        () => _editorRevision, _ => CreateEditorListElement())).SetWidth(190f).SetFlexShrink(0f),
+                    UI.Box(UI.DynamicElementOnStatusChanged(
+                        () => (_selectedEditorItem, _params.Next.Decks.Count),
+                        _ => CreateSelectedEditorElement())).SetMinWidth(420f).SetFlexGrow(1f)));
         }
 
         private Element CreateEditorListElement()
         {
             var items = new List<Element>
             {
-                UI.Label("Next Editor"),
+                UI.Label(() => _params.EditMode == PostEffectEditMode.Immediate
+                    ? "Immediate Editor"
+                    : "Next Editor"),
                 UI.Button(UI.Label(() => $"{(_selectedEditorItem == 0 ? "▶ " : "  ")}Volume Effects"),
                     () => _selectedEditorItem = 0),
                 UI.Button("+ Add Deck", AddDeck),
@@ -487,8 +518,8 @@ namespace Aetherin
         }
 
         private void ApplyVolumeSettings(
-            VolumeProfile profile, DeckVolumeEffects settings, Camera camera,
-            in ModulationContext context, AutoFocusState autoFocus)
+            VolumeProfile profile, DeckVolumeEffects settings, CameraWorkRecipe cameraWork,
+            in ModulationContext context)
         {
             settings.EnsureInitialized();
             if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
@@ -508,94 +539,20 @@ namespace Aetherin
             if (!profile.TryGet(out DepthOfField depthOfField)) depthOfField = profile.Add<DepthOfField>(true);
             depthOfField.active = true;
             depthOfField.mode.overrideState = true;
-            depthOfField.mode.value = settings.DepthOfFieldEnabled
+            depthOfField.mode.value = cameraWork?.DepthOfFieldEnabled == true
                 ? settings.DepthOfFieldMode == VolumeDepthOfFieldMode.Bokeh
                     ? DepthOfFieldMode.Bokeh
                     : DepthOfFieldMode.Gaussian
                 : DepthOfFieldMode.Off;
             depthOfField.focusDistance.overrideState = true;
-            depthOfField.focusDistance.value = EvaluateFocusDistance(settings, camera, context, autoFocus);
+            depthOfField.focusDistance.value = Mathf.Max(0.1f,
+                cameraWork?.FocusDistance?.Evaluate(context) ?? 10f);
             depthOfField.aperture.overrideState = true;
-            depthOfField.aperture.value = Mathf.Clamp(settings.Aperture.Evaluate(context), 1f, 32f);
+            depthOfField.aperture.value = Mathf.Clamp(cameraWork?.Aperture?.Evaluate(context) ?? 5.6f, 1f, 32f);
             depthOfField.focalLength.overrideState = true;
-            depthOfField.focalLength.value = Mathf.Clamp(settings.FocalLength.Evaluate(context), 1f, 300f);
+            depthOfField.focalLength.value = Mathf.Clamp(cameraWork?.FocalLength?.Evaluate(context) ?? 50f, 1f, 300f);
         }
 
-        private static readonly List<FocusRay> _rays = new();
-        private static float _gizmoRayLength;
-
-        private static float EvaluateFocusDistance(
-            DeckVolumeEffects settings, Camera camera, in ModulationContext context, AutoFocusState state)
-        {
-            float manualDistance = Mathf.Max(0.1f, settings.FocusDistance.Evaluate(context));
-            if (!settings.AutoFocusEnabled || camera == null)
-            {
-                state.Initialized = false;
-                return manualDistance;
-            }
-            _rays.Clear();  
-
-            int hitCount = 0;
-            float maxDistance = Mathf.Max(0.1f, settings.AutoFocusMaxDistance.Evaluate(context));
-            _gizmoRayLength = maxDistance;
-            for (int y = 0; y < 3; y++)
-            {
-                for (int x = 0; x < 3; x++)
-                {
-                    Ray ray = camera.ViewportPointToRay(new Vector3(x * 0.5f, y * 0.5f, 0f));
-                    float distance = FindFocusDistance(ray, camera, maxDistance);
-                    _rays.Add(new FocusRay(ray, distance));
-                    if (distance >= 0f) state.HitDistances[hitCount++] = distance;
-                }
-            }
-
-            float targetDistance = hitCount > 0
-                ? GetMedianDistance(state.HitDistances, hitCount)
-                : manualDistance;
-            if (!state.Initialized)
-            {
-                state.SmoothedDistance = targetDistance;
-                state.Initialized = true;
-            }
-            else
-            {
-                float deltaTime = Application.isPlaying ? Time.unscaledDeltaTime : 1f / 60f;
-                float lerpFactor = 1f - Mathf.Exp(-Mathf.Max(0f, settings.AutoFocusLerpSpeed.Evaluate(context)) * deltaTime);
-                state.SmoothedDistance = Mathf.Lerp(state.SmoothedDistance, targetDistance, lerpFactor);
-            }
-
-            return Mathf.Max(0.1f, state.SmoothedDistance);
-        }
-
-        private static float FindFocusDistance(Ray ray, Camera camera, float maxDistance)
-        {
-            float nearestDistance = maxDistance + 1f;
-            if (Physics.Raycast(ray, out RaycastHit hit, maxDistance, Physics.DefaultRaycastLayers,
-                    QueryTriggerInteraction.Ignore))
-                nearestDistance = hit.distance;
-
-            // Stage layers are draw-only MeshRenderers and do not own physics colliders.
-            // Their world-space bounds are sufficient for selecting a practical focus depth.
-            int cameraMask = camera.cullingMask;
-            foreach (Renderer renderer in UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
-            {
-                if (!renderer.enabled || renderer.forceRenderingOff ||
-                    (cameraMask & (1 << renderer.gameObject.layer)) == 0) continue;
-                if (renderer.bounds.IntersectRay(ray, out float distance) && distance < nearestDistance)
-                    nearestDistance = distance;
-            }
-
-            return nearestDistance <= maxDistance ? nearestDistance : -1f;
-        }
-
-        private static float GetMedianDistance(float[] distances, int count)
-        {
-            Array.Sort(distances, 0, count);
-            int middle = count / 2;
-            return count % 2 == 0
-                ? (distances[middle - 1] + distances[middle]) * 0.5f
-                : distances[middle];
-        }
 
         private static void DestroyRuntimeProfile(VolumeProfile profile)
         {
@@ -610,29 +567,6 @@ namespace Aetherin
             else DestroyImmediate(profile);
         }
 
-        private void OnDrawGizmos()
-        {
-            // rayを表示
-            foreach (FocusRay focusRay in _rays)
-            {
-                bool hit = focusRay.Distance >= 0f;
-                Gizmos.color = hit ? Color.green : Color.red;
-                float length = hit ? focusRay.Distance : _gizmoRayLength;
-                Gizmos.DrawRay(focusRay.Ray.origin, focusRay.Ray.direction * length);
-            }
-        }
-
-        private readonly struct FocusRay
-        {
-            public readonly Ray Ray;
-            public readonly float Distance;
-
-            public FocusRay(Ray ray, float distance)
-            {
-                Ray = ray;
-                Distance = distance;
-            }
-        }
 
         private sealed class StackRuntime : IDisposable
         {
@@ -715,11 +649,5 @@ namespace Aetherin
             }
         }
 
-        private sealed class AutoFocusState
-        {
-            public readonly float[] HitDistances = new float[9];
-            public float SmoothedDistance;
-            public bool Initialized;
-        }
     }
 }

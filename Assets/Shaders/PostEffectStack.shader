@@ -27,6 +27,8 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float _Hue, _Saturation, _Value, _BlackLevel, _WhiteLevel, _Gamma;
             int _ShutterMode;
             float _HandDrawnFrameRate;
+            float _LightLeakPosition;
+            float4 _LightLeakColor;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float3 bloomSample(float2 uv)
@@ -315,12 +317,14 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float2 direction = float2(cos(angle), sin(angle));
                     float aspect = _MainTex_TexelSize.z / _MainTex_TexelSize.w;
                     float size = max(0.05, 0.1 + abs(_Scale) * 0.05);
-                    float2 sourcePosition = 0.5 + direction * (0.5 + size * 0.4);
+                    // Keep the source just outside the selected horizontal edge so 0/1 maps cleanly to left/right.
+                    float sourceX = lerp(-size * 0.5, 1.0 + size * 0.5, saturate(_LightLeakPosition));
+                    float2 sourcePosition = float2(sourceX, 0.5) + direction * size * 0.35;
                     float2 leakVector = (uv - sourcePosition) * float2(aspect, 1.0);
                     float radialLeak = 1.0 - smoothstep(size, size * 2.2, length(leakVector));
                     float directionalLeak = saturate(dot(normalize(uv - 0.5 + 0.0001), -direction) * 0.5 + 0.5);
                     float leak = radialLeak * (0.65 + directionalLeak * 0.35) * max(0.0, _Amount);
-                    float3 leakColor = lerp(float3(1.0, 0.18, 0.03), float3(1.0, 0.82, 0.32), radialLeak);
+                    float3 leakColor = _LightLeakColor.rgb;
                     fx.rgb = 1.0 - (1.0 - src.rgb) * (1.0 - leakColor * leak);
                     fx = lerp(src, fx, saturate(_Strength));
                 }
