@@ -182,7 +182,7 @@ namespace Aetherin
         {
             if (_fontAsset == null) return;
             if (_ownsFontAsset) _fontAsset.hideFlags = HideFlags.HideAndDontSave;
-            _fontAsset.TryAddCharacters(_resolvedText ?? string.Empty, out _);
+            TryAddCharactersToDynamicFont();
             _text.font = _fontAsset;
             _material = new Material(_fontAsset.material) { hideFlags = HideFlags.HideAndDontSave };
             _text.fontSharedMaterial = _material;
@@ -198,7 +198,7 @@ namespace Aetherin
             int hash = CalculateLayoutHash(fontSize, characterSpacing, wordSpacing, lineSpacing);
             if (hash == _layoutHash && _baseVertices != null) return;
 
-            _fontAsset.TryAddCharacters(_resolvedText ?? string.Empty, out _);
+            TryAddCharactersToDynamicFont();
             _text.text = _resolvedText ?? string.Empty;
             _text.fontSize = fontSize;
             _text.characterSpacing = characterSpacing;
@@ -210,6 +210,12 @@ namespace Aetherin
             _text.ForceMeshUpdate(true, true);
             CaptureBaseMesh();
             _layoutHash = hash;
+        }
+
+        private void TryAddCharactersToDynamicFont()
+        {
+            if (_fontAsset == null || _fontAsset.atlasPopulationMode == AtlasPopulationMode.Static) return;
+            _fontAsset.TryAddCharacters(_resolvedText ?? string.Empty, out _);
         }
 
         private int CalculateLayoutHash(float fontSize, float characterSpacing, float wordSpacing, float lineSpacing)
