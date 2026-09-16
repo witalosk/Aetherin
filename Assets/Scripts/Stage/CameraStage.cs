@@ -354,6 +354,21 @@ namespace Aetherin
             return layer;
         }
 
+        public MovieLayer AddMovieLayer(Transform parent = null)
+        {
+            var layerObject = new GameObject("Movie Layer");
+            layerObject.transform.SetParent(parent != null ? parent : transform, false);
+            ApplyDeckRenderingLayer(layerObject);
+            layerObject.AddComponent<MeshFilter>();
+            layerObject.AddComponent<MeshRenderer>();
+            var layer = layerObject.AddComponent<MovieLayer>();
+            layer.Initialize(_audioFeatureProvider, _beatManager);
+            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
+            ApplyDeckRenderingLayer(layerObject);
+            RefreshLayers();
+            return layer;
+        }
+
         public LightLayer AddLightLayer(Transform parent = null)
         {
             var layerObject = new GameObject("Light Layer");
@@ -530,7 +545,7 @@ namespace Aetherin
             LayerId = layer.LayerId,
             Type = layer switch
             {
-                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", SpriteSheetLayer => "sprite-sheet", LightLayer => "light",
+                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", SpriteSheetLayer => "sprite-sheet", MovieLayer => "movie", LightLayer => "light",
                 GpuParticleLayer => "gpu-particle", TextLayer => "text",
                 RuntimeShaderLayer => "runtime-shader", GroupLayer => "group", _ => string.Empty,
             },
@@ -559,7 +574,7 @@ namespace Aetherin
             StageLayer layer = savedLayer?.Type switch
             {
                 "shape" => AddShapeLayer(parent), "primitive3d" => AddPrimitive3DLayer(parent),
-                "model" => AddModelLayer(parent), "sprite-sheet" => AddSpriteSheetLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
+                "model" => AddModelLayer(parent), "sprite-sheet" => AddSpriteSheetLayer(parent), "movie" => AddMovieLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
                 "text" => AddTextLayer(parent), "runtime-shader" => AddRuntimeShaderLayer(parent),
                 "group" => AddGroupLayer(parent), _ => null,
             };
@@ -576,6 +591,7 @@ namespace Aetherin
                     Primitive3DLayer => "Primitive 3D Layer",
                     ModelLayer => "Model Layer",
                     SpriteSheetLayer => "Sprite Sheet Layer",
+                    MovieLayer => "Movie Layer",
                     LightLayer => "Light Layer",
                     GpuParticleLayer => "GPU Particle Layer",
                     TextLayer => "Text Layer",
