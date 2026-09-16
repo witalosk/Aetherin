@@ -20,6 +20,7 @@ namespace RosettaUI.UIToolkit
         private int _currentTabIndex;
         private readonly VisualElement _contentContainer = new();
 
+        public int TabCount => _tabs.Count;
         public IEnumerable<(VisualElement header, VisualElement content)> TabPairs =>
             _tabs.Select(pair => (pair.headerButton.Children().First(), pair.content));
         public VisualElement TitleContainer { get; } = new();
@@ -74,16 +75,18 @@ namespace RosettaUI.UIToolkit
             UpdateTabActive();
         }
 
-        public void AddTab(VisualElement header, VisualElement content)
+        public VisualElement AddTab(VisualElement header, VisualElement content)
         {
-            DoAddTab(header, content);
+            var titleButton = DoAddTab(header, content);
             UpdateTabActive();
+            return titleButton;
         }
         
-        private void DoAddTab(VisualElement header, VisualElement content)
+        private Button DoAddTab(VisualElement header, VisualElement content)
         {
             var index = _tabs.Count;
-            var titleVe = new Button(() => CurrentTabIndex = index);
+            Button titleVe = null;
+            titleVe = new Button(() => CurrentTabIndex = _tabs.FindIndex(pair => pair.headerButton == titleVe));
             titleVe.ClearClassList();
             titleVe.AddToClassList(UssClassNameTitle);
             titleVe.Add(header);
@@ -92,6 +95,28 @@ namespace RosettaUI.UIToolkit
             contentContainer.Add(content);
 
             _tabs.Add((titleVe, content));
+            return titleVe;
+        }
+
+        /// <summary>Removes the tab that owns <paramref name="content"/>.</summary>
+        public bool RemoveTab(VisualElement content)
+        {
+            var index = _tabs.FindIndex(pair => pair.content == content);
+            if (index < 0) return false;
+
+            var tab = _tabs[index];
+            tab.headerButton.RemoveFromHierarchy();
+            tab.content.RemoveFromHierarchy();
+            _tabs.RemoveAt(index);
+            _currentTabIndex = Mathf.Clamp(_currentTabIndex, 0, Mathf.Max(0, _tabs.Count - 1));
+            UpdateTabActive();
+            return true;
+        }
+
+        public void SelectTab(VisualElement content)
+        {
+            var index = _tabs.FindIndex(pair => pair.content == content);
+            if (index >= 0) CurrentTabIndex = index;
         }
         
         private void UpdateTabActive()

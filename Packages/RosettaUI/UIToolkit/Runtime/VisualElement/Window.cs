@@ -64,6 +64,12 @@ namespace RosettaUI.UIToolkit
 
         public bool IsMoved { get; protected set; }
 
+        /// <summary>True while this window is owned by a <see cref="DockingWorkspace"/>.</summary>
+        public bool IsDocked { get; private set; }
+
+        /// <summary>Title shown by a docking tab.</summary>
+        public string DockTitle { get; set; } = "Window";
+
         public VisualElement TitleBarContainerLeft { get; } = new();
 
         public VisualElement TitleBarContainerRight { get; } = new();
@@ -195,6 +201,7 @@ namespace RosettaUI.UIToolkit
 
             RegisterCallback<PointerDownEvent>(OnPointerDownTrickleDown, TrickleDown.TrickleDown);
             RegisterCallback<PointerDownEvent>(OnPointerDown);
+            RegisterCallback<AttachToPanelEvent>(_ => InitializeDragRoot());
             RegisterCallback<FocusEvent>(OnFocus, TrickleDown.TrickleDown);
             RegisterCallback<BlurEvent>(OnBlur, TrickleDown.TrickleDown);
             RegisterCallback<RequestResizeWindowEvent>(evt =>
@@ -279,6 +286,7 @@ namespace RosettaUI.UIToolkit
         // 同一フレームだとGeometryChangedEventなどでサイズが変わるやつがいるので１フレーム待つ
         private void ResetFixedSize()
         {
+            if (IsDocked) return;
             FreeFixedSize();
             
             var startFrameCount = Time.frameCount;
@@ -292,6 +300,7 @@ namespace RosettaUI.UIToolkit
 
         private void FreezeFixedSize(bool fixHeight = false)
         {
+            if (IsDocked) return;
             style.width = layout.width;
             style.minWidth = StyleKeyword.Null;
 
@@ -306,6 +315,7 @@ namespace RosettaUI.UIToolkit
         
         private void FreeFixedSize()
         {
+            if (IsDocked) return;
             // 現状のサイズは保持。拡大しかしない。勝手に縮小されるのは違和感があるが拡大されるのは内容物で膨らんだ形で問題ない印象
             style.minWidth = layout.width; 
             style.width = StyleKeyword.Null;
@@ -395,6 +405,11 @@ namespace RosettaUI.UIToolkit
                 FreezeFixedSize(fixHeight: true);
             }
             
+            if (_dragMode == DragMode.DragWindow)
+            {
+                DockingWorkspace.For(dragRoot)?.TryDock(this, _lastPointerPosition);
+            }
+
             _dragMode = DragMode.None;
             UnregisterPanelCallback();
 
@@ -423,10 +438,12 @@ namespace RosettaUI.UIToolkit
             // 画面外でボタンをUpされた場合検知できないので、現在押下中かどうかで判定する
             if ((evt.pressedButtons & 0x1) != 0)
             {
+                _lastPointerPosition = evt.position;
                 switch (_dragMode)
                 {
                     case DragMode.DragWindow:
                         UpdateDragWindow(evt.position);
+                        DockingWorkspace.For(dragRoot)?.UpdateDockPreview(evt.position);
                         break;
 
                     case DragMode.ResizeWindow:
@@ -457,12 +474,14 @@ namespace RosettaUI.UIToolkit
         #region DragWindow
 
         private bool _beforeDrag;
+        private Vector2 _lastPointerPosition;
 
         private void StartDragWindow(Vector2 localPosition)
         {
             StartDrag(DragMode.DragWindow);
             _draggingLocalPosition = localPosition;
             _beforeDrag = true;
+            DockingWorkspace.For(dragRoot)?.HideDockPreview();
         }
 
         private Vector2 WorldToDragRootLocal(Vector2 worldPosition)
@@ -586,10 +605,57 @@ namespace RosettaUI.UIToolkit
 
         private void SearchDragRootAndAdd(VisualElement target)
         {
+            if (IsDocked) return;
             dragRoot = target.panel.visualTree.Q<TemplateContainer>()
                        ?? target.panel.visualTree.Query(null, RosettaUIRootUIToolkit.USSRootClassName).First();
-
+            DockingWorkspace.For(dragRoot);
             dragRoot.Add(SelfRoot);
+        }
+
+        private void InitializeDragRoot()
+        {
+            if (panel == null || dragRoot != null) return;
+            dragRoot = panel.visualTree.Q<TemplateContainer>()
+                       ?? panel.visualTree.Query(null, RosettaUIRootUIToolkit.USSRootClassName).First();
+            DockingWorkspace.For(dragRoot);
+        }
+
+        internal void SetDocked(bool docked)
+        {
+            IsDocked = docked;
+            _titleBarContainer.style.display = docked ? DisplayStyle.None : DisplayStyle.Flex;
+            EnableInClassList("rosettaui-window--docked", docked);
+            if (docked)
+            {
+                _freezeFixedSizeTask?.Pause();
+                style.position = UnityEngine.UIElements.Position.Relative;
+                style.left = StyleKeyword.Null;
+                style.top = StyleKeyword.Null;
+                style.width = StyleKeyword.Null;
+                style.height = StyleKeyword.Null;
+                style.minWidth = 0;
+                style.minHeight = 0;
+                style.flexGrow = 1f;
+            }
+            else
+            {
+                style.position = UnityEngine.UIElements.Position.Absolute;
+                style.minWidth = StyleKeyword.Null;
+                style.minHeight = StyleKeyword.Null;
+                style.flexGrow = StyleKeyword.Null;
+            }
+        }
+
+        internal void Undock(VisualElement root, Vector2 worldPosition, Vector2 size)
+        {
+            SetDocked(false);
+            root.Add(SelfRoot);
+            style.width = Mathf.Max(size.x, minSize.x);
+            style.height = Mathf.Max(size.y, minSize.y);
+            Position = worldPosition - root.worldBound.position;
+            style.display = DisplayStyle.Flex;
+            BringToFront();
+            Focus();
         }
     }
 }

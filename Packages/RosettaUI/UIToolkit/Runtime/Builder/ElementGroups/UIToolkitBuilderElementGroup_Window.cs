@@ -17,6 +17,9 @@ namespace RosettaUI.UIToolkit.Builder
             {
                 window.TitleBarContainerLeft.Add(Build(windowElement.Header));
             }
+
+            window.DockTitle = window.TitleBarContainerLeft.Q<TextElement>()?.text ?? "Window";
+            window.name = window.DockTitle;
             
             window.Closable = windowElement.Closable;
 
