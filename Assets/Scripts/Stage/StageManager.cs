@@ -52,7 +52,7 @@ namespace Aetherin
     /// スワップ時はNext側を昇格したCurrentのコピーとして作り直すため、
     /// どんな子オブジェクト構成のステージでも、いま出ている絵から続きを操作できる
     /// </summary>
-    public class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
+    public partial class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
         public static CameraWorkSwitchTiming CurrentCameraWorkTiming { get; private set; } = CameraWorkSwitchTiming.Manual;
         public IParams Params => _params;
@@ -131,7 +131,6 @@ namespace Aetherin
         private IPostEffectManager _postEffectManager;
         private Texture _currentPostTexture;
         private Texture _nextPostTexture;
-        private CameraStageSaveData _pendingCameraStageData;
         private readonly HashSet<string> _runtimeStageIds = new();
         private StageBase _lastStageTimeCcStage;
         private int _lastStageTimeCcNumber = MidiCcBinding.Unassigned;
@@ -908,87 +907,9 @@ namespace Aetherin
             return stage != null && stage.OutputTexture != null ? stage.OutputTexture : Texture2D.blackTexture;
         }
 
-        public string CaptureSaveData()
-        {
-            var data = new CameraStageSaveData();
-            List<StageBase> stages = EditingStages;
-            if (stages == null) return JsonUtility.ToJson(data);
-
-            for (int i = 0; i < stages.Count; i++)
-            {
-                if (stages[i] is not CameraStage stage) continue;
-                data.Stages.Add(new CameraStageLayersSaveData
-                {
-                    StageId = stage.StageId,
-                    StageName = GetStageDisplayName(_stages[i], i),
-                    RuntimeCreated = _runtimeStageIds.Contains(stage.StageId),
-                    StageIndex = i,
-                    BackgroundMode = stage.BackgroundMode,
-                    BackgroundColor = stage.BackgroundColor,
-                    Layers = stage.CaptureLayers(),
-                    CameraWorkDecks = stage.CaptureCameraWorkDecks(),
-                });
-            }
-
-            return JsonUtility.ToJson(data);
-        }
-
-        public void RestoreSaveData(string json)
-        {
-            _pendingCameraStageData = JsonUtility.FromJson<CameraStageSaveData>(json);
-            if (_nextStages != null) ApplyPendingCameraStageData();
-        }
-
-        private void ApplyPendingCameraStageData()
-        {
-            if (_pendingCameraStageData?.Stages == null) return;
-            int currentStageIndex = _params.CurrentStageIndex;
-            int nextStageIndex = _params.NextStageIndex;
-
-            foreach (var savedStage in _pendingCameraStageData.Stages)
-            {
-                if (savedStage == null) continue;
-                int stageIndex = FindStageIndex(savedStage.StageId);
-                if (stageIndex < 0 && savedStage.RuntimeCreated && !string.IsNullOrEmpty(savedStage.StageId))
-                {
-                    AddCameraStage(savedStage.StageName, savedStage.StageId);
-                    stageIndex = FindStageIndex(savedStage.StageId);
-                }
-                if (stageIndex < 0) stageIndex = savedStage.StageIndex;
-                if (stageIndex < 0 || stageIndex >= _nextStages.Count) continue;
-
-                if (!string.IsNullOrEmpty(savedStage.StageId))
-                {
-                    string stageName = string.IsNullOrEmpty(savedStage.StageName)
-                        ? GetStageDisplayName(_stages[stageIndex], stageIndex)
-                        : savedStage.StageName;
-                    _stages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
-                    _currentStages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
-                    _nextStages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
-                }
-
-                if (_nextStages[stageIndex] is CameraStage nextStage)
-                {
-                    nextStage.RestoreLayers(savedStage.Layers);
-                    nextStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
-                    nextStage.BackgroundMode = savedStage.BackgroundMode;
-                    nextStage.BackgroundColor = savedStage.BackgroundColor;
-                }
-                if (_currentStages[stageIndex] is CameraStage currentStage)
-                {
-                    currentStage.RestoreLayers(savedStage.Layers);
-                    currentStage.RestoreCameraWorkDecks(savedStage.CameraWorkDecks);
-                    currentStage.BackgroundMode = savedStage.BackgroundMode;
-                    currentStage.BackgroundColor = savedStage.BackgroundColor;
-                }
-            }
-
-            int maxIndex = Mathf.Max(0, _stages.Count - 1);
-            _params.CurrentStageIndex = Mathf.Clamp(currentStageIndex, 0, maxIndex);
-            _params.NextStageIndex = Mathf.Clamp(nextStageIndex, 0, maxIndex);
-            _deckRevision++;
-            _pendingCameraStageData = null;
-        }
+        private static string GetStageDisplayName(StageBase stage, int index) =>
+            stage == null ? $"Stage {index}" :
+            string.IsNullOrEmpty(stage.StageName) ? stage.name : stage.StageName;
 
         private void OnDestroy()
         {
@@ -1110,10 +1031,6 @@ namespace Aetherin
                 CreateStageListElement(stageNames)
             );
         }
-
-        private static string GetStageDisplayName(StageBase stage, int index) =>
-            stage == null ? $"Stage {index}" :
-            string.IsNullOrEmpty(stage.StageName) ? stage.name : stage.StageName;
 
         private Element CreateCameraWorkListElement(int stageIndex)
         {
@@ -1321,20 +1238,18 @@ namespace Aetherin
             
 
             return UI.Column(
-                UI.Row(
-                    UI.Button("+ Shape", () => cameraStage.AddShapeLayer()),
-                    UI.Button("+ 3D", () => cameraStage.AddPrimitive3DLayer()),
-                    UI.Button("+ Model", () => cameraStage.AddModelLayer()),
-                    UI.Button("+ Sprite", () => cameraStage.AddSpriteSheetLayer()),
-                    UI.Button("+ Movie", () => cameraStage.AddMovieLayer()),
-                    UI.Button("+ Light", () => cameraStage.AddLightLayer()),
-                    UI.Button("+ Group", () => cameraStage.AddGroupLayer()),
-                    UI.Button("+ Particles", () => cameraStage.AddGpuParticleLayer()),
-                    UI.Button("+ Text", () => cameraStage.AddTextLayer()),
-                    UI.Button("+ Shader", () => cameraStage.AddRuntimeShaderLayer())
-                ),
+                CreateLayerAddButtons(cameraStage),
                 layers.Count == 0 ? UI.Label("No Layers") : UI.Row(layerElements)
             );
+        }
+
+        private static Element CreateLayerAddButtons(CameraStage stage, Transform parent = null)
+        {
+            IEnumerable<LayerDescriptor> descriptors = LayerRegistry.Descriptors;
+            if (parent != null) descriptors = descriptors.Where(descriptor => descriptor.CanAddToGroup);
+            return UI.Row(descriptors
+                .Select(descriptor => UI.Button($"+ {descriptor.DisplayName}", () => stage.AddLayer(descriptor.TypeId, parent)))
+                .ToArray());
         }
 
         private Element CreateLayerElement(CameraStage stage, StageLayer layer)
@@ -1351,16 +1266,7 @@ namespace Aetherin
                 return UI.Fold(
                     CreateLayerHeader(stage, layer),
                     new Element[] { UI.Column(
-                        UI.Row(
-                            UI.Button("+ Shape", () => stage.AddShapeLayer(group.transform)),
-                            UI.Button("+ 3D", () => stage.AddPrimitive3DLayer(group.transform)),
-                            UI.Button("+ Model", () => stage.AddModelLayer(group.transform)),
-                            UI.Button("+ Sprite", () => stage.AddSpriteSheetLayer(group.transform)),
-                            UI.Button("+ Movie", () => stage.AddMovieLayer(group.transform)),
-                            UI.Button("+ Light", () => stage.AddLightLayer(group.transform)),
-                            UI.Button("+ GPU", () => stage.AddGpuParticleLayer(group.transform)),
-                            UI.Button("+ Text", () => stage.AddTextLayer(group.transform)),
-                            UI.Button("+ Group", () => stage.AddGroupLayer(group.transform))),
+                        CreateLayerAddButtons(stage, group.transform),
                         UI.Button("Move Selected Here", () =>
                         {
                             if (_inspectedLayer != null) stage.MoveLayerToGroup(_inspectedLayer, group);
@@ -1517,23 +1423,4 @@ namespace Aetherin
         }
     }
 
-    [Serializable]
-    public sealed class CameraStageSaveData
-    {
-        public int Version = 2;
-        public List<CameraStageLayersSaveData> Stages = new();
-    }
-
-    [Serializable]
-    public sealed class CameraStageLayersSaveData
-    {
-        public string StageId;
-        public string StageName;
-        public bool RuntimeCreated;
-        public int StageIndex;
-        public CameraStageBackgroundMode BackgroundMode;
-        public PaletteColorSource BackgroundColor = PaletteColorSource.BackgroundColor1;
-        public List<CameraStageLayerSaveData> Layers = new();
-        public List<CameraWorkDeck> CameraWorkDecks = new();
-    }
 }

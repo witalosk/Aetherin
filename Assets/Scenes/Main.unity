@@ -1206,11 +1206,6 @@ MonoBehaviour:
   _tex: {fileID: 0}
   _stageTimeSpeed: 1
   _camera: {fileID: 174343825}
-  _modelLibrary: {fileID: 1994971893}
-  _textureLibrary: {fileID: 0}
-  _lutLibrary: {fileID: 910745199}
-  _vfxGraphLibrary: {fileID: 0}
-  _fontAssetLibrary: {fileID: 0}
   _backgroundMode: 0
   _backgroundColor: 0
   _cameraWorkDecks: []
@@ -2061,6 +2056,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1915598371}
   - component: {fileID: 1915598370}
+  - component: {fileID: 1915598372}
   m_Layer: 0
   m_Name: SceneContainer
   m_TagString: Untagged
@@ -2084,6 +2080,23 @@ MonoBehaviour:
   _manualBinders: []
   _projectContainerPrefabName: ProjectContainer
   _isIncludeInactive: 1
+--- !u!114 &1915598372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915598369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b052b75a0e4cc0926c8d970d2c8d49, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.StageAssetCatalog
+  _modelLibrary: {fileID: 1994971893}
+  _textureLibrary: {fileID: 910745198}
+  _lutLibrary: {fileID: 221290746}
+  _vfxGraphLibrary: {fileID: 0}
+  _fontAssetLibrary: {fileID: 2093487957}
 --- !u!4 &1915598371
 Transform:
   m_ObjectHideFlags: 0

@@ -30,6 +30,10 @@ namespace Aetherin
         private bool _ownsFontAsset;
         private string _resolvedText = string.Empty;
         private float _smoothedFps;
+        // TMPの頂点配列は文字単位のアニメーションでだけ書き換える。静的なテキストまで
+        // 毎フレームコピー/再計算しないよう、最後に反映した状態を保持する。
+        private bool _geometryDirty = true;
+        private int _geometryStateHash;
 
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
@@ -189,6 +193,7 @@ namespace Aetherin
             _material = new Material(_fontAsset.material) { hideFlags = HideFlags.HideAndDontSave };
             _text.fontSharedMaterial = _material;
             _layoutHash = 0;
+            _geometryDirty = true;
         }
 
         private void EvaluateLayout(in ModulationContext context)
@@ -286,6 +291,7 @@ namespace Aetherin
                 _baseVertices[i] = (Vector3[])meshInfo[i].vertices.Clone();
                 _baseColors[i] = (Color32[])meshInfo[i].colors32.Clone();
             }
+            _geometryDirty = true;
         }
 
         private void RestoreBaseMesh()
@@ -301,11 +307,15 @@ namespace Aetherin
         private void ApplyCharacterAnimators(in ModulationContext baseContext)
         {
             if (_baseVertices == null || _text.textInfo == null) return;
-            RestoreBaseMesh();
 
             TMP_TextInfo info = _text.textInfo;
-            ApplyPathLayout(info, baseContext);
             ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Current).Palette;
+            int stateHash = CalculateGeometryStateHash(palette);
+            if (!_geometryDirty && !HasDynamicGeometryInput(baseContext) && stateHash == _geometryStateHash)
+                return;
+
+            RestoreBaseMesh();
+            ApplyPathLayout(info, baseContext);
             EvaluatedPaletteColor baseColor = EvaluatedPaletteColor.Evaluate(_params.Color, palette, baseContext);
             Vector3 anchor = _params.Anchor?.Evaluate(baseContext) ?? Vector3.zero;
 
@@ -371,6 +381,179 @@ namespace Aetherin
                 info.meshInfo[i].mesh.RecalculateBounds();
                 _text.UpdateGeometry(info.meshInfo[i].mesh, i);
             }
+
+            _geometryDirty = false;
+            _geometryStateHash = stateHash;
+        }
+
+        // Modulation は外部入力・時刻・拍などで変化し得るため、値が同じに見えるフレームでも
+        // 保守的に再評価する。modulation がない構成では、下の状態ハッシュだけで更新を決める。
+        private bool HasDynamicGeometryInput(in ModulationContext context)
+        {
+            if (_params.Source != TextSource.Manual) return true;
+            if (HasDynamic(_params.Opacity, context) || HasDynamic(_params.Anchor, context) ||
+                HasDynamic(_params.Color, context)) return true;
+
+            if (_params.Layout != TextLayoutMode.Linear &&
+                (HasDynamic(_params.PathRadius, context) || HasDynamic(_params.PathStartAngle, context) ||
+                 HasDynamic(_params.PathEndAngle, context) || HasDynamic(_params.PathRotationOffset, context)))
+                return true;
+
+            if (_params.Animators == null) return false;
+            foreach (TextAnimatorParams animator in _params.Animators)
+            {
+                if (animator is not { Enabled: true }) continue;
+                if (HasDynamic(animator.Position, context) || HasDynamic(animator.Rotation, context) ||
+                    HasDynamic(animator.Scale, context) || HasDynamic(animator.Opacity, context) ||
+                    HasDynamic(animator.Color, context) || HasDynamic(animator.ColorAmount, context) ||
+                    HasDynamic(animator.AnimationPhaseOffset, context) ||
+                    HasDynamic(animator.Selector, context))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private int CalculateGeometryStateHash(ColorPalette palette)
+        {
+            unchecked
+            {
+                int hash = 17;
+                AddHash(ref hash, _params.Layout);
+                AddHash(ref hash, _params.PathClockwise);
+                AddHash(ref hash, _params.OrientToPath);
+                AddHash(ref hash, _params.PathRadius);
+                AddHash(ref hash, _params.PathStartAngle);
+                AddHash(ref hash, _params.PathEndAngle);
+                AddHash(ref hash, _params.PathRotationOffset);
+                AddHash(ref hash, _params.Anchor);
+                AddHash(ref hash, _params.Opacity);
+                AddHash(ref hash, _params.Color);
+                AddHash(ref hash, palette);
+
+                if (_params.Animators != null)
+                {
+                    AddHash(ref hash, _params.Animators.Count);
+                    foreach (TextAnimatorParams animator in _params.Animators)
+                        AddHash(ref hash, animator);
+                }
+
+                return hash;
+            }
+        }
+
+        private static bool HasDynamic(FloatParameter parameter, in ModulationContext context) =>
+            HasDynamic(parameter?.Modulation, context);
+
+        private static bool HasDynamic(Vector3Parameter parameter, in ModulationContext context) =>
+            HasDynamic(parameter?.XModulation, context) || HasDynamic(parameter?.YModulation, context) ||
+            HasDynamic(parameter?.ZModulation, context);
+
+        private static bool HasDynamic(PaletteColorParameter parameter, in ModulationContext context) =>
+            parameter != null && (HasDynamic(parameter.GradientAngle, context) ||
+                HasDynamic(parameter.GradientOffset, context) || HasDynamic(parameter.GradientScale, context) ||
+                HasDynamic(parameter.Intensity, context) || HasDynamic(parameter.Alpha, context));
+
+        private static bool HasDynamic(TextRangeSelectorParams selector, in ModulationContext context) =>
+            selector != null && (HasDynamic(selector.Start, context) || HasDynamic(selector.End, context) ||
+                HasDynamic(selector.Offset, context) || HasDynamic(selector.Smoothness, context));
+
+        private static bool HasDynamic(FloatModulationStack stack, in ModulationContext context)
+        {
+            if (stack?.Modulators == null) return false;
+            foreach (FloatModulator modulator in stack.Modulators)
+                if (modulator is { Enabled: true } && modulator.IsAvailable(context)) return true;
+            return false;
+        }
+
+        private static void AddHash<T>(ref int hash, T value)
+        {
+            unchecked { hash = hash * 31 + EqualityComparer<T>.Default.GetHashCode(value); }
+        }
+
+        private static void AddHash(ref int hash, FloatParameter parameter) =>
+            AddHash(ref hash, parameter?.BaseValue ?? 0f);
+
+        private static void AddHash(ref int hash, Vector3Parameter parameter) =>
+            AddHash(ref hash, parameter?.BaseValue ?? Vector3.zero);
+
+        private static void AddHash(ref int hash, PaletteColorParameter parameter)
+        {
+            if (parameter == null)
+            {
+                AddHash(ref hash, 0);
+                return;
+            }
+
+            AddHash(ref hash, parameter.Mode);
+            AddHash(ref hash, parameter.ColorReference);
+            AddHash(ref hash, parameter.Color);
+            AddHash(ref hash, parameter.CustomColor);
+            AddHash(ref hash, parameter.GradientColorAReference);
+            AddHash(ref hash, parameter.GradientColorA);
+            AddHash(ref hash, parameter.CustomGradientColorA);
+            AddHash(ref hash, parameter.GradientColorBReference);
+            AddHash(ref hash, parameter.GradientColorB);
+            AddHash(ref hash, parameter.CustomGradientColorB);
+            AddHash(ref hash, parameter.RandomSeed);
+            AddHash(ref hash, parameter.GradientAngle);
+            AddHash(ref hash, parameter.GradientOffset);
+            AddHash(ref hash, parameter.GradientScale);
+            AddHash(ref hash, parameter.Intensity);
+            AddHash(ref hash, parameter.Alpha);
+        }
+
+        private static void AddHash(ref int hash, TextAnimatorParams animator)
+        {
+            if (animator == null)
+            {
+                AddHash(ref hash, 0);
+                return;
+            }
+
+            AddHash(ref hash, animator.Enabled);
+            AddHash(ref hash, animator.Selector);
+            AddHash(ref hash, animator.Position);
+            AddHash(ref hash, animator.Rotation);
+            AddHash(ref hash, animator.Scale);
+            AddHash(ref hash, animator.Opacity);
+            AddHash(ref hash, animator.Color);
+            AddHash(ref hash, animator.ColorAmount);
+            AddHash(ref hash, animator.AnimationPhaseOffset);
+        }
+
+        private static void AddHash(ref int hash, TextRangeSelectorParams selector)
+        {
+            if (selector == null)
+            {
+                AddHash(ref hash, 0);
+                return;
+            }
+
+            AddHash(ref hash, selector.BasedOn);
+            AddHash(ref hash, selector.Shape);
+            AddHash(ref hash, selector.Start);
+            AddHash(ref hash, selector.End);
+            AddHash(ref hash, selector.Offset);
+            AddHash(ref hash, selector.Smoothness);
+            AddHash(ref hash, selector.RandomizeOrder);
+            AddHash(ref hash, selector.RandomSeed);
+        }
+
+        private static void AddHash(ref int hash, ColorPalette palette)
+        {
+            if (palette == null)
+            {
+                AddHash(ref hash, 0);
+                return;
+            }
+
+            AddHash(ref hash, palette.BackgroundColor1);
+            AddHash(ref hash, palette.BackgroundColor2);
+            AddHash(ref hash, palette.AccentColor1);
+            AddHash(ref hash, palette.AccentColor2);
+            AddHash(ref hash, palette.SubAccentColor1);
+            AddHash(ref hash, palette.SubAccentColor2);
         }
 
         private void ApplyPathLayout(TMP_TextInfo info, in ModulationContext context)

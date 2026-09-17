@@ -4,7 +4,6 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Rendering.Universal;
-using UnityEngine.Serialization;
 using UnityEngine.VFX;
 using UnitySimpleContainer;
 
@@ -52,18 +51,15 @@ namespace Aetherin
         }
 
         [SerializeField] private Camera _camera;
-        [SerializeField] private ModelLayerLibrary _modelLibrary;
-        [FormerlySerializedAs("_spriteSheetLibrary")]
-        [SerializeField] private TextureLibrary _textureLibrary;
-        [SerializeField] private LutLibrary _lutLibrary;
-        [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
-        [SerializeField] private FontAssetLibrary _fontAssetLibrary;
         [SerializeField] private CameraStageBackgroundMode _backgroundMode;
         [SerializeField] private PaletteColorSource _backgroundColor = PaletteColorSource.BackgroundColor1;
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private bool _layersInitialized;
         private IAudioFeatureProvider _audioFeatureProvider;
         private IBeatManager _beatManager;
+        private IStageAssetCatalog _assetCatalog;
+
+        private IStageAssetCatalog AssetCatalog => _assetCatalog ??= StageAssetCatalog.FindBestAvailable();
 
         public CameraStageBackgroundMode BackgroundMode
         {
@@ -138,10 +134,14 @@ namespace Aetherin
         }
 
         [Inject]
-        private void ConstructLayers(IAudioFeatureProvider audioFeatureProvider, IBeatManager beatManager)
+        private void ConstructLayers(
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager,
+            [Nullable] IStageAssetCatalog assetCatalog)
         {
             _audioFeatureProvider = audioFeatureProvider;
             _beatManager = beatManager;
+            _assetCatalog = StageAssetCatalog.FindBestAvailable(assetCatalog);
         }
 
         protected override void Start()
@@ -225,244 +225,104 @@ namespace Aetherin
             _layers[index].Visible = visible;
         }
 
-        public ShapeLayer AddShapeLayer(Transform parent = null)
+        public IReadOnlyList<LayerDescriptor> LayerDescriptors => LayerRegistry.Descriptors;
+
+        /// <summary>登録済みのIDからレイヤーを生成する。未知のIDは生成せず null を返す。</summary>
+        public StageLayer AddLayer(string typeId, Transform parent = null) =>
+            AddLayer(LayerRegistry.GetDescriptor(typeId), parent);
+
+        private StageLayer AddLayer(LayerDescriptor descriptor, Transform parent)
         {
-            var layerObject = new GameObject("Shape Layer");
+            if (descriptor == null)
+            {
+                Debug.LogWarning("[CameraStage] 未登録のレイヤー型は生成できません。", this);
+                return null;
+            }
+
+            var layerObject = new GameObject(descriptor.DefaultObjectName);
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
             ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<ShapeLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
+            StageLayer layer = descriptor.Create(layerObject);
+            if (layer == null)
+            {
+                Debug.LogError($"[CameraStage] レイヤー型 '{descriptor.TypeId}' を生成できませんでした。", this);
+                Destroy(layerObject);
+                return null;
+            }
+
+            descriptor.Initialize(layer, _audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
             ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
             return layer;
         }
 
-        public Primitive3DLayer AddPrimitive3DLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Primitive 3D Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<Primitive3DLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
+        // Existing public APIs remain as compatibility entry points for call sites and user scripts.
+        public ShapeLayer AddShapeLayer(Transform parent = null) => AddLayer(LayerRegistry.Shape, parent) as ShapeLayer;
+        public Primitive3DLayer AddPrimitive3DLayer(Transform parent = null) => AddLayer(LayerRegistry.Primitive3D, parent) as Primitive3DLayer;
 
         public GameObject ResolveModel(string key)
         {
-            EnsureModelLibrary();
-            return _modelLibrary?.Resolve(key);
+            return AssetCatalog.ResolveModel(key);
         }
 
         public IReadOnlyList<string> GetModelKeys()
         {
-            EnsureModelLibrary();
-            return _modelLibrary?.GetKeys() ?? Array.Empty<string>();
+            return AssetCatalog.GetModelKeys();
         }
 
         public Texture2D ResolveSpriteSheet(string key)
         {
-            EnsureTextureLibrary();
-            return _textureLibrary?.Resolve(key);
+            return AssetCatalog.ResolveTexture(key);
         }
 
         public Texture2D ResolveTexture(string key) => ResolveSpriteSheet(key);
 
         public IReadOnlyList<string> GetSpriteSheetKeys()
         {
-            EnsureTextureLibrary();
-            return _textureLibrary?.GetKeys() ?? Array.Empty<string>();
+            return AssetCatalog.GetTextureKeys();
         }
 
         public IReadOnlyList<string> GetTextureKeys() => GetSpriteSheetKeys();
 
         public Texture2D ResolveLut(string key)
         {
-            EnsureLutLibrary();
-            return _lutLibrary?.Resolve(key);
+            return AssetCatalog.ResolveLut(key);
         }
 
         public IReadOnlyList<string> GetLutKeys()
         {
-            EnsureLutLibrary();
-            return _lutLibrary?.GetKeys() ?? Array.Empty<string>();
-        }
-
-        private void EnsureTextureLibrary()
-        {
-            if (_textureLibrary == null)
-                _textureLibrary = FindFirstObjectByType<TextureLibrary>(FindObjectsInactive.Include);
-        }
-
-        private void EnsureLutLibrary()
-        {
-            if (_lutLibrary == null)
-                _lutLibrary = FindFirstObjectByType<LutLibrary>(FindObjectsInactive.Include);
-        }
-
-        private void EnsureModelLibrary()
-        {
-            if (_modelLibrary == null)
-                _modelLibrary = FindFirstObjectByType<ModelLayerLibrary>(FindObjectsInactive.Include);
+            return AssetCatalog.GetLutKeys();
         }
 
         public VisualEffectAsset ResolveVfxGraph(string key)
         {
-            EnsureVfxGraphLibrary();
-            return _vfxGraphLibrary?.Resolve(key);
+            return AssetCatalog.ResolveVfxGraph(key);
         }
 
         public IReadOnlyList<string> GetVfxGraphKeys()
         {
-            EnsureVfxGraphLibrary();
-            return _vfxGraphLibrary?.GetKeys() ?? Array.Empty<string>();
-        }
-
-        private void EnsureVfxGraphLibrary()
-        {
-            if (_vfxGraphLibrary == null)
-                _vfxGraphLibrary = FindFirstObjectByType<VfxGraphLibrary>(FindObjectsInactive.Include);
+            return AssetCatalog.GetVfxGraphKeys();
         }
 
         public TMP_FontAsset ResolveFontAsset(string key)
         {
-            EnsureFontAssetLibrary();
-            return _fontAssetLibrary?.Resolve(key);
+            return AssetCatalog.ResolveFontAsset(key);
         }
 
         public IReadOnlyList<string> GetFontAssetKeys()
         {
-            EnsureFontAssetLibrary();
-            return _fontAssetLibrary?.GetKeys() ?? Array.Empty<string>();
+            return AssetCatalog.GetFontAssetKeys();
         }
 
-        private void EnsureFontAssetLibrary()
-        {
-            if (_fontAssetLibrary == null)
-                _fontAssetLibrary = FindFirstObjectByType<FontAssetLibrary>(FindObjectsInactive.Include);
-        }
-
-        public ModelLayer AddModelLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Model Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            var layer = layerObject.AddComponent<ModelLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public SpriteSheetLayer AddSpriteSheetLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Sprite Sheet Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<SpriteSheetLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public MovieLayer AddMovieLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Movie Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<MovieLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public LightLayer AddLightLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Light Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<Light>();
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<LightLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public GpuParticleLayer AddGpuParticleLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("GPU Particle Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            var layer = layerObject.AddComponent<GpuParticleLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public TextLayer AddTextLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Text Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshRenderer>();
-            layerObject.AddComponent<TMPro.TextMeshPro>();
-            var layer = layerObject.AddComponent<TextLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public RuntimeShaderLayer AddRuntimeShaderLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Runtime Shader Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            layerObject.AddComponent<MeshFilter>();
-            layerObject.AddComponent<MeshRenderer>();
-            var layer = layerObject.AddComponent<RuntimeShaderLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
-
-        public GroupLayer AddGroupLayer(Transform parent = null)
-        {
-            var layerObject = new GameObject("Group Layer");
-            layerObject.transform.SetParent(parent != null ? parent : transform, false);
-            ApplyDeckRenderingLayer(layerObject);
-            var layer = layerObject.AddComponent<GroupLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
-            layer.Order = GetNextLayerOrder(layerObject.transform.parent);
-            ApplyDeckRenderingLayer(layerObject);
-            RefreshLayers();
-            return layer;
-        }
+        public ModelLayer AddModelLayer(Transform parent = null) => AddLayer(LayerRegistry.Model, parent) as ModelLayer;
+        public SpriteSheetLayer AddSpriteSheetLayer(Transform parent = null) => AddLayer(LayerRegistry.SpriteSheet, parent) as SpriteSheetLayer;
+        public MovieLayer AddMovieLayer(Transform parent = null) => AddLayer(LayerRegistry.Movie, parent) as MovieLayer;
+        public LightLayer AddLightLayer(Transform parent = null) => AddLayer(LayerRegistry.Light, parent) as LightLayer;
+        public GpuParticleLayer AddGpuParticleLayer(Transform parent = null) => AddLayer(LayerRegistry.GpuParticle, parent) as GpuParticleLayer;
+        public TextLayer AddTextLayer(Transform parent = null) => AddLayer(LayerRegistry.Text, parent) as TextLayer;
+        public RuntimeShaderLayer AddRuntimeShaderLayer(Transform parent = null) => AddLayer(LayerRegistry.RuntimeShader, parent) as RuntimeShaderLayer;
+        public GroupLayer AddGroupLayer(Transform parent = null) => AddLayer(LayerRegistry.Group, parent) as GroupLayer;
 
         private int GetNextLayerOrder(Transform parent)
         {
@@ -566,12 +426,7 @@ namespace Aetherin
         private static CameraStageLayerSaveData CaptureLayer(StageLayer layer) => new()
         {
             LayerId = layer.LayerId,
-            Type = layer switch
-            {
-                ShapeLayer => "shape", Primitive3DLayer => "primitive3d", ModelLayer => "model", SpriteSheetLayer => "sprite-sheet", MovieLayer => "movie", LightLayer => "light",
-                GpuParticleLayer => "gpu-particle", TextLayer => "text",
-                RuntimeShaderLayer => "runtime-shader", GroupLayer => "group", _ => string.Empty,
-            },
+            Type = LayerRegistry.GetDescriptor(layer)?.TypeId ?? string.Empty,
             Name = layer.gameObject.name,
             ParamsJson = JsonUtility.ToJson(layer.Params),
             Children = layer is GroupLayer group ? group.Children.Select(CaptureLayer).ToList() : new List<CameraStageLayerSaveData>(),
@@ -594,35 +449,18 @@ namespace Aetherin
 
         private StageLayer RestoreLayer(CameraStageLayerSaveData savedLayer, Transform parent)
         {
-            StageLayer layer = savedLayer?.Type switch
-            {
-                "shape" => AddShapeLayer(parent), "primitive3d" => AddPrimitive3DLayer(parent),
-                "model" => AddModelLayer(parent), "sprite-sheet" => AddSpriteSheetLayer(parent), "movie" => AddMovieLayer(parent), "light" => AddLightLayer(parent), "gpu-particle" => AddGpuParticleLayer(parent),
-                "text" => AddTextLayer(parent), "runtime-shader" => AddRuntimeShaderLayer(parent),
-                "group" => AddGroupLayer(parent), _ => null,
-            };
-
-            if (layer == null)
+            LayerDescriptor descriptor = LayerRegistry.GetDescriptor(savedLayer?.Type);
+            if (descriptor == null)
             {
                 Debug.LogWarning($"[CameraStage] 未対応のレイヤー型 '{savedLayer?.Type}' を読み込み時にスキップしました。", this);
                 return null;
             }
 
-                string fallbackName = layer switch
-                {
-                    ShapeLayer => "Shape Layer",
-                    Primitive3DLayer => "Primitive 3D Layer",
-                    ModelLayer => "Model Layer",
-                    SpriteSheetLayer => "Sprite Sheet Layer",
-                    MovieLayer => "Movie Layer",
-                    LightLayer => "Light Layer",
-                    GpuParticleLayer => "GPU Particle Layer",
-                    TextLayer => "Text Layer",
-                    RuntimeShaderLayer => "Runtime Shader Layer", GroupLayer => "Group Layer",
-                    _ => "Layer",
-                };
+            StageLayer layer = AddLayer(descriptor, parent);
+            if (layer == null) return null;
+
             layer.SetLayerId(savedLayer.LayerId);
-            layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? fallbackName : savedLayer.Name;
+            layer.gameObject.name = string.IsNullOrWhiteSpace(savedLayer.Name) ? descriptor.DefaultObjectName : savedLayer.Name;
             if (!string.IsNullOrEmpty(savedLayer.ParamsJson)) JsonUtility.FromJsonOverwrite(savedLayer.ParamsJson, layer.Params);
             if (layer is GroupLayer)
                 foreach (var child in savedLayer.Children ?? new List<CameraStageLayerSaveData>()) RestoreLayer(child, layer.transform);
