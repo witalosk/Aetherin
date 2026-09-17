@@ -504,7 +504,13 @@ namespace Aetherin
                 if (setting == null) continue;
                 setting.Pad ??= new MidiBinding();
                 float speed = Mathf.Max(0f, setting.Speed);
-                if (stage != null && setting.Pad.WasNoteOn) stage.SetStageTimeSpeed(speed);
+                if (stage != null && setting.Pad.WasNoteOn)
+                {
+                    stage.SetStageTimeSpeed(speed);
+                    // Padで明示した値を、同じフレームのCC更新で上書きしない。
+                    // 以降はCCが実際に動いたときだけ連続操作へ戻る。
+                    TrackStageTimeSpeedCc(stage, true);
+                }
                 bool selected = stage != null && Mathf.Approximately(stage.StageTimeSpeed, speed);
                 setting.Pad.SetLed(selected ? Color.green : Color.green * 0.15f);
             }
@@ -539,6 +545,16 @@ namespace Aetherin
             _lastStageTimeCcStage = stage;
             _lastStageTimeCcNumber = _params.StageTimeSpeedCc.CcNumber;
             _lastStageTimeCcValue = value;
+        }
+
+        private void TrackStageTimeSpeedCc(StageBase stage, bool captureCurrentValue)
+        {
+            if (stage == null || _params.StageTimeSpeedCc?.IsAssigned != true) return;
+
+            _lastStageTimeCcStage = stage;
+            _lastStageTimeCcNumber = _params.StageTimeSpeedCc.CcNumber;
+            if (captureCurrentValue)
+                _lastStageTimeCcValue = _params.StageTimeSpeedCc.GetValue();
         }
 
         /// <summary>
@@ -838,6 +854,12 @@ namespace Aetherin
                 nextCamera.ConfigureCinemachineChannel(channel);
             }
             _nextStages[index] = next;
+
+            // 選択中Nextは昇格したCurrentの複製なので、そのStageTimeSpeedを維持する。
+            // 参照先だけを新しいNextへ付け替え、最後に観測したCC値は保持することで、
+            // フェーダーが実際に動いた場合にだけUpdateStageTimeSpeedCcが再適用する。
+            if (index == Mathf.Clamp(_params.NextStageIndex, 0, Mathf.Max(0, _nextStages.Count - 1)))
+                TrackStageTimeSpeedCc(next, false);
         }
 
         private static void DestroyRetiredStage(IReadOnlyList<StageBase> retiredStages, int index)
