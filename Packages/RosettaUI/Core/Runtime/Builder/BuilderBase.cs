@@ -49,6 +49,7 @@ namespace RosettaUI.Builder
             if (uiObj != null)
             {
                 SetupUIObj(element, uiObj);
+                NotifyUIObjAttached(element, uiObj);
             }
             else
             {
@@ -64,6 +65,11 @@ namespace RosettaUI.Builder
         {
             RegisterUIObj(element, uiObj);
             SetDefaultCallbacks(element, uiObj);
+        }
+
+        protected void NotifyUIObjAttached(Element element, TUIObj uiObj)
+        {
+            element.NotifyViewAttached(uiObj);
         }
 
         protected virtual TUIObj TeardownUIObj(Element element)

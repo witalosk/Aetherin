@@ -19,6 +19,9 @@ namespace Aetherin
         public bool Loop = true;
         public float PlaybackSpeed = 1f;
         public bool PreserveAspect = true;
+        public bool LutEnabled;
+        [Tooltip("Lut Library に登録したLUTテクスチャのファイル名（拡張子なし）")]
+        public string LutKey;
 
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
@@ -26,9 +29,12 @@ namespace Aetherin
         public Vector3Parameter Anchor = new();
         public Vector2Parameter Size = new(new Vector2(2f, 2f));
 
+        [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableLutKeys;
+
         public void EnsureInitialized()
         {
             VideoPaths ??= new List<string>();
+            LutKey ??= string.Empty;
             Opacity ??= new FloatParameter(1f);
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();

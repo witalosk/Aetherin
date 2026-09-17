@@ -14,7 +14,7 @@ namespace Aetherin
         Scanline,
         Posterize,
         Invert,
-        Bloom,
+        CrossBlur,
         LedDisplay,
         HorizontalFold,
         HashInvertBlocks,
@@ -25,6 +25,7 @@ namespace Aetherin
         Shutter,
         HandDrawn,
         LightLeak,
+        Lut,
     }
 
     public enum ShutterMode
@@ -59,21 +60,10 @@ namespace Aetherin
     [Serializable]
     public sealed class DeckVolumeEffects
     {
-        public bool BloomEnabled = true;
-        [Tooltip("Bloomの有効/無効を切り替えるMIDIパッド")]
-        public MidiBinding BloomToggleButton = new();
-        public FloatParameter BloomIntensity = new(1f);
-        public FloatParameter BloomThreshold = new(0.9f);
-        public FloatParameter BloomScatter = new(0.5f);
-
         public VolumeDepthOfFieldMode DepthOfFieldMode = VolumeDepthOfFieldMode.Bokeh;
 
         public void EnsureInitialized()
         {
-            BloomToggleButton ??= new MidiBinding();
-            BloomIntensity ??= new FloatParameter(1f);
-            BloomThreshold ??= new FloatParameter(0.9f);
-            BloomScatter ??= new FloatParameter(0.5f);
         }
     }
 
@@ -113,6 +103,10 @@ namespace Aetherin
             ColorReference = PaletteColorReference.Custom,
             CustomColor = new Color(1f, 0.32f, 0.06f, 1f),
         };
+        [Tooltip("Lut Library に登録したLUTテクスチャのファイル名（拡張子なし）")]
+        public string LutKey;
+
+        [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableLutKeys;
 
         public void EnsureInitialized()
         {
@@ -130,6 +124,7 @@ namespace Aetherin
                 CustomColor = new Color(1f, 0.32f, 0.06f, 1f),
             };
             LightLeakColor.EnsureInitialized();
+            LutKey ??= string.Empty;
         }
     }
 

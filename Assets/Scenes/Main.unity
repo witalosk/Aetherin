@@ -433,6 +433,93 @@ Camera:
   m_OcclusionCulling: 1
   m_StereoConvergence: 10
   m_StereoSeparation: 0.022
+--- !u!1 &221290744
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 221290745}
+  - component: {fileID: 221290746}
+  m_Layer: 0
+  m_Name: LutLibrary
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &221290745
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221290744}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 1185.0858, y: 0, z: -456.29553}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1384360350}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &221290746
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 221290744}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e5f5ec29cf9465eae51d31c0d4463a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.LutLibrary
+  _textures:
+  - {fileID: 2800000, guid: f2a0cdefb12ea4c319055558352f97b3, type: 3}
+  - {fileID: 2800000, guid: 441c27c78433f4bf582ef92c938ae995, type: 3}
+  - {fileID: 2800000, guid: 24d1a9f36648547fc81b92fa445e023e, type: 3}
+  - {fileID: 2800000, guid: d0a2dce63a91443aea926d64b262724e, type: 3}
+  - {fileID: 2800000, guid: aa2c1e4557cfc4aa080a6ca21a6fdc1e, type: 3}
+  - {fileID: 2800000, guid: c72a9db1d864e464580929659f7de6b3, type: 3}
+  - {fileID: 2800000, guid: c993ee088ee3b4fdc81d689051f130ae, type: 3}
+  - {fileID: 2800000, guid: af1f1e8931e314a168b1109cdeb163e1, type: 3}
+  - {fileID: 2800000, guid: d051a2b798e884ad688581c8a1cd6107, type: 3}
+  - {fileID: 2800000, guid: 649da6dd6356f45ca8cd2cecab63fbc6, type: 3}
+  - {fileID: 2800000, guid: 7735f09baae3a49f6992baa46d6f8e7a, type: 3}
+  - {fileID: 2800000, guid: 34987d7d4e1ab402a9c52e94f9cd823f, type: 3}
+  - {fileID: 2800000, guid: 02e32577b1323469c887495556abaed1, type: 3}
+  - {fileID: 2800000, guid: 150540e26dabe4ab6ba71878fccb182a, type: 3}
+  - {fileID: 2800000, guid: 0e348dd6c0e554aed95dd8b68ce9f9cc, type: 3}
+  - {fileID: 2800000, guid: 89ecc69ef71e8408c81a3798d924f050, type: 3}
+  - {fileID: 2800000, guid: 9c41db8d6c29b49dbb685388690ee310, type: 3}
+  - {fileID: 2800000, guid: d33b86d8ae4c44c97aaef12fb5ddb370, type: 3}
+  - {fileID: 2800000, guid: 9dafabcbc9c6e406fb5eb2575d3c6cf4, type: 3}
+  - {fileID: 2800000, guid: 9cd83d4e109a9463f8f8c1546d55950b, type: 3}
+  - {fileID: 2800000, guid: ee2a726a5728a49628a3993f42775401, type: 3}
+  - {fileID: 2800000, guid: b9fdcab3be6b24bf99892674c25ad3fe, type: 3}
+  - {fileID: 2800000, guid: e9ba66f0830c64b50aa84d5129f0fb8e, type: 3}
+  - {fileID: 2800000, guid: df1e01dea05024b3683b06e458e8ae61, type: 3}
+  - {fileID: 2800000, guid: 622b4230398734819bfcd51ace88c789, type: 3}
+  - {fileID: 2800000, guid: b3f8a0ff0a0544c3491d2a29e5288994, type: 3}
+  - {fileID: 2800000, guid: dd09df50a38b14123bd8cda6f545b613, type: 3}
+  - {fileID: 2800000, guid: 02c6b31691c0d4f7f90190638f42f813, type: 3}
+  - {fileID: 2800000, guid: ac6840d604c3143e8ad9fc948561b81d, type: 3}
+  - {fileID: 2800000, guid: 14d0c06b35e3a48d187c780116fc5acb, type: 3}
+  - {fileID: 2800000, guid: 8b27e27543fad474598de6ee9d36cabd, type: 3}
+  - {fileID: 2800000, guid: 9144d84d4d54d45dd98a8fcec1b174f2, type: 3}
+  - {fileID: 2800000, guid: eed1cef3d99a743a2951fcc3ee3e2a36, type: 3}
+  - {fileID: 2800000, guid: eed259a801711416e8a0b611b070da5c, type: 3}
+  - {fileID: 2800000, guid: 7c380463f1cfc434d909f385fb1a97b3, type: 3}
+  - {fileID: 2800000, guid: 0759568dc6b414ee1b271934304a2caf, type: 3}
+  - {fileID: 2800000, guid: f1f2337139eea4c11bf11bb3480cb8f1, type: 3}
+  - {fileID: 2800000, guid: 9071b8a0a294b403e8252c3f71097854, type: 3}
+  - {fileID: 2800000, guid: c1eab49537388444d9f6b82cd02a4c34, type: 3}
+  - {fileID: 2800000, guid: 3cc1fae7e118a491e844f05944dda64c, type: 3}
+  - {fileID: 2800000, guid: a42280902c44f4e808838fcfc64e4eaa, type: 3}
+  - {fileID: 2800000, guid: 9de46428bcb004ee88919d3a3a420e53, type: 3}
 --- !u!1 &227302514
 GameObject:
   m_ObjectHideFlags: 0
@@ -783,6 +870,7 @@ MonoBehaviour:
   _stageId: b53190822fc5452d84edf857c5cd1aa6
   _stageName: TestStage
   _tex: {fileID: 0}
+  _stageTimeSpeed: 1
   _shader: {fileID: 4800000, guid: 87790690f7b442489498db6c9920fad3, type: 3}
 --- !u!4 &735597824
 Transform:
@@ -871,6 +959,12 @@ MonoBehaviour:
       _noteNumber: -1
     RandomLayerLowButton:
       _noteNumber: -1
+    StageTimeSpeedPads: []
+    StageTimeSpeedCc:
+      _ccNumber: -1
+    StageTimeSpeedCcMin: 0
+    StageTimeSpeedCcMax: 2
+    UiRowNum: 8
     CurrentStageIndex: 0
     NextStageIndex: 0
     NextStageOffset: {x: 0, y: 1000, z: 0}
@@ -1106,9 +1200,11 @@ MonoBehaviour:
   _stageId: 4ec43fb07aec4340b746c6abfe0e5d7e
   _stageName: CameraStage
   _tex: {fileID: 0}
+  _stageTimeSpeed: 1
   _camera: {fileID: 174343825}
   _modelLibrary: {fileID: 1994971893}
   _textureLibrary: {fileID: 0}
+  _lutLibrary: {fileID: 910745199}
   _vfxGraphLibrary: {fileID: 0}
   _fontAssetLibrary: {fileID: 0}
   _backgroundMode: 0
@@ -1187,6 +1283,7 @@ GameObject:
   m_Component:
   - component: {fileID: 910745197}
   - component: {fileID: 910745198}
+  - component: {fileID: 910745199}
   m_Layer: 0
   m_Name: TextureLibrarly
   m_TagString: Untagged
@@ -1224,6 +1321,19 @@ MonoBehaviour:
   _textures:
   - Key: girl_sprite
     Texture: {fileID: 2800000, guid: 860376efed7c0994dad1d3d4eea556c2, type: 3}
+--- !u!114 &910745199
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 910745196}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1e5f5ec29cf9465eae51d31c0d4463a0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.LutLibrary
+  _textures: []
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1441,6 +1551,7 @@ Transform:
   - {fileID: 1994971894}
   - {fileID: 2093487958}
   - {fileID: 910745197}
+  - {fileID: 221290745}
   - {fileID: 316289534}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2319,44 +2430,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PostEffectManager
   _shader: {fileID: 4800000, guid: 09e24602631035546aba142dec7dc527, type: 3}
+  _lutLibrary: {fileID: 910745199}
   _params:
+    EditMode: 0
     Current:
       Decks: []
     Next:
       Decks: []
     CurrentVolume:
-      BloomEnabled: 1
-      BloomToggleButton:
-        _noteNumber: -1
-      BloomIntensity:
-        BaseValue: 1
-        Modulation:
-          Modulators: []
-      BloomThreshold:
-        BaseValue: 0.9
-        Modulation:
-          Modulators: []
-      BloomScatter:
-        BaseValue: 0.5
-        Modulation:
-          Modulators: []
       DepthOfFieldMode: 1
     NextVolume:
-      BloomEnabled: 1
-      BloomToggleButton:
-        _noteNumber: -1
-      BloomIntensity:
-        BaseValue: 1
-        Modulation:
-          Modulators: []
-      BloomThreshold:
-        BaseValue: 0.9
-        Modulation:
-          Modulators: []
-      BloomScatter:
-        BaseValue: 0.5
-        Modulation:
-          Modulators: []
       DepthOfFieldMode: 1
 --- !u!1 &2134490627
 GameObject:

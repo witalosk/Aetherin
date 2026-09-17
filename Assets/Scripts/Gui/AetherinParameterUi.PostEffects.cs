@@ -26,12 +26,6 @@ namespace Aetherin
 
             return UI.Column(
                 label,
-                UI.Fold("Bloom", UI.Column(
-                    UI.Toggle("Enabled", () => effects.BloomEnabled, value => effects.BloomEnabled = value),
-                    UI.Field("Toggle Pad", Binder.Create(effects.BloomToggleButton, typeof(MidiBinding))),
-                    Param("Intensity", effects.BloomIntensity),
-                    Param("Threshold", effects.BloomThreshold),
-                    Param("Scatter", effects.BloomScatter))),
                 UI.Fold("Depth Of Field", UI.Column(
                     UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value))));
         }
@@ -81,6 +75,9 @@ namespace Aetherin
             var module = binder.Get();
             if (module == null) return UI.Label("-");
             module.EnsureInitialized();
+            module.GetAvailableLutKeys ??= () =>
+                UnityEngine.Object.FindFirstObjectByType<LutLibrary>(UnityEngine.FindObjectsInactive.Include)
+                    ?.GetKeys() ?? System.Array.Empty<string>();
 
             return UI.Column(
                 UI.Row(
@@ -131,10 +128,9 @@ namespace Aetherin
                 case PostEffectType.Posterize:
                     yield return Param("Levels", module.Scale);
                     break;
-                case PostEffectType.Bloom:
-                    yield return Param("Intensity", module.Amount);
-                    yield return Param("Radius", module.Scale);
-                    yield return Param("Threshold", module.Secondary);
+                case PostEffectType.CrossBlur:
+                    yield return Param("Radius", module.Amount);
+                    yield return Param("Iterations", module.Scale);
                     break;
                 case PostEffectType.LedDisplay:
                     yield return Param("Dot Size", module.Amount);
@@ -187,6 +183,19 @@ namespace Aetherin
                     yield return Param("Angle", module.Secondary);
                     yield return Param("Position (Left - Right)", module.LightLeakPosition);
                     yield return Param("Color", module.LightLeakColor);
+                    break;
+                case PostEffectType.Lut:
+                    IReadOnlyList<string> lutKeys = module.GetAvailableLutKeys?.Invoke();
+                    if (lutKeys != null && lutKeys.Count > 0)
+                    {
+                        yield return UI.Dropdown("LUT", () => IndexOfKey(lutKeys, module.LutKey),
+                            value => module.LutKey = lutKeys[value], lutKeys);
+                    }
+                    else
+                    {
+                        yield return UI.Dropdown("LUT", () => 0, _ => { }, new[] { "LUT未登録" })
+                            .SetInteractable(false);
+                    }
                     break;
             }
         }

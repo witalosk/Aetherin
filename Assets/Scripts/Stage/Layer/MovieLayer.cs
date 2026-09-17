@@ -12,6 +12,9 @@ namespace Aetherin
     {
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int LutTexId = Shader.PropertyToID("_LutTex");
+        private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
+        private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
 
         [SerializeField] private MovieLayerParams _params = new() { BlendMode = LayerBlendMode.Opaque };
         [SerializeField] private Shader _shader;
@@ -52,6 +55,8 @@ namespace Aetherin
             _params ??= new MovieLayerParams { BlendMode = LayerBlendMode.Opaque };
             _params.EnsureInitialized();
             _cameraStage = GetComponentInParent<CameraStage>();
+            _params.GetAvailableLutKeys = _cameraStage != null ? _cameraStage.GetLutKeys : null;
+            EnsureLutKey();
             EnsureResources();
             ApplyLayerState();
         }
@@ -60,6 +65,7 @@ namespace Aetherin
         {
             base.LateUpdate();
             _params.EnsureInitialized();
+            EnsureLutKey();
             EnsureResources();
             SynchronizeMovie();
             if (_material == null) return;
@@ -70,7 +76,32 @@ namespace Aetherin
             ApplyTransform(context);
             _material.SetTexture(MainTexId, _videoTexture != null ? _videoTexture : Texture2D.blackTexture);
             _material.SetColor(ColorId, new Color(1f, 1f, 1f, Mathf.Clamp01(_params.Opacity.Evaluate(context))));
+            ApplyLut();
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
+        }
+
+        private void EnsureLutKey()
+        {
+            if (!_params.LutEnabled || !string.IsNullOrWhiteSpace(_params.LutKey) || _cameraStage == null) return;
+            var keys = _cameraStage.GetLutKeys();
+            if (keys != null && keys.Count > 0) _params.LutKey = keys[0];
+        }
+
+        private void ApplyLut()
+        {
+            Texture2D lut = _params.LutEnabled ? _cameraStage?.ResolveLut(_params.LutKey) : null;
+            bool horizontal = lut != null && lut.width == lut.height * lut.height;
+            bool vertical = lut != null && lut.height == lut.width * lut.width;
+            if (!horizontal && !vertical)
+            {
+                _material.SetFloat(LutEnabledId, 0f);
+                return;
+            }
+
+            float size = horizontal ? lut.height : lut.width;
+            _material.SetTexture(LutTexId, lut);
+            _material.SetVector(LutParamsId, new Vector4(size, vertical ? 1f : 0f, 1f / lut.width, 1f / lut.height));
+            _material.SetFloat(LutEnabledId, 1f);
         }
 
         protected override void OnValidate()

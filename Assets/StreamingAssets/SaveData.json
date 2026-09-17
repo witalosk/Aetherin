@@ -675,7 +675,7 @@
         "StageTimeSpeedCcMax": 8.0,
         "UiRowNum": 8,
         "CurrentStageIndex": 7,
-        "NextStageIndex": 8,
+        "NextStageIndex": 2,
         "NextStageOffset": {
           "x": 0.0,
           "y": 0.0,
@@ -8840,7 +8840,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -9004,7 +9005,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -9205,7 +9207,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -9346,7 +9349,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -9510,7 +9514,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -9711,7 +9716,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -9875,7 +9881,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -10039,7 +10046,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -10203,7 +10211,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -10367,7 +10376,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": false,
@@ -10508,7 +10518,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -10672,7 +10683,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -10813,7 +10825,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -10991,7 +11004,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -11132,7 +11146,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -11273,7 +11288,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -11451,7 +11467,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -11615,7 +11632,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -11779,7 +11797,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -11943,7 +11962,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -12107,7 +12127,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -12285,7 +12306,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -12426,7 +12448,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -12567,7 +12590,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -12708,7 +12732,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -12872,7 +12897,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -13013,7 +13039,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -13154,7 +13181,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -13295,7 +13323,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             }
@@ -13500,7 +13529,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -13664,7 +13694,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -13865,7 +13896,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -14006,7 +14038,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -14170,7 +14203,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -14371,7 +14405,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -14535,7 +14570,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -14699,7 +14735,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -14863,7 +14900,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -15027,7 +15065,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": false,
@@ -15168,7 +15207,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -15332,7 +15372,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -15473,7 +15514,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -15651,7 +15693,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -15792,7 +15835,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -15933,7 +15977,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -16111,7 +16156,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -16275,7 +16321,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -16439,7 +16486,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -16603,7 +16651,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -16767,7 +16816,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -16945,7 +16995,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17086,7 +17137,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17227,7 +17279,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17368,7 +17421,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 }
               ]
             },
@@ -17532,7 +17586,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17673,7 +17728,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17814,7 +17870,8 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
                 },
                 {
                   "Enabled": true,
@@ -17955,60 +18012,182 @@
                         "Modulators": []
                       }
                     }
-                  }
+                  },
+                  "LutKey": ""
+                }
+              ]
+            },
+            {
+              "Name": "CrpccBlur",
+              "Enabled": false,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "ControlMode": 0,
+              "Fader": {
+                "_ccNumber": -1
+              },
+              "ToggleButton": {
+                "_noteNumber": -1
+              },
+              "OutputPad": {
+                "_noteNumber": -1
+              },
+              "CurrentFaderValue": 0.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 9,
+                  "Strength": {
+                    "BaseValue": 0.30000001192092896,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.029999999329447746,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Hue": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Saturation": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Value": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "BlackLevel": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "WhiteLevel": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Gamma": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "ShutterMode": 0,
+                  "HandDrawnFrameRate": {
+                    "BaseValue": 8.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LightLeakPosition": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LightLeakColor": {
+                    "Mode": 0,
+                    "ColorReference": 1,
+                    "Color": 2,
+                    "CustomColor": {
+                      "r": 1.0,
+                      "g": 0.31999999284744263,
+                      "b": 0.059999998658895493,
+                      "a": 1.0
+                    },
+                    "GradientColorAReference": 0,
+                    "GradientColorA": 2,
+                    "CustomGradientColorA": {
+                      "r": 1.0,
+                      "g": 1.0,
+                      "b": 1.0,
+                      "a": 1.0
+                    },
+                    "GradientColorBReference": 0,
+                    "GradientColorB": 3,
+                    "CustomGradientColorB": {
+                      "r": 0.699999988079071,
+                      "g": 0.699999988079071,
+                      "b": 0.699999988079071,
+                      "a": 1.0
+                    },
+                    "RandomSeed": 0,
+                    "GradientAngle": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "GradientOffset": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "GradientScale": {
+                      "BaseValue": 2.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Intensity": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Alpha": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  },
+                  "LutKey": ""
                 }
               ]
             }
           ]
         },
         "CurrentVolume": {
-          "BloomEnabled": true,
-          "BloomToggleButton": {
-            "_noteNumber": 112
-          },
-          "BloomIntensity": {
-            "BaseValue": 20.0,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
-          "BloomThreshold": {
-            "BaseValue": 0.89999997615814209,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
-          "BloomScatter": {
-            "BaseValue": 0.5,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
           "DepthOfFieldMode": 1
         },
         "NextVolume": {
-          "BloomEnabled": false,
-          "BloomToggleButton": {
-            "_noteNumber": 112
-          },
-          "BloomIntensity": {
-            "BaseValue": 20.0,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
-          "BloomThreshold": {
-            "BaseValue": 0.89999997615814209,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
-          "BloomScatter": {
-            "BaseValue": 0.5,
-            "Modulation": {
-              "Modulators": []
-            }
-          },
           "DepthOfFieldMode": 1
         }
       }

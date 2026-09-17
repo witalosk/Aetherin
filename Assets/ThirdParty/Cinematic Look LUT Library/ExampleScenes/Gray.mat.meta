@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 3a19b047891004a3aacf9c1a9e742ee7
+timeCreated: 1471522070
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 69785
+  packageName: Cinematic Look LUT Library
+  packageVersion: 1.0
+  assetPath: Assets/Cinematic Look LUT Library/ExampleScenes/Gray.mat
+  uploadId: 134783

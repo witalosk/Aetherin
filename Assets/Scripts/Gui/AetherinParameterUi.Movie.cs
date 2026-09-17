@@ -9,6 +9,15 @@ namespace Aetherin
             var p = binder.Get();
             if (p == null) return UI.Label("-");
             p.EnsureInitialized();
+            var lutKeys = p.GetAvailableLutKeys?.Invoke();
+            Element lutSelector = lutKeys != null && lutKeys.Count > 0
+                ? UI.Dropdown("LUT", () =>
+                    {
+                        for (int i = 0; i < lutKeys.Count; i++) if (lutKeys[i] == p.LutKey) return i;
+                        return 0;
+                    }, value => p.LutKey = lutKeys[value], lutKeys)
+                : UI.Dropdown("LUT", () => 0, _ => { }, new[] { "LUT未登録" })
+                    .SetInteractable(false);
 
             return UI.Column(UI.Tabs(
                 ("Movie", UI.Column(
@@ -20,6 +29,8 @@ namespace Aetherin
                 ("Transform", UI.Column(Param("Size", p.Size), Param("Position", p.Position),
                     Param("Rotation", p.Rotation), Param("Scale", p.Scale), Param("Anchor", p.Anchor))),
                 ("Appearance", UI.Column(
+                    UI.Toggle("LUT", () => p.LutEnabled, value => p.LutEnabled = value),
+                    UI.DynamicElementIf(() => p.LutEnabled, () => lutSelector),
                     Param("Opacity", p.Opacity),
                     UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)))));
         }

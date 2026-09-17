@@ -124,7 +124,7 @@ namespace RosettaUI.UIToolkit.Builder
                 return false;
             }
 
-            
+            NotifyUIObjAttached(element, ve);
             return true;
         }
 

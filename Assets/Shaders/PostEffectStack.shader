@@ -20,7 +20,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             struct v2f { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; };
             v2f vert(appdata v) { v2f o; o.vertex = UnityObjectToClipPos(v.vertex); o.uv = v.uv; return o; }
 
-            sampler2D _MainTex, _HistoryTex;
+            sampler2D _MainTex, _HistoryTex, _LutTex;
             float4 _MainTex_TexelSize;
             int _EffectType;
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
@@ -29,15 +29,34 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float _HandDrawnFrameRate;
             float _LightLeakPosition;
             float4 _LightLeakColor;
+            float4 _LutParams;
+            float _LutEnabled;
+            float _KawaseOffset;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
-            float3 bloomSample(float2 uv)
+            float3 sampleLut(float3 color)
             {
-                float3 color = tex2D(_MainTex, uv).rgb;
-                float brightness = max(color.r, max(color.g, color.b));
-                float threshold = saturate(_Secondary);
-                float contribution = saturate((brightness - threshold) / max(0.0001, 1.0 - threshold));
-                return color * contribution;
+                float size = _LutParams.x;
+                float blue = saturate(color.b) * (size - 1.0);
+                float slice0 = floor(blue);
+                float slice1 = min(slice0 + 1.0, size - 1.0);
+                float2 texel = _LutParams.zw;
+                float2 uv0;
+                float2 uv1;
+                if (_LutParams.y < 0.5)
+                {
+                    uv0 = float2((slice0 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
+                        (saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                    uv1 = float2((slice1 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x, uv0.y);
+                }
+                else
+                {
+                    uv0 = float2((saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
+                        (slice0 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                    uv1 = float2(uv0.x,
+                        (slice1 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                }
+                return lerp(tex2D(_LutTex, uv0).rgb, tex2D(_LutTex, uv1).rgb, frac(blue));
             }
 
             float noise21(float2 p)
@@ -170,19 +189,14 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     fx.rgb = 1.0 - src.rgb;
                     fx = lerp(src, fx, saturate(_Strength));
                 }
-                else if (_EffectType == 9) // Bloom
+                else if (_EffectType == 9) // Cross blur
                 {
-                    float2 offset = _MainTex_TexelSize.xy * max(0.0, abs(_Scale));
-                    float3 bloom = bloomSample(uv) * 4.0;
-                    bloom += bloomSample(uv + float2( offset.x, 0.0)) * 2.0;
-                    bloom += bloomSample(uv + float2(-offset.x, 0.0)) * 2.0;
-                    bloom += bloomSample(uv + float2(0.0,  offset.y)) * 2.0;
-                    bloom += bloomSample(uv + float2(0.0, -offset.y)) * 2.0;
-                    bloom += bloomSample(uv + float2( offset.x,  offset.y));
-                    bloom += bloomSample(uv + float2(-offset.x,  offset.y));
-                    bloom += bloomSample(uv + float2( offset.x, -offset.y));
-                    bloom += bloomSample(uv + float2(-offset.x, -offset.y));
-                    fx.rgb = src.rgb + bloom * (max(0.0, _Amount) / 16.0);
+                    float2 offset = _MainTex_TexelSize.xy * max(0.0, _KawaseOffset);
+                    fx = (
+                        tex2D(_MainTex, saturate(uv + float2(-offset.x, -offset.y))) +
+                        tex2D(_MainTex, saturate(uv + float2( offset.x, -offset.y))) +
+                        tex2D(_MainTex, saturate(uv + float2(-offset.x,  offset.y))) +
+                        tex2D(_MainTex, saturate(uv + float2( offset.x,  offset.y)))) * 0.25;
                     fx = lerp(src, fx, saturate(_Strength));
                 }
                 else if (_EffectType == 10) // LED display
@@ -326,6 +340,11 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     float leak = radialLeak * (0.65 + directionalLeak * 0.35) * max(0.0, _Amount);
                     float3 leakColor = _LightLeakColor.rgb;
                     fx.rgb = 1.0 - (1.0 - src.rgb) * (1.0 - leakColor * leak);
+                    fx = lerp(src, fx, saturate(_Strength));
+                }
+                else if (_EffectType == 20) // LUT
+                {
+                    fx.rgb = _LutEnabled > 0.5 ? sampleLut(src.rgb) : src.rgb;
                     fx = lerp(src, fx, saturate(_Strength));
                 }
 

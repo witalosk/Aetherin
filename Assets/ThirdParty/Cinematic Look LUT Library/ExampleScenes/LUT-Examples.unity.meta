@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: d892c21b1238e4a3eb78f7a80aaa8889
+timeCreated: 1471514840
+licenseType: Store
+DefaultImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 69785
+  packageName: Cinematic Look LUT Library
+  packageVersion: 1.0
+  assetPath: Assets/Cinematic Look LUT Library/ExampleScenes/LUT-Examples.unity
+  uploadId: 134783

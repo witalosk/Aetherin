@@ -19,6 +19,7 @@ namespace Aetherin
         public bool FoldParams => true;
 
         [SerializeField] private Shader _shader;
+        [SerializeField] private LutLibrary _lutLibrary;
         [SerializeField] private PostEffectManagerParams _params = new();
 
         private static readonly int SourceTexId = Shader.PropertyToID("_MainTex");
@@ -40,6 +41,10 @@ namespace Aetherin
         private static readonly int HandDrawnFrameRateId = Shader.PropertyToID("_HandDrawnFrameRate");
         private static readonly int LightLeakPositionId = Shader.PropertyToID("_LightLeakPosition");
         private static readonly int LightLeakColorId = Shader.PropertyToID("_LightLeakColor");
+        private static readonly int LutTexId = Shader.PropertyToID("_LutTex");
+        private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
+        private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
+        private static readonly int KawaseOffsetId = Shader.PropertyToID("_KawaseOffset");
 
         private Material _material;
         private StackRuntime _current = new();
@@ -70,6 +75,7 @@ namespace Aetherin
 
         private void Awake()
         {
+            EnsureLutLibrary();
             Shader shader = _shader != null ? _shader : Shader.Find("Hidden/Aetherin/PostEffectStack");
             if (shader != null) _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
         }
@@ -160,11 +166,6 @@ namespace Aetherin
 
             DeckVolumeEffects effects = _params.NextVolume;
             effects.EnsureInitialized();
-
-            if (effects.BloomToggleButton.WasNoteOn)
-                effects.BloomEnabled = !effects.BloomEnabled;
-
-            effects.BloomToggleButton.SetLed(effects.BloomEnabled ? Color.yellow : Color.yellow * 0.15f);
 
             if (_params.Next?.Decks == null) return;
             foreach (PostEffectDeck deck in _params.Next.Decks)
@@ -285,10 +286,10 @@ namespace Aetherin
                         runtime.Activations.Evaluate(module, module.Enabled && deckIsActive, context.Time));
                     if (!module.Enabled) continue;
                     module.EnsureInitialized();
+                    module.GetAvailableLutKeys = GetLutKeys;
                     float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(moduleContext) ?? 1f);
                     if (strength <= 0f) continue;
 
-                    RenderTexture target = runtime.NextTarget(input);
                     _material.SetTexture(SourceTexId, input);
                     _material.SetTexture(HistoryTexId, runtime.HistoryValid ? runtime.History : input);
                     _material.SetInt(EffectTypeId, (int)module.Type);
@@ -312,8 +313,30 @@ namespace Aetherin
                     Color lightLeakColor = EvaluatedPaletteColor.Evaluate(
                         module.LightLeakColor, palette, moduleContext).ColorA;
                     _material.SetColor(LightLeakColorId, lightLeakColor);
-                    Graphics.Blit(input, target, _material);
-                    input = target;
+                    ApplyLut(module);
+                    if (module.Type == PostEffectType.CrossBlur)
+                    {
+                        int iterations = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(
+                            module.Scale?.Evaluate(moduleContext) ?? 1f)), 1, 12);
+                        float radius = Mathf.Max(0f, module.Amount?.Evaluate(moduleContext) ?? 0f);
+                        float passStrength = 1f - Mathf.Pow(1f - strength, 1f / iterations);
+                        _material.SetFloat(StrengthId, passStrength);
+                        for (int pass = 0; pass < iterations; pass++)
+                        {
+                            RenderTexture target = runtime.NextTarget(input);
+                            _material.SetTexture(SourceTexId, input);
+                            _material.SetFloat(KawaseOffsetId,
+                                radius * Mathf.Min(input.width, input.height) * (pass + 0.5f) / iterations);
+                            Graphics.Blit(input, target, _material);
+                            input = target;
+                        }
+                    }
+                    else
+                    {
+                        RenderTexture target = runtime.NextTarget(input);
+                        Graphics.Blit(input, target, _material);
+                        input = target;
+                    }
                     wroteAny = true;
                 }
             }
@@ -358,6 +381,7 @@ namespace Aetherin
 
         public Element AdditiveUi()
         {
+            EnsureLutLibrary();
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
             _params.Next ??= new PostEffectStack();
@@ -416,6 +440,9 @@ namespace Aetherin
             PostEffectDeck deck = _params.Next.Decks[deckIndex];
             deck ??= _params.Next.Decks[deckIndex] = new PostEffectDeck();
             deck.EnsureInitialized();
+            if (deck.Modules != null)
+                foreach (PostEffectModule module in deck.Modules)
+                    if (module != null) module.GetAvailableLutKeys = GetLutKeys;
             return UI.Column(
                 UI.Row(
                     UI.Field("Name", () => deck.Name, value => deck.Name = value).SetFlexGrow(1f),
@@ -522,19 +549,7 @@ namespace Aetherin
             in ModulationContext context)
         {
             settings.EnsureInitialized();
-            if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
-            // Keep the override active and control the effect with its intensity, as DoF does
-            // with DepthOfFieldMode. Toggling VolumeComponent.active causes the inherited
-            // Bloom state to win on some URP volume-stack updates.
-            bloom.active = true;
-            bloom.intensity.overrideState = true;
-            bloom.intensity.value = settings.BloomEnabled
-                ? Mathf.Max(0f, settings.BloomIntensity.Evaluate(context))
-                : 0f;
-            bloom.threshold.overrideState = true;
-            bloom.threshold.value = Mathf.Max(0f, settings.BloomThreshold.Evaluate(context));
-            bloom.scatter.overrideState = true;
-            bloom.scatter.value = Mathf.Clamp01(settings.BloomScatter.Evaluate(context));
+            if (profile.TryGet(out Bloom bloom)) bloom.active = false;
 
             if (!profile.TryGet(out DepthOfField depthOfField)) depthOfField = profile.Add<DepthOfField>(true);
             depthOfField.active = true;
@@ -551,6 +566,36 @@ namespace Aetherin
             depthOfField.aperture.value = Mathf.Clamp(cameraWork?.Aperture?.Evaluate(context) ?? 5.6f, 1f, 32f);
             depthOfField.focalLength.overrideState = true;
             depthOfField.focalLength.value = Mathf.Clamp(cameraWork?.FocalLength?.Evaluate(context) ?? 50f, 1f, 300f);
+        }
+
+        private void EnsureLutLibrary()
+        {
+            if (_lutLibrary == null)
+                _lutLibrary = FindFirstObjectByType<LutLibrary>(FindObjectsInactive.Include);
+        }
+
+        private IReadOnlyList<string> GetLutKeys()
+        {
+            EnsureLutLibrary();
+            return _lutLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private void ApplyLut(PostEffectModule module)
+        {
+            _material.SetFloat(LutEnabledId, 0f);
+            if (module.Type != PostEffectType.Lut) return;
+
+            EnsureLutLibrary();
+            Texture2D lut = _lutLibrary?.Resolve(module.LutKey);
+            bool horizontal = lut != null && lut.width == lut.height * lut.height;
+            bool vertical = lut != null && lut.height == lut.width * lut.width;
+            if (!horizontal && !vertical) return;
+
+            float size = horizontal ? lut.height : lut.width;
+            _material.SetTexture(LutTexId, lut);
+            _material.SetVector(LutParamsId,
+                new Vector4(size, vertical ? 1f : 0f, 1f / lut.width, 1f / lut.height));
+            _material.SetFloat(LutEnabledId, 1f);
         }
 
 

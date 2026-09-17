@@ -27,6 +27,8 @@ namespace RosettaUI
         public event Action onViewValueChanged;
         public event Action<Element, bool> onDetachView;
 
+        private event Action<object> onViewAttached;
+
         private ElementViewBridge _viewBridge;
 
         public bool Enable
@@ -116,6 +118,16 @@ namespace RosettaUI
         {
             onViewValueChanged?.Invoke();
             Parent?.NotifyViewValueChanged();
+        }
+
+        public void RegisterViewAttachedCallback(Action<object> callback)
+        {
+            onViewAttached += callback;
+        }
+
+        internal void NotifyViewAttached(object view)
+        {
+            onViewAttached?.Invoke(view);
         }
         
         

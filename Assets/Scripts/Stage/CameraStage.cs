@@ -55,6 +55,7 @@ namespace Aetherin
         [SerializeField] private ModelLayerLibrary _modelLibrary;
         [FormerlySerializedAs("_spriteSheetLibrary")]
         [SerializeField] private TextureLibrary _textureLibrary;
+        [SerializeField] private LutLibrary _lutLibrary;
         [SerializeField] private VfxGraphLibrary _vfxGraphLibrary;
         [SerializeField] private FontAssetLibrary _fontAssetLibrary;
         [SerializeField] private CameraStageBackgroundMode _backgroundMode;
@@ -282,10 +283,28 @@ namespace Aetherin
 
         public IReadOnlyList<string> GetTextureKeys() => GetSpriteSheetKeys();
 
+        public Texture2D ResolveLut(string key)
+        {
+            EnsureLutLibrary();
+            return _lutLibrary?.Resolve(key);
+        }
+
+        public IReadOnlyList<string> GetLutKeys()
+        {
+            EnsureLutLibrary();
+            return _lutLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
         private void EnsureTextureLibrary()
         {
             if (_textureLibrary == null)
                 _textureLibrary = FindFirstObjectByType<TextureLibrary>(FindObjectsInactive.Include);
+        }
+
+        private void EnsureLutLibrary()
+        {
+            if (_lutLibrary == null)
+                _lutLibrary = FindFirstObjectByType<LutLibrary>(FindObjectsInactive.Include);
         }
 
         private void EnsureModelLibrary()
