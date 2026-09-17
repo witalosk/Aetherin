@@ -132,7 +132,9 @@ namespace Aetherin
                 ShapePrimitive.Polygon => Param("Points", p.Points),
                 ShapePrimitive.Star => UI.Column(
                     Param("Points", p.Points),
-                    Param("Inner Radius", p.InnerRadius)),
+                    Param("Inner Radius", p.InnerRadius),
+                    UI.Field("Edge Segments", () => p.StarEdgeSegments,
+                        value => p.StarEdgeSegments = Math.Max(1, value))),
                 _ => null,
             };
         }

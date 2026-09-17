@@ -11,6 +11,14 @@ namespace Aetherin
         Additive,
     }
 
+    public enum LayerRandomPriority
+    {
+        Low,
+        Middle,
+        High,
+        Keep,
+    }
+
     public interface IStageLayer
     {
         bool Visible { get; set; }
@@ -22,6 +30,8 @@ namespace Aetherin
     public class StageLayerParams : IParams
     {
         public bool Visible = true;
+        [Tooltip("ランダムレイヤー選択時の抽選優先度。Keepは現在の表示状態を維持します")]
+        public LayerRandomPriority RandomPriority = LayerRandomPriority.Middle;
 
         public FloatParameter Opacity = new(1f);
         public LayerBlendMode BlendMode = LayerBlendMode.Opaque;
@@ -109,6 +119,12 @@ namespace Aetherin
                 LayerParams.Order = value;
                 ApplyLayerState();
             }
+        }
+
+        public LayerRandomPriority RandomPriority
+        {
+            get => LayerParams.RandomPriority;
+            set => LayerParams.RandomPriority = value;
         }
 
         public Renderer Renderer => LayerRenderer;

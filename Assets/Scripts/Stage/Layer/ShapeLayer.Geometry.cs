@@ -225,7 +225,7 @@ namespace Aetherin
                 ShapePrimitive.Rectangle => 4,
                 ShapePrimitive.Ellipse => Mathf.Max(3, _params.EllipseSegments),
                 ShapePrimitive.Polygon => Mathf.Max(3, _evaluatedPoints),
-                ShapePrimitive.Star => Mathf.Max(3, _evaluatedPoints) * 2,
+                ShapePrimitive.Star => Mathf.Max(3, _evaluatedPoints) * 2 * Mathf.Max(1, _params.StarEdgeSegments),
                 _ => 4,
             };
         }
@@ -244,12 +244,52 @@ namespace Aetherin
                 };
             }
 
-            float angle = Mathf.PI * 2f * index / edgeCount + Mathf.PI * 0.5f;
-            float radius = _params.Shape == ShapePrimitive.Star && (index & 1) == 1
-                ? _evaluatedInnerRadius
-                : 1f;
+            if (_params.Shape == ShapePrimitive.Star)
+            {
+                int segmentsPerEdge = Mathf.Max(1, _params.StarEdgeSegments);
+                int cornerCount = Mathf.Max(3, _evaluatedPoints) * 2;
+                int cornerIndex = index / segmentsPerEdge;
+                float t = index % segmentsPerEdge / (float)segmentsPerEdge;
+                Vector2 previous = GetRadialBoundaryPoint(
+                    (cornerIndex - 1 + cornerCount) % cornerCount, cornerCount, halfSize, _evaluatedInnerRadius);
+                Vector2 current = GetRadialBoundaryPoint(
+                    cornerIndex, cornerCount, halfSize, _evaluatedInnerRadius);
+                Vector2 next = GetRadialBoundaryPoint(
+                    (cornerIndex + 1) % cornerCount, cornerCount, halfSize, _evaluatedInnerRadius);
+                Vector2 following = GetRadialBoundaryPoint(
+                    (cornerIndex + 2) % cornerCount, cornerCount, halfSize, _evaluatedInnerRadius);
+                bool startsAtOuterCorner = (cornerIndex & 1) == 0;
+                Vector2 inner = startsAtOuterCorner ? next : current;
+                Vector2 previousOuter = startsAtOuterCorner ? current : previous;
+                Vector2 nextOuter = startsAtOuterCorner ? following : next;
+                Vector2 innerTangent = (nextOuter - previousOuter) * 0.25f;
+                Vector2 control = startsAtOuterCorner
+                    ? inner - innerTangent
+                    : inner + innerTangent;
+                return QuadraticBezier(current, control, next, t);
+            }
 
+            float angle = Mathf.PI * 2f * index / edgeCount + Mathf.PI * 0.5f;
+            return new Vector2(Mathf.Cos(angle) * halfSize.x, Mathf.Sin(angle) * halfSize.y);
+        }
+
+        private static Vector2 GetRadialBoundaryPoint(
+            int index,
+            int pointCount,
+            Vector2 halfSize,
+            float innerRadius)
+        {
+            float angle = Mathf.PI * 2f * index / pointCount + Mathf.PI * 0.5f;
+            float radius = (index & 1) == 1 ? innerRadius : 1f;
             return new Vector2(Mathf.Cos(angle) * halfSize.x, Mathf.Sin(angle) * halfSize.y) * radius;
+        }
+
+        private static Vector2 QuadraticBezier(Vector2 start, Vector2 control, Vector2 end, float t)
+        {
+            float inverseT = 1f - t;
+            return inverseT * inverseT * start +
+                   2f * inverseT * t * control +
+                   t * t * end;
         }
 
     }

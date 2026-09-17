@@ -202,6 +202,7 @@ namespace Aetherin
             _params.Repeater ??= new RepeaterParams();
             _params.Repeater.EnsureInitialized(MaxRepeaterCopies);
             _params.Points.BaseValue = Mathf.Max(3, _params.Points.BaseValue);
+            _params.StarEdgeSegments = Mathf.Max(1, _params.StarEdgeSegments);
             _params.EllipseSegments = Mathf.Max(3, _params.EllipseSegments);
             _params.Size.BaseValue.x = Mathf.Max(0f, _params.Size.BaseValue.x);
             _params.Size.BaseValue.y = Mathf.Max(0f, _params.Size.BaseValue.y);
@@ -467,6 +468,7 @@ namespace Aetherin
                 hash = hash * 31 + _evaluatedSize.GetHashCode();
                 hash = hash * 31 + _evaluatedPoints;
                 hash = hash * 31 + _evaluatedInnerRadius.GetHashCode();
+                hash = hash * 31 + _params.StarEdgeSegments;
                 hash = hash * 31 + _params.EllipseSegments;
                 hash = hash * 31 + (_params.VertexNoise?.Enabled == true ? _params.VertexNoiseTessellation : 1);
                 hash = hash * 31 + _params.FillEnabled.GetHashCode();

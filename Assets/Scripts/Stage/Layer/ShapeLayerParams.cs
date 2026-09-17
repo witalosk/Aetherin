@@ -50,6 +50,10 @@ namespace Aetherin
 
         public FloatParameter InnerRadius = new(0.5f);
 
+        [Min(1)]
+        [Tooltip("Starの隣接する頂点間を滑らかな曲線で補間するセグメント数")]
+        public int StarEdgeSegments = 1;
+
         [Min(3)]
         public int EllipseSegments = 64;
 

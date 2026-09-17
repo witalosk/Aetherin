@@ -627,8 +627,9 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// Nextステージのレイヤーをランダムに選び、指定割合だけ表示する。
+        /// Nextステージのレイヤーを優先度つきでランダムに選び、指定割合だけ表示する。
         /// High は80〜90%、Mid は40〜50%、Low は10〜30%の範囲で、毎回選ぶ数も変える。
+        /// レイヤーごとのHigh/Middle/Lowは抽選重み3/2/1、Keepは現在の表示状態を維持する。
         /// </summary>
         private void UpdateRandomLayerButtons()
         {
@@ -655,29 +656,48 @@ namespace Aetherin
             IReadOnlyList<StageLayer> layers = stage?.Layers;
             if (layers == null || layers.Count == 0) return;
 
-            int minimum = Mathf.CeilToInt(layers.Count * minRatio);
-            int maximum = Mathf.FloorToInt(layers.Count * maxRatio);
-            minimum = Mathf.Clamp(minimum, 1, layers.Count);
-            maximum = Mathf.Clamp(Mathf.Max(minimum, maximum), minimum, layers.Count);
+            var candidates = layers
+                .Where(layer => layer != null && layer.RandomPriority != LayerRandomPriority.Keep)
+                .ToList();
+            if (candidates.Count == 0) return;
+
+            int minimum = Mathf.CeilToInt(candidates.Count * minRatio);
+            int maximum = Mathf.FloorToInt(candidates.Count * maxRatio);
+            minimum = Mathf.Clamp(minimum, 1, candidates.Count);
+            maximum = Mathf.Clamp(Mathf.Max(minimum, maximum), minimum, candidates.Count);
             int selectedCount = UnityEngine.Random.Range(minimum, maximum + 1);
 
-            var indices = Enumerable.Range(0, layers.Count).ToList();
+            var selected = new List<StageLayer>(selectedCount);
             for (int i = 0; i < selectedCount; i++)
             {
-                int randomIndex = UnityEngine.Random.Range(i, indices.Count);
-                (indices[i], indices[randomIndex]) = (indices[randomIndex], indices[i]);
+                int totalWeight = candidates.Sum(GetRandomLayerWeight);
+                int ticket = UnityEngine.Random.Range(0, totalWeight);
+                int selectedIndex = 0;
+                for (; selectedIndex < candidates.Count - 1; selectedIndex++)
+                {
+                    ticket -= GetRandomLayerWeight(candidates[selectedIndex]);
+                    if (ticket < 0) break;
+                }
+
+                selected.Add(candidates[selectedIndex]);
+                candidates.RemoveAt(selectedIndex);
             }
 
-            for (int i = 0; i < layers.Count; i++)
-            {
-                if (layers[i] != null) layers[i].Visible = false;
-            }
+            foreach (StageLayer layer in layers)
+                if (layer != null && layer.RandomPriority != LayerRandomPriority.Keep)
+                    layer.Visible = false;
 
-            for (int i = 0; i < selectedCount; i++)
+            foreach (StageLayer layer in selected) layer.Visible = true;
+        }
+
+        private static int GetRandomLayerWeight(StageLayer layer)
+        {
+            return layer.RandomPriority switch
             {
-                StageLayer layer = layers[indices[i]];
-                if (layer != null) layer.Visible = true;
-            }
+                LayerRandomPriority.High => 3,
+                LayerRandomPriority.Middle => 2,
+                _ => 1,
+            };
         }
 
         /// <summary>
@@ -1384,6 +1404,7 @@ namespace Aetherin
                     UI.Toggle(null, () => layer.Visible, value => layer.Visible = value),
                     UI.Field(null, () => layer.gameObject.name, value => layer.gameObject.name = value).SetFlexGrow(1f)
                 ).SetBackgroundColor(GetLayerColor(layer) * 0.5f),
+                UI.Field("Random Priority", () => layer.RandomPriority, value => layer.RandomPriority = value),
                 UI.Field("Order", () => layer.Order, value => layer.Order = value),
                 UI.Field(null, Binder.Create(layer.Params, layer.Params.GetType()))
             );
