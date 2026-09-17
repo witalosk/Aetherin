@@ -278,7 +278,8 @@ namespace Aetherin
         private void EvaluateAndApply()
         {
             var context = CreateModulationContext(Time.unscaledTimeAsDouble,
-                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null, Application.isPlaying);
+                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null,
+                Application.isPlaying && (_stage == null || (_deckState?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             float layerOpacity = Mathf.Clamp01(_params.Opacity.Evaluate(context));
             Vector3 position = _params.Position.Evaluate(context);
             Vector3 rotation = _params.Rotation.Evaluate(context);

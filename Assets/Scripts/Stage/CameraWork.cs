@@ -193,7 +193,7 @@ namespace Aetherin
             if (recipe == null) return;
             recipe.EnsureInitialized();
 
-            bool allowMidi = Deck == StageDeck.Next;
+            bool allowMidi = _deckStateProvider?.IsDeckEditable(Deck) ?? Deck == StageDeck.Next;
             double stageTime = StageTime;
             var context = new ModulationContext(stageTime, _audioFeatureProvider, _beatManager, allowMidi);
             Vector3 position = recipe.Position.Evaluate(context);

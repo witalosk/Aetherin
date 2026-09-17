@@ -82,7 +82,7 @@ namespace Aetherin
             if (module == null) return UI.Label("-");
             module.EnsureInitialized();
             module.GetAvailableLutKeys ??= () =>
-                UnityEngine.Object.FindFirstObjectByType<LutLibrary>(UnityEngine.FindObjectsInactive.Include)
+                LutLibrary.FindBestAvailable()
                     ?.GetKeys() ?? System.Array.Empty<string>();
 
             return UI.Column(
@@ -194,8 +194,15 @@ namespace Aetherin
                     IReadOnlyList<string> lutKeys = module.GetAvailableLutKeys?.Invoke();
                     if (lutKeys != null && lutKeys.Count > 0)
                     {
-                        yield return UI.Dropdown("LUT", () => IndexOfKey(lutKeys, module.LutKey),
-                            value => module.LutKey = lutKeys[value], lutKeys);
+                        module.InitializeLutIndex(lutKeys);
+                        yield return UI.Row(
+                            UI.Dropdown("LUT", () => UnityEngine.Mathf.Clamp(module.LutIndex.BaseValue, 0, lutKeys.Count - 1),
+                                value =>
+                                {
+                                    module.LutIndex.BaseValue = value;
+                                    module.LutKey = lutKeys[value];
+                                }, lutKeys).SetFlexGrow(1f),
+                            CreateModulationLauncher("LUT Index", module.LutIndex.Modulation));
                     }
                     else
                     {

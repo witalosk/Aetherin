@@ -9,7 +9,7 @@ using RosettaUI;
 namespace Aetherin
 {
     /// <summary>
-    /// Nextへ直列ポストエフェクトを実行する。
+    /// Current / Nextへ独立した直列ポストエフェクトを実行する。
     /// 一時RTと前フレーム履歴を保持し、フレーム中のGCを発生させない。
     /// </summary>
     public sealed class PostEffectManager : MonoBehaviour, IPostEffectManager, ISaveAndUiTarget, IDisposable
@@ -57,9 +57,14 @@ namespace Aetherin
         private IBeatManager _beatManager;
         private ICounter _counter;
         private IDeckStateProvider _deckStateProvider;
-        // 0はVolume、1以降はNextのDeckインデックス + 1。
+        // 0はVolume、1以降は編集中デッキのDeckインデックス + 1。
         private int _selectedEditorItem;
         private int _editorRevision;
+        private StageDeck? _lastEditingDeck;
+
+        private StageDeck EditingDeck => _deckStateProvider?.EditingDeck ?? StageDeck.Next;
+        private PostEffectStack EditingStack => EditingDeck == StageDeck.Current ? _params.Current : _params.Next;
+        private DeckVolumeEffects EditingVolume => EditingDeck == StageDeck.Current ? _params.CurrentVolume : _params.NextVolume;
 
         [Inject]
         public void Construct(
@@ -88,24 +93,25 @@ namespace Aetherin
 
         public Texture ProcessCurrent(Texture source)
         {
+            RefreshEditingDeckState();
+            bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Current) ?? false;
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
             _params.Next ??= new PostEffectStack();
-            PostEffectStack stack = _params.EditMode == PostEffectEditMode.Immediate
-                ? _params.Next
-                : _params.Current;
-            return Process(source, stack, _current, context);
+            return Process(source, _params.Current, _current, context, StageDeck.Current);
         }
 
         public Texture ProcessNext(Texture source) 
         {
+            RefreshEditingDeckState();
+            bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Next) ?? true;
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
-            return Process(source, _params.Next, _next, context);
+            return Process(source, _params.Next, _next, context, StageDeck.Next);
         }
 
         /// <summary>
@@ -118,7 +124,7 @@ namespace Aetherin
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
-            return Process(source, _params.Next, _output, context, true);
+            return Process(source, _params.Next, _output, context, StageDeck.Next, true);
         }
 
         /// <summary>
@@ -127,10 +133,11 @@ namespace Aetherin
         /// </summary>
         public void ApplyDeckVolumes(Camera currentCamera, Camera nextCamera)
         {
+            RefreshEditingDeckState();
             _params ??= new PostEffectManagerParams();
             _params.CurrentVolume ??= new DeckVolumeEffects();
             _params.NextVolume ??= new DeckVolumeEffects();
-            UpdateNextToggleButtons();
+            UpdateEditingToggleButtons();
 
             EnsureVolumeProfiles();
             if (_currentVolumeProfile == null || _nextVolumeProfile == null) return;
@@ -141,31 +148,30 @@ namespace Aetherin
             // 見つからず、Bloom/DoFなどが一瞬消える。
             if (currentCamera != null)
             {
+                bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Current) ?? false;
                 var currentContext = new ModulationContext(
-                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, false, counter: _counter);
-                DeckVolumeEffects currentSettings = _params.EditMode == PostEffectEditMode.Immediate
-                    ? _params.NextVolume
-                    : _params.CurrentVolume;
-                ApplyVolumeSettings(_currentVolumeProfile, currentSettings,
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
+                ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume,
                     currentCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, currentContext);
                 ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
             }
 
             if (nextCamera != null)
             {
+                bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Next) ?? true;
                 var nextContext = new ModulationContext(
-                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
                 ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume,
                     nextCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, nextContext);
                 ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
             }
         }
 
-        private void UpdateNextToggleButtons()
+        private void UpdateEditingToggleButtons()
         {
             if (_deckStateProvider.IsPreparingNext) return;
 
-            DeckVolumeEffects effects = _params.NextVolume;
+            DeckVolumeEffects effects = EditingVolume;
             effects.EnsureInitialized();
 
             if (effects.BloomToggleButton.WasNoteOn)
@@ -173,8 +179,8 @@ namespace Aetherin
 
             effects.BloomToggleButton.SetLed(effects.BloomEnabled ? Color.yellow : Color.yellow * 0.15f);
 
-            if (_params.Next?.Decks == null) return;
-            foreach (PostEffectDeck deck in _params.Next.Decks)
+            if (EditingStack?.Decks == null) return;
+            foreach (PostEffectDeck deck in EditingStack.Decks)
             {
                 if (deck == null) continue;
                 deck.EnsureInitialized();
@@ -185,6 +191,27 @@ namespace Aetherin
                 }
                 if (deck.ToggleButton.WasNoteOn) deck.Enabled = !deck.Enabled;
                 deck.ToggleButton.SetLed(deck.Enabled ? Color.white : Color.white * 0.15f);
+            }
+        }
+
+        private void RefreshEditingDeckState()
+        {
+            StageDeck editingDeck = EditingDeck;
+            if (_lastEditingDeck == editingDeck) return;
+
+            _lastEditingDeck = editingDeck;
+            if (editingDeck != StageDeck.Current) return;
+
+            // Immediateへ入る直前にNextプレビューへ使われていたフェーダー値を固定する。
+            // HideInInspectorの古いシリアライズ値を使うと、意図しない強度でエフェクトが復活する。
+            _params ??= new PostEffectManagerParams();
+            _params.Next ??= new PostEffectStack();
+            if (_params.Next.Decks == null) return;
+            foreach (PostEffectDeck deck in _params.Next.Decks)
+            {
+                if (deck == null || deck.ControlMode == PostEffectControlMode.OutputPad) continue;
+                deck.EnsureInitialized();
+                deck.CurrentFaderValue = deck.Fader.IsAssigned ? deck.Fader.GetValue(0f) : 1f;
             }
         }
 
@@ -218,14 +245,6 @@ namespace Aetherin
             _next = new StackRuntime();
         }
 
-        private void SetEditMode(PostEffectEditMode mode)
-        {
-            if (_params.EditMode == mode) return;
-            if (_params.EditMode == PostEffectEditMode.Immediate && mode == PostEffectEditMode.Next)
-                CopyNextSettingsToCurrent();
-            _params.EditMode = mode;
-        }
-
         private void CopyNextSettingsToCurrent()
         {
             _params.Current ??= new PostEffectStack();
@@ -236,7 +255,8 @@ namespace Aetherin
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(_params.NextVolume), _params.CurrentVolume);
         }
 
-        private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime, in ModulationContext context, bool outputOnly = false)
+        private Texture Process(Texture source, PostEffectStack stack, StackRuntime runtime,
+            in ModulationContext context, StageDeck deckType, bool outputOnly = false)
         {
             if (source == null || _material == null || stack?.Decks == null)
                 return source;
@@ -314,8 +334,7 @@ namespace Aetherin
                     _material.SetInt(ShutterModeId, (int)module.ShutterMode);
                     _material.SetFloat(HandDrawnFrameRateId, module.HandDrawnFrameRate?.Evaluate(moduleContext) ?? 8f);
                     _material.SetFloat(LightLeakPositionId, module.LightLeakPosition?.Evaluate(moduleContext) ?? 0.5f);
-                    ColorPalette palette = _deckStateProvider?.GetState(
-                        context.AllowMidi ? StageDeck.Next : StageDeck.Current)?.Palette;
+                    ColorPalette palette = _deckStateProvider?.GetState(deckType)?.Palette;
                     Color lightLeakColor = EvaluatedPaletteColor.Evaluate(
                         module.LightLeakColor, palette, moduleContext).ColorA;
                     _material.SetColor(LightLeakColorId, lightLeakColor);
@@ -396,12 +415,12 @@ namespace Aetherin
 
             ClampSelectedEditorItem();
             return UI.Column(
-                UI.Field("Edit Mode", () => _params.EditMode, SetEditMode),
+                UI.Label(() => $"Editing: {EditingDeck}"),
                 UI.Row(
                     UI.Box(UI.DynamicElementOnStatusChanged(
-                        () => _editorRevision, _ => CreateEditorListElement())).SetWidth(190f).SetFlexShrink(0f),
+                        () => (_editorRevision, EditingDeck), _ => CreateEditorListElement())).SetWidth(190f).SetFlexShrink(0f),
                     UI.Box(UI.DynamicElementOnStatusChanged(
-                        () => (_selectedEditorItem, _params.Next.Decks.Count),
+                        () => (_selectedEditorItem, EditingDeck, EditingStack.Decks.Count),
                         _ => CreateSelectedEditorElement())).SetMinWidth(420f).SetFlexGrow(1f)));
         }
 
@@ -409,20 +428,19 @@ namespace Aetherin
         {
             var items = new List<Element>
             {
-                UI.Label(() => _params.EditMode == PostEffectEditMode.Immediate
-                    ? "Immediate Editor"
-                    : "Next Editor"),
+                UI.Label(() => $"{EditingDeck} Editor"),
                 UI.Button(UI.Label(() => $"{(_selectedEditorItem == 0 ? "▶ " : "  ")}Volume Effects"),
                     () => _selectedEditorItem = 0),
                 UI.Button("+ Add Deck", AddDeck),
             };
 
-            for (int i = 0; i < _params.Next.Decks.Count; i++)
+            PostEffectStack stack = EditingStack;
+            for (int i = 0; i < stack.Decks.Count; i++)
             {
                 int deckIndex = i;
                 items.Add(UI.Button(UI.Label(() =>
                     {
-                        PostEffectDeck deck = _params.Next.Decks[deckIndex];
+                        PostEffectDeck deck = EditingStack.Decks[deckIndex];
                         string name = string.IsNullOrWhiteSpace(deck?.Name) ? $"Deck {deckIndex + 1}" : deck.Name;
                         return $"{(_selectedEditorItem == deckIndex + 1 ? "▶ " : "  ")}{name}";
                     }),
@@ -439,12 +457,13 @@ namespace Aetherin
             {
                 return UI.Column(
                     UI.Label("URP Volume Effects"),
-                    UI.Field(null, Binder.Create(_params.NextVolume, typeof(DeckVolumeEffects))));
+                    UI.Field(null, Binder.Create(EditingVolume, typeof(DeckVolumeEffects))));
             }
 
             int deckIndex = _selectedEditorItem - 1;
-            PostEffectDeck deck = _params.Next.Decks[deckIndex];
-            deck ??= _params.Next.Decks[deckIndex] = new PostEffectDeck();
+            PostEffectStack stack = EditingStack;
+            PostEffectDeck deck = stack.Decks[deckIndex];
+            deck ??= stack.Decks[deckIndex] = new PostEffectDeck();
             deck.EnsureInitialized();
             if (deck.Modules != null)
                 foreach (PostEffectModule module in deck.Modules)
@@ -460,8 +479,9 @@ namespace Aetherin
 
         private void AddDeck()
         {
-            _params.Next.Decks.Add(new PostEffectDeck { Name = $"Deck {_params.Next.Decks.Count + 1}" });
-            _selectedEditorItem = _params.Next.Decks.Count;
+            PostEffectStack stack = EditingStack;
+            stack.Decks.Add(new PostEffectDeck { Name = $"Deck {stack.Decks.Count + 1}" });
+            _selectedEditorItem = stack.Decks.Count;
             _editorRevision++;
         }
 
@@ -469,10 +489,11 @@ namespace Aetherin
         {
             int index = _selectedEditorItem - 1;
             int destination = index + direction;
-            if (index < 0 || destination < 0 || destination >= _params.Next.Decks.Count) return;
-            PostEffectDeck deck = _params.Next.Decks[index];
-            _params.Next.Decks.RemoveAt(index);
-            _params.Next.Decks.Insert(destination, deck);
+            PostEffectStack stack = EditingStack;
+            if (index < 0 || destination < 0 || destination >= stack.Decks.Count) return;
+            PostEffectDeck deck = stack.Decks[index];
+            stack.Decks.RemoveAt(index);
+            stack.Decks.Insert(destination, deck);
             _selectedEditorItem = destination + 1;
             _editorRevision++;
         }
@@ -480,16 +501,17 @@ namespace Aetherin
         private void DeleteSelectedDeck()
         {
             int index = _selectedEditorItem - 1;
-            if (index < 0 || index >= _params.Next.Decks.Count) return;
-            _params.Next.Decks.RemoveAt(index);
+            PostEffectStack stack = EditingStack;
+            if (index < 0 || index >= stack.Decks.Count) return;
+            stack.Decks.RemoveAt(index);
             _selectedEditorItem = 0;
             _editorRevision++;
         }
 
         private void ClampSelectedEditorItem()
         {
-            _params.Next.Decks ??= new List<PostEffectDeck>();
-            _selectedEditorItem = Mathf.Clamp(_selectedEditorItem, 0, _params.Next.Decks.Count);
+            EditingStack.Decks ??= new List<PostEffectDeck>();
+            _selectedEditorItem = Mathf.Clamp(_selectedEditorItem, 0, EditingStack.Decks.Count);
         }
 
         private void EnsureVolumeProfiles()
@@ -588,8 +610,7 @@ namespace Aetherin
 
         private void EnsureLutLibrary()
         {
-            if (_lutLibrary == null)
-                _lutLibrary = FindFirstObjectByType<LutLibrary>(FindObjectsInactive.Include);
+            _lutLibrary = LutLibrary.FindBestAvailable(_lutLibrary);
         }
 
         private IReadOnlyList<string> GetLutKeys()
@@ -604,7 +625,12 @@ namespace Aetherin
             if (module.Type != PostEffectType.Lut) return;
 
             EnsureLutLibrary();
-            Texture2D lut = _lutLibrary?.Resolve(module.LutKey);
+            IReadOnlyList<string> keys = _lutLibrary?.GetKeys();
+            if (keys == null || keys.Count == 0) return;
+            module.InitializeLutIndex(keys);
+            int lutIndex = Mathf.Clamp(module.LutIndex.Evaluate(context), 0, keys.Count - 1);
+            module.LutKey = keys[lutIndex];
+            Texture2D lut = _lutLibrary.Resolve(module.LutKey);
             bool horizontal = lut != null && lut.width == lut.height * lut.height;
             bool vertical = lut != null && lut.height == lut.width * lut.width;
             if (!horizontal && !vertical) return;

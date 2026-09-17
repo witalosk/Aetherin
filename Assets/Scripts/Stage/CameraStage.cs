@@ -385,7 +385,7 @@ namespace Aetherin
             layerObject.AddComponent<MeshFilter>();
             layerObject.AddComponent<MeshRenderer>();
             var layer = layerObject.AddComponent<MovieLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager);
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
             ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();
@@ -457,7 +457,7 @@ namespace Aetherin
             layerObject.transform.SetParent(parent != null ? parent : transform, false);
             ApplyDeckRenderingLayer(layerObject);
             var layer = layerObject.AddComponent<GroupLayer>();
-            layer.Initialize(_audioFeatureProvider, _beatManager);
+            layer.Initialize(_audioFeatureProvider, _beatManager, _deckStateProvider);
             layer.Order = GetNextLayerOrder(layerObject.transform.parent);
             ApplyDeckRenderingLayer(layerObject);
             RefreshLayers();

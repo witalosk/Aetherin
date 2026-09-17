@@ -91,7 +91,7 @@ namespace Aetherin
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 Application.isPlaying ? _audio : null,
                 Application.isPlaying ? _beat : null,
-                Application.isPlaying && (_stage == null || _stage.Deck == StageDeck.Next));
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
             ApplyAppearance(context);
 
@@ -126,7 +126,7 @@ namespace Aetherin
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 Application.isPlaying ? _audio : null,
                 Application.isPlaying ? _beat : null,
-                Application.isPlaying && (_stage == null || _stage.Deck == StageDeck.Next));
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
         }
 

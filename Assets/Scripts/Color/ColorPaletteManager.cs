@@ -140,6 +140,7 @@ namespace Aetherin
 
         private ColorPalette CurrentPalette => _deckStateProvider?.GetState(StageDeck.Current).Palette;
         private ColorPalette NextPalette => _deckStateProvider?.NextState.Palette;
+        private ColorPalette EditingPalette => _deckStateProvider?.EditingState.Palette;
 
         [Inject]
         public void Construct(IDeckStateProvider deckStateProvider)
@@ -175,19 +176,19 @@ namespace Aetherin
 
             foreach (var pair in _params.PaletteBindings)
             {
-                // Nextに選択中のものを点滅、Currentに反映済みのものを点灯、それ以外は暗めに表示する
+                // 操作対象に選択中のものを点滅、Currentに反映済みのものを点灯、それ以外は暗めに表示する
                 Color baseColor = Color.Lerp(pair.Palette.BackgroundColor1, pair.Palette.AccentColor1, Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
                 var ledColor = baseColor * 0.25f;
-                bool isNextPalette = IsSelectedPalette(NextPalette, pair.Palette);
+                bool isEditingPalette = IsSelectedPalette(EditingPalette, pair.Palette);
                 bool isCurrentPalette = IsSelectedPalette(CurrentPalette, pair.Palette);
-                if (isNextPalette) ledColor = baseColor * (Mathf.Sin(Time.time * 40f) * 0.4f + 0.5f);
+                if (isEditingPalette) ledColor = baseColor * (Mathf.Sin(Time.time * 40f) * 0.4f + 0.5f);
                 else if (isCurrentPalette) ledColor = baseColor;
                 pair.Binding.SetLed(ledColor);
 
                 if (pair.Binding.WasNoteOn)
                 {
-                    _deckStateProvider.NextState.Palette = isNextPalette
-                        ? CreateNextVariation(NextPalette, pair.Palette)
+                    _deckStateProvider.EditingState.Palette = isEditingPalette
+                        ? CreateNextVariation(EditingPalette, pair.Palette)
                         : pair.Palette;
                 }
             }

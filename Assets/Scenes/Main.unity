@@ -597,8 +597,11 @@ MonoBehaviour:
     SnareSensitivity: 1.55
     FluxThreshold: 1.8
     AdaptationTime: 0.9
+    LongTermAdaptationTime: 10
+    LongTermWeight: 0.4
     NoiseGate: 0.004
     KickToSnareRejection: 0.4
+    ClassificationMargin: 0.08
     TriggerThreshold: 0.12
     ReleaseTime: 0.14
     Cooldown: 0.09
@@ -968,6 +971,7 @@ MonoBehaviour:
     CurrentStageIndex: 0
     NextStageIndex: 0
     NextStageOffset: {x: 0, y: 1000, z: 0}
+    ImmediateExitFaderThreshold: 0.5
     SwapThreshold: 0.99
     NextRebuildFrameInterval: 3
 --- !u!1 &823168519
@@ -1321,6 +1325,8 @@ MonoBehaviour:
   _textures:
   - Key: girl_sprite
     Texture: {fileID: 2800000, guid: 860376efed7c0994dad1d3d4eea556c2, type: 3}
+  - Key: hyoshiki
+    Texture: {fileID: 2800000, guid: 6c52e56b1f6c3d844a535e04483388d0, type: 3}
 --- !u!114 &910745199
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2438,8 +2444,38 @@ MonoBehaviour:
     Next:
       Decks: []
     CurrentVolume:
+      BloomEnabled: 1
+      BloomToggleButton:
+        _noteNumber: -1
+      BloomIntensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      BloomThreshold:
+        BaseValue: 0.9
+        Modulation:
+          Modulators: []
+      BloomScatter:
+        BaseValue: 0.5
+        Modulation:
+          Modulators: []
       DepthOfFieldMode: 1
     NextVolume:
+      BloomEnabled: 1
+      BloomToggleButton:
+        _noteNumber: -1
+      BloomIntensity:
+        BaseValue: 1
+        Modulation:
+          Modulators: []
+      BloomThreshold:
+        BaseValue: 0.9
+        Modulation:
+          Modulators: []
+      BloomScatter:
+        BaseValue: 0.5
+        Modulation:
+          Modulators: []
       DepthOfFieldMode: 1
 --- !u!1 &2134490627
 GameObject:
@@ -2537,6 +2573,6 @@ SceneRoots:
   - {fileID: 2100000001}
   - {fileID: 76371272}
   - {fileID: 1953477468}
-  - {fileID: 1384360350}
   - {fileID: 934651080}
   - {fileID: 754430060}
+  - {fileID: 1384360350}

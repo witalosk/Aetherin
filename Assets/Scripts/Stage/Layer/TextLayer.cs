@@ -100,7 +100,8 @@ namespace Aetherin
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
-                _audio, _beat, Application.isPlaying);
+                _audio, _beat,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             _resolvedText = ResolveText(context);
             EvaluateLayout(context);
             ApplyCharacterAnimators(context);
@@ -115,7 +116,8 @@ namespace Aetherin
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
-                _audio, _beat, Application.isPlaying);
+                _audio, _beat,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
         }
 

@@ -364,7 +364,7 @@ namespace Aetherin
                 runtime ? Time.timeAsDouble : 0d,
                 runtime ? _audioFeatureProvider : null,
                 runtime ? _beatManager : null,
-                runtime && (_stage == null || _stage.Deck == StageDeck.Next));
+                runtime && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             _modulationContext = context;
 
             _evaluatedPosition = _params.Position?.Evaluate(context) ?? Vector3.zero;

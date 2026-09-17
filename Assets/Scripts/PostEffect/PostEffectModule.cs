@@ -116,10 +116,28 @@ namespace Aetherin
         };
         [Tooltip("Lut Library に登録したLUTテクスチャのファイル名（拡張子なし）")]
         public string LutKey;
+        [Tooltip("LUT一覧のインデックス。Modulation後の値は有効範囲へClampされます")]
+        public IntParameter LutIndex = new(0);
         [Tooltip("元映像とLUT適用結果の混合率")]
         public FloatParameter LutIntensity = new(1f);
 
         [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableLutKeys;
+        [NonSerialized] private bool _lutIndexInitialized;
+
+        public void InitializeLutIndex(System.Collections.Generic.IReadOnlyList<string> keys)
+        {
+            if (_lutIndexInitialized || keys == null || keys.Count == 0) return;
+            _lutIndexInitialized = true;
+            int savedIndex = 0;
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (keys[i] != LutKey) continue;
+                savedIndex = i;
+                break;
+            }
+            if (!string.IsNullOrWhiteSpace(LutKey)) LutIndex.BaseValue = savedIndex;
+            LutKey = keys[Mathf.Clamp(LutIndex.BaseValue, 0, keys.Count - 1)];
+        }
 
         public void EnsureInitialized()
         {
@@ -138,6 +156,7 @@ namespace Aetherin
             };
             LightLeakColor.EnsureInitialized();
             LutKey ??= string.Empty;
+            LutIndex ??= new IntParameter(0);
             LutIntensity ??= new FloatParameter(1f);
         }
     }

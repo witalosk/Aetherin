@@ -70,7 +70,8 @@ namespace Aetherin
             _params.EnsureInitialized();
             EnsureVolumeResources();
             double time = Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble;
-            var context = CreateModulationContext(time, _audio, _beat, Application.isPlaying);
+            var context = CreateModulationContext(time, _audio, _beat,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             transform.localPosition = _params.Position.Evaluate(context);
             transform.localRotation = Quaternion.Euler(_params.Rotation.Evaluate(context));
 

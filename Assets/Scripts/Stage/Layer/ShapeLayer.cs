@@ -418,7 +418,7 @@ namespace Aetherin
                 useRuntimeSources ? Time.timeAsDouble : 0d,
                 useRuntimeSources ? _audioFeatureProvider : null,
                 useRuntimeSources ? _beatManager : null,
-                useRuntimeSources && (_stage == null || _stage.Deck == StageDeck.Next));
+                useRuntimeSources && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             _modulationContext = context;
 
             _evaluatedRotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;

@@ -167,7 +167,8 @@ namespace Aetherin
                 : (float)Math.Max(0.0, Math.Min(0.05, now - _lastEditorTime));
             _lastEditorTime = now;
 
-            var context = CreateModulationContext(now, _audio, _beat, Application.isPlaying);
+            var context = CreateModulationContext(now, _audio, _beat,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             StageBase timeStage = GetComponentInParent<StageBase>();
             float timeDelta = Application.isPlaying && timeStage != null ? timeStage.StageDeltaTime : rawDelta;
             float deltaTime = timeDelta * Mathf.Max(0f, _params.SimulationSpeed?.Evaluate(context) ?? 1f);
@@ -241,7 +242,8 @@ namespace Aetherin
         private void ResetParticles()
         {
             if (_particles == null || _compute == null) return;
-            var context = CreateModulationContext(Time.unscaledTimeAsDouble, _audio, _beat, Application.isPlaying);
+            var context = CreateModulationContext(Time.unscaledTimeAsDouble, _audio, _beat,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             _compute.SetBuffer(_resetKernel, ParticlesId, _particles);
             _compute.SetInt(CapacityId, _allocatedCapacity);
             SetSpawnParameters(context);

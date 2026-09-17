@@ -68,7 +68,8 @@ namespace Aetherin
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
-                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null, Application.isPlaying);
+                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null,
+                Application.isPlaying && (_stage == null || (_deckState?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
             ApplyAppearance(context);
         }

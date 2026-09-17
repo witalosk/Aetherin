@@ -29,6 +29,8 @@ namespace Aetherin
         private CameraStage _cameraStage;
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
+        private IDeckStateProvider _deckStateProvider;
+        private StageBase _stage;
         private int _loadedCameraWork = int.MinValue;
         private string _loadedPath;
         private MoviePathMode _loadedPathMode;
@@ -39,12 +41,14 @@ namespace Aetherin
         protected override Renderer LayerRenderer => _meshRenderer;
 
         [Inject]
-        private void Construct(IAudioFeatureProvider audio, IBeatManager beat) => Initialize(audio, beat);
+        private void Construct(IAudioFeatureProvider audio, IBeatManager beat, IDeckStateProvider deckStateProvider) =>
+            Initialize(audio, beat, deckStateProvider);
 
-        public void Initialize(IAudioFeatureProvider audio, IBeatManager beat)
+        public void Initialize(IAudioFeatureProvider audio, IBeatManager beat, IDeckStateProvider deckStateProvider)
         {
             _audio = audio;
             _beat = beat;
+            _deckStateProvider = deckStateProvider;
             InitializeLayer();
         }
 
@@ -56,6 +60,7 @@ namespace Aetherin
             _params ??= new MovieLayerParams { BlendMode = LayerBlendMode.Opaque };
             _params.EnsureInitialized();
             _cameraStage = GetComponentInParent<CameraStage>();
+            _stage = GetComponentInParent<StageBase>();
             _params.GetAvailableLutKeys = _cameraStage != null ? _cameraStage.GetLutKeys : null;
             EnsureLutKey();
             EnsureResources();
@@ -73,7 +78,8 @@ namespace Aetherin
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
-                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null, Application.isPlaying);
+                Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null,
+                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
             _material.SetTexture(MainTexId, _videoTexture != null ? _videoTexture : Texture2D.blackTexture);
             _material.SetColor(ColorId, new Color(1f, 1f, 1f, Mathf.Clamp01(_params.Opacity.Evaluate(context))));

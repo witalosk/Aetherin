@@ -18,9 +18,15 @@ namespace Aetherin
 
         bool IsPreparingNext { get; }
 
+        StageDeck EditingDeck { get; }
+
+        bool IsDeckEditable(StageDeck deck);
+
         DeckState GetState(StageDeck deck);
 
-        /// <summary> MIDIコンやUIからの変更はこちらに書き込む </summary>
+        DeckState EditingState { get; }
+
+        /// <summary> 通常モードのNext状態。デッキを明示して扱う処理向け。 </summary>
         DeckState NextState { get; }
     }
 }

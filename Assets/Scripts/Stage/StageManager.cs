@@ -39,6 +39,7 @@ namespace Aetherin
         public int CurrentStageIndex;
         public int NextStageIndex; 
         public Vector3 NextStageOffset = new(0f, 1000f, 0f);
+        [Range(0f, 1f)] public float ImmediateExitFaderThreshold = 0.5f;
         [Range(0.9f, 1f)] public float SwapThreshold = 0.99f;
         [Min(1)] public int NextRebuildFrameInterval = 3;
     }
@@ -62,13 +63,15 @@ namespace Aetherin
         public event Action NextPromoted;
         public bool IsPreparingNext => _isPreparingNext;
 
-        /// <summary> MIDIコンやUIからの変更はこちらに書き込まれる </summary>
+        /// <summary> 通常時にMIDIコンやUIからの変更が書き込まれるNext状態 </summary>
         public DeckState NextState { get; private set; } = new();
+        public StageDeck EditingDeck => IsImmediateMode ? StageDeck.Current : StageDeck.Next;
+        public DeckState EditingState => GetState(EditingDeck);
 
         /// <summary> クロスフェード済みの最終出力 </summary>
         public RenderTexture OutputTexture { get; private set; }
 
-        /// <summary> フェーダーを介さず、Nextへの操作が即座に最終出力へ反映されるモード </summary>
+        /// <summary> フェーダーを介さず、Currentを直接操作して最終出力へ反映するモード </summary>
         public bool IsImmediateMode { get; private set; }
 
         /// <summary>
@@ -106,6 +109,7 @@ namespace Aetherin
         private Vector3 _nextSlotOffset;
         private bool _isFaderFlipped;
         private bool _isPreparingNext;
+        private float _immediateStartFader;
 
         /// <summary> デッキを作り直すたびに増える。UIが参照先の作り直しを検知するために使う </summary>
         private int _deckRevision;
@@ -142,6 +146,10 @@ namespace Aetherin
         }
 
         public DeckState GetState(StageDeck deck) => deck == StageDeck.Current ? _currentState : NextState;
+        public bool IsDeckEditable(StageDeck deck) => deck == EditingDeck;
+
+        private List<StageBase> EditingStages => IsImmediateMode ? _currentStages : _nextStages;
+        private int EditingStageIndex => IsImmediateMode ? _params.CurrentStageIndex : _params.NextStageIndex;
 
         private void Start()
         {
@@ -370,6 +378,10 @@ namespace Aetherin
 
             if (!_isPreparingNext && _params.ImmediateModeButton.WasNoteOn)
                 SetImmediateMode(!IsImmediateMode);
+            if (IsImmediateMode &&
+                Mathf.Abs(_params.CrossFader.GetValue() - _immediateStartFader) >=
+                Mathf.Clamp01(_params.ImmediateExitFaderThreshold))
+                SetImmediateMode(false);
             _params.ImmediateModeButton.SetLed(IsImmediateMode ? Color.red : Color.red * 0.15f);
 
             if (!_isPreparingNext)
@@ -404,7 +416,7 @@ namespace Aetherin
 
             _crossFadeMaterial.SetTexture(TexAId, _currentPostTexture);
             _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
-            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 1f : CrossFade);
+            _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 0f : CrossFade);
             Graphics.Blit(null, _crossFadeTexture, _crossFadeMaterial);
             Texture outputTexture = _postEffectManager.ProcessOutput(_crossFadeTexture);
             Graphics.Blit(outputTexture, OutputTexture);
@@ -438,8 +450,8 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// Nextに出すステージをボタンで選択し、LEDに選択状態を表示する
-        /// (点滅: Nextに選択中 / 点灯: Currentに表示中 / 暗: それ以外)
+        /// 操作対象デッキに出すステージをボタンで選択し、LEDに選択状態を表示する。
+        /// 通常時はNext、Immediate中はCurrentを操作する。
         /// </summary>
         private void UpdateStageSelect()
         {
@@ -451,19 +463,20 @@ namespace Aetherin
                 var button = _params.StageSelectButtons[i];
                 if (button.WasNoteOn)
                 {
-                    int selectedPadIndex = _params.NextStageIndex % count;
-                    int nextStageIndex = _params.NextStageIndex + count;
+                    int editingIndex = EditingStageIndex;
+                    int selectedPadIndex = editingIndex % count;
+                    int nextStageIndex = editingIndex + count;
                     int selectedIndex = selectedPadIndex == i
                         ? nextStageIndex < _stages.Count ? nextStageIndex : i
                         : i;
-                    SelectNextStage(selectedIndex);
+                    SelectEditingStage(selectedIndex);
                     // MIDI選択とStage編集UIの選択対象を常に一致させる。
-                    _selectedStageUiIndex = _params.NextStageIndex;
+                    _selectedStageUiIndex = EditingStageIndex;
                 }
 
                 var ledColor = StageLedColor * 0.15f;
-                if (i == _params.NextStageIndex % count) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
-                else if (i == _params.CurrentStageIndex % count) ledColor = StageLedColor;
+                if (i == EditingStageIndex % count) ledColor = StageLedColor * (Mathf.Sin(Time.time * 20f) * 0.5f + 0.5f);
+                else if (!IsImmediateMode && i == _params.CurrentStageIndex % count) ledColor = StageLedColor;
                 button.SetLed(ledColor);
             }
         }
@@ -477,11 +490,17 @@ namespace Aetherin
             _deckRevision++;
         }
 
+        private void SelectEditingStage(int index)
+        {
+            if (IsImmediateMode) SelectCurrentStage(index);
+            else SelectNextStage(index);
+        }
+
         private void SelectStageFromUi(int index)
         {
             if (_isPreparingNext) return;
-            SelectNextStage(index);
-            _selectedStageUiIndex = _params.NextStageIndex;
+            SelectEditingStage(index);
+            _selectedStageUiIndex = EditingStageIndex;
         }
 
         private void SelectCurrentStage(int index)
@@ -496,8 +515,9 @@ namespace Aetherin
         private void UpdateStageTimeSpeedPads()
         {
             _params.StageTimeSpeedPads ??= new List<StageTimeSpeedPad>();
-            StageBase stage = _nextStages != null && _nextStages.Count > 0
-                ? _nextStages[Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1)]
+            List<StageBase> stages = EditingStages;
+            StageBase stage = stages != null && stages.Count > 0
+                ? stages[Mathf.Clamp(EditingStageIndex, 0, stages.Count - 1)]
                 : null;
             foreach (StageTimeSpeedPad setting in _params.StageTimeSpeedPads)
             {
@@ -527,8 +547,9 @@ namespace Aetherin
                 return;
             }
 
-            StageBase stage = _nextStages != null && _nextStages.Count > 0
-                ? _nextStages[Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1)]
+            List<StageBase> stages = EditingStages;
+            StageBase stage = stages != null && stages.Count > 0
+                ? stages[Mathf.Clamp(EditingStageIndex, 0, stages.Count - 1)]
                 : null;
             if (stage == null) return;
 
@@ -564,7 +585,7 @@ namespace Aetherin
         private void UpdateBackgroundToggleButton()
         {
             _params.BackgroundToggleButton ??= new MidiBinding();
-            CameraStage stage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            CameraStage stage = GetCameraStage(EditingStages, EditingStageIndex);
             if (stage != null && _params.BackgroundToggleButton.WasNoteOn)
             {
                 stage.BackgroundMode = stage.BackgroundMode == CameraStageBackgroundMode.Skybox
@@ -581,10 +602,11 @@ namespace Aetherin
             _params.LayerToggleButtons ??= new List<MidiBinding>();
 
             IReadOnlyList<StageLayer> layers = null;
-            if (_nextStages != null && _nextStages.Count > 0)
+            List<StageBase> stages = EditingStages;
+            if (stages != null && stages.Count > 0)
             {
-                int stageIndex = Mathf.Clamp(_params.NextStageIndex, 0, _nextStages.Count - 1);
-                if (_nextStages[stageIndex] is CameraStage cameraStage) layers = cameraStage.Layers;
+                int stageIndex = Mathf.Clamp(EditingStageIndex, 0, stages.Count - 1);
+                if (stages[stageIndex] is CameraStage cameraStage) layers = cameraStage.Layers;
             }
 
             for (int index = 0; index < _params.LayerToggleButtons.Count; index++)
@@ -615,13 +637,13 @@ namespace Aetherin
             _params.RandomLayerMidButton ??= new MidiBinding();
             _params.RandomLayerLowButton ??= new MidiBinding();
 
-            CameraStage nextStage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            CameraStage editingStage = GetCameraStage(EditingStages, EditingStageIndex);
             if (_params.RandomLayerHighButton.WasNoteOn)
-                SelectRandomNextLayers(nextStage, 0.8f, 0.9f);
+                SelectRandomLayers(editingStage, 0.8f, 0.9f);
             if (_params.RandomLayerMidButton.WasNoteOn)
-                SelectRandomNextLayers(nextStage, 0.4f, 0.5f);
+                SelectRandomLayers(editingStage, 0.4f, 0.5f);
             if (_params.RandomLayerLowButton.WasNoteOn)
-                SelectRandomNextLayers(nextStage, 0.1f, 0.3f);
+                SelectRandomLayers(editingStage, 0.1f, 0.3f);
 
             float sinVal = Mathf.Sin(Time.time * 10f) * 0.5f;
             _params.RandomLayerHighButton.SetLed(Color.red * sinVal);
@@ -629,7 +651,7 @@ namespace Aetherin
             _params.RandomLayerLowButton.SetLed(Color.blue * sinVal);
         }
 
-        private static void SelectRandomNextLayers(CameraStage stage, float minRatio, float maxRatio)
+        private static void SelectRandomLayers(CameraStage stage, float minRatio, float maxRatio)
         {
             IReadOnlyList<StageLayer> layers = stage?.Layers;
             if (layers == null || layers.Count == 0) return;
@@ -680,7 +702,7 @@ namespace Aetherin
 
         private void UpdateCameraWorkButtons()
         {
-            CameraStage nextStage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            CameraStage editingStage = GetCameraStage(EditingStages, EditingStageIndex);
             CameraStage currentStage = GetCameraStage(_currentStages, _params.CurrentStageIndex);
 
             _params.CameraWorkDeckButtons ??= new List<MidiBinding>();
@@ -688,15 +710,15 @@ namespace Aetherin
             {
                 MidiBinding button = _params.CameraWorkDeckButtons[i];
                 if (button == null) continue;
-                bool available = nextStage != null && i < nextStage.CameraWorkDecks.Count;
+                bool available = editingStage != null && i < editingStage.CameraWorkDecks.Count;
                 if (!available) { button.ClearLed(); continue; }
                 if (button.WasNoteOn)
                 {
-                    nextStage.SelectCameraWorkDeck(i);
-                    if (currentStage != null && i < currentStage.CameraWorkDecks.Count)
+                    editingStage.SelectCameraWorkDeck(i);
+                    if (!IsImmediateMode && currentStage != null && i < currentStage.CameraWorkDecks.Count)
                         currentStage.SelectCameraWorkDeck(i);
                 }
-                button.SetLed(i == nextStage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
+                button.SetLed(i == editingStage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
             }
 
             _params.CameraWorkTimingButtons ??= new List<MidiBinding>();
@@ -716,8 +738,8 @@ namespace Aetherin
             _params.CameraWorkManualButton ??= new MidiBinding();
             if (_params.CameraWorkManualButton.WasNoteOn)
             {
-                nextStage?.AdvanceCameraWork();
-                currentStage?.AdvanceCameraWork();
+                editingStage?.AdvanceCameraWork();
+                if (!IsImmediateMode) currentStage?.AdvanceCameraWork();
             }
             _params.CameraWorkManualButton.SetLed(_params.CameraWorkManualButton.WasNoteOn ? Color.yellow * 0.5f : Color.yellow * 0.25f);
         }
@@ -729,7 +751,8 @@ namespace Aetherin
         }
 
         /// <summary>
-        /// 解除時は表示中のNextをCurrentへ昇格させ、フェーダー操作へ自然に戻す
+        /// Immediate中はCurrentを直接操作する。フェーダーが閾値以上動くか、明示的に解除されたら
+        /// デッキを入れ替えず通常のクロスフェードへ戻る。
         /// </summary>
         public void SetImmediateMode(bool enabled)
         {
@@ -737,7 +760,15 @@ namespace Aetherin
             if (IsImmediateMode == enabled) return;
 
             IsImmediateMode = enabled;
-            if (!enabled) SwapDecks();
+            if (enabled) _immediateStartFader = _params.CrossFader.GetValue();
+            _selectedStageUiIndex = EditingStageIndex;
+            _inspectedLayer = null;
+            _inspectedLayerStage = null;
+            _inspectedCameraWork = null;
+            _inspectedCameraWorkStage = null;
+            TrackStageTimeSpeedCc(null, false);
+            _lastStageTimeCcStage = null;
+            _deckRevision++;
         }
 
         /// <summary>
@@ -880,11 +911,12 @@ namespace Aetherin
         public string CaptureSaveData()
         {
             var data = new CameraStageSaveData();
-            if (_nextStages == null) return JsonUtility.ToJson(data);
+            List<StageBase> stages = EditingStages;
+            if (stages == null) return JsonUtility.ToJson(data);
 
-            for (int i = 0; i < _nextStages.Count; i++)
+            for (int i = 0; i < stages.Count; i++)
             {
-                if (_nextStages[i] is not CameraStage stage) continue;
+                if (stages[i] is not CameraStage stage) continue;
                 data.Stages.Add(new CameraStageLayersSaveData
                 {
                     StageId = stage.StageId,
@@ -1032,8 +1064,9 @@ namespace Aetherin
                 return (0, _deckRevision, null, 0, 0);
 
             int index = Mathf.Clamp(_selectedStageUiIndex, 0, stageCount - 1);
-            var cameraStage = _nextStages != null && index < _nextStages.Count
-                ? _nextStages[index] as CameraStage
+            List<StageBase> stages = EditingStages;
+            var cameraStage = stages != null && index < stages.Count
+                ? stages[index] as CameraStage
                 : null;
             return (index, _deckRevision, cameraStage, cameraStage?.LayerRevision ?? 0,
                 cameraStage?.CameraWorkRevision ?? 0);
@@ -1046,7 +1079,7 @@ namespace Aetherin
             var stageNames = _stages
                 .Select(GetStageDisplayName)
                 .ToList();
-            CameraStage selectedCameraStage = GetCameraStage(_nextStages, _params.NextStageIndex);
+            CameraStage selectedCameraStage = GetCameraStage(EditingStages, EditingStageIndex);
 
             return UI.Column(
                 UI.Row(
@@ -1084,7 +1117,8 @@ namespace Aetherin
 
         private Element CreateCameraWorkListElement(int stageIndex)
         {
-            var stage = _nextStages != null && stageIndex < _nextStages.Count ? _nextStages[stageIndex] as CameraStage : null;
+            List<StageBase> stages = EditingStages;
+            var stage = stages != null && stageIndex < stages.Count ? stages[stageIndex] as CameraStage : null;
             if (stage == null) return UI.Label("CameraStageではありません");
 
             var decks = stage.CameraWorkDecks.Select((deck, deckIndex) =>
@@ -1265,7 +1299,8 @@ namespace Aetherin
 
         private Element CreateLayerListElement(int stageIndex)
         {
-            var stage = _nextStages != null && stageIndex < _nextStages.Count ? _nextStages[stageIndex] : null;
+            List<StageBase> stages = EditingStages;
+            var stage = stages != null && stageIndex < stages.Count ? stages[stageIndex] : null;
             if (stage == null) return UI.Label("ステージが構築されていません");
 
             if (stage is not CameraStage cameraStage) return UI.Label("このステージはレイヤー編集に未対応です");
@@ -1477,7 +1512,7 @@ namespace Aetherin
                 ),
                 UI.DynamicElementIf(() => _isPreparingNext, () => UI.Label("Preparing Next...")),
                 UI.DynamicElementOnStatusChanged(() => _deckRevision, _ => CreateStageManagementElement()),
-                UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE MODE</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
+                UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE: EDITING CURRENT</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
             );
         }
     }
