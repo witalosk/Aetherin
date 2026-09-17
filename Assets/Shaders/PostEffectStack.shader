@@ -4,6 +4,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
     {
         _MainTex ("Source", 2D) = "black" {}
         _HistoryTex ("Previous Frame", 2D) = "black" {}
+        _RuntimeTex ("Runtime Shader", 2D) = "black" {}
     }
     SubShader
     {
@@ -20,7 +21,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             struct v2f { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; };
             v2f vert(appdata v) { v2f o; o.vertex = UnityObjectToClipPos(v.vertex); o.uv = v.uv; return o; }
 
-            sampler2D _MainTex, _HistoryTex, _LutTex;
+            sampler2D _MainTex, _HistoryTex, _LutTex, _RuntimeTex;
             float4 _MainTex_TexelSize;
             int _EffectType;
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
@@ -349,6 +350,10 @@ Shader "Hidden/Aetherin/PostEffectStack"
                         ? lerp(src.rgb, sampleLut(src.rgb), saturate(_LutIntensity))
                         : src.rgb;
                     fx = lerp(src, fx, saturate(_Strength));
+                }
+                else if (_EffectType == 21) // Runtime shader
+                {
+                    fx = lerp(src, tex2D(_RuntimeTex, uv), saturate(_Strength));
                 }
 
                 return fx;

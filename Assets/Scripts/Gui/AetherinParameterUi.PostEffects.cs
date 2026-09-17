@@ -211,6 +211,23 @@ namespace Aetherin
                     }
                     yield return Param("LUT Intensity", module.LutIntensity);
                     break;
+                case PostEffectType.RuntimeShader:
+                    yield return UI.Toggle("Previous Frame Texture",
+                        () => module.RuntimeProvidePreviousFrameTexture,
+                        value => module.RuntimeProvidePreviousFrameTexture = value);
+                    yield return UI.Fold("Parameters", UI.Column(
+                        Param("Float 0", module.RuntimeUserFloat0),
+                        Param("Float 1", module.RuntimeUserFloat1),
+                        Param("Float 2", module.RuntimeUserFloat2),
+                        Param("Float 3", module.RuntimeUserFloat3),
+                        Param("Vector 0", module.RuntimeUserVector0),
+                        Param("Vector 1", module.RuntimeUserVector1)));
+                    yield return UI.ScrollViewVertical(500f,
+                        UI.TextArea(null, () => module.RuntimeShaderCode,
+                                value => module.RuntimeShaderCode = value)
+                            .SetMinHeight(320f),
+                        UI.Label(() => module.RuntimeCompileMessage).SetFlexGrow(1f));
+                    break;
             }
         }
 

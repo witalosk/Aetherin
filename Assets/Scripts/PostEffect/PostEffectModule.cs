@@ -26,6 +26,7 @@ namespace Aetherin
         HandDrawn,
         LightLeak,
         Lut,
+        RuntimeShader,
     }
 
     public enum ShutterMode
@@ -121,6 +122,19 @@ namespace Aetherin
         [Tooltip("元映像とLUT適用結果の混合率")]
         public FloatParameter LutIntensity = new(1f);
 
+        [Tooltip("ランタイムポストエフェクトの t3 (_PreviousFrameTexture) に1フレーム前の出力を渡します")]
+        public bool RuntimeProvidePreviousFrameTexture;
+        public FloatParameter RuntimeUserFloat0 = new(1f);
+        public FloatParameter RuntimeUserFloat1 = new(0f);
+        public FloatParameter RuntimeUserFloat2 = new(0f);
+        public FloatParameter RuntimeUserFloat3 = new(0f);
+        public Vector3Parameter RuntimeUserVector0 = new();
+        public Vector3Parameter RuntimeUserVector1 = new();
+        [TextArea(12, 40)] public string RuntimeShaderCode = RuntimeShaderPostEffectRenderer.DefaultShaderCode;
+
+        [NonSerialized] public string RuntimeCompileMessage = "Play Modeでコンパイルされます";
+        [NonSerialized] public bool RuntimeLastCompileSucceeded;
+
         [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableLutKeys;
         [NonSerialized] private bool _lutIndexInitialized;
 
@@ -158,6 +172,14 @@ namespace Aetherin
             LutKey ??= string.Empty;
             LutIndex ??= new IntParameter(0);
             LutIntensity ??= new FloatParameter(1f);
+            RuntimeUserFloat0 ??= new FloatParameter(1f);
+            RuntimeUserFloat1 ??= new FloatParameter();
+            RuntimeUserFloat2 ??= new FloatParameter();
+            RuntimeUserFloat3 ??= new FloatParameter();
+            RuntimeUserVector0 ??= new Vector3Parameter();
+            RuntimeUserVector1 ??= new Vector3Parameter();
+            RuntimeShaderCode ??= RuntimeShaderPostEffectRenderer.DefaultShaderCode;
+            RuntimeCompileMessage ??= string.Empty;
         }
     }
 

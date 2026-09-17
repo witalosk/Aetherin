@@ -43,6 +43,7 @@ namespace Aetherin
         private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
         private static readonly int LutIntensityId = Shader.PropertyToID("_LutIntensity");
         private static readonly int KawaseOffsetId = Shader.PropertyToID("_KawaseOffset");
+        private static readonly int RuntimeTexId = Shader.PropertyToID("_RuntimeTex");
 
         private Material _material;
         private StackRuntime _current = new();
@@ -262,7 +263,18 @@ namespace Aetherin
                         module.LightLeakColor, palette, moduleContext).ColorA;
                     _material.SetColor(LightLeakColorId, lightLeakColor);
                     ApplyLut(module, moduleContext);
-                    if (module.Type == PostEffectType.CrossBlur)
+                    if (module.Type == PostEffectType.RuntimeShader)
+                    {
+                        RuntimeShaderPostEffectRenderer runtimeShader = runtime.GetRuntimeShader(module, transform);
+                        Texture runtimeOutput = runtimeShader.Process(input, module, moduleContext,
+                            _audioFeatureProvider, _beatManager,
+                            _deckStateProvider?.GetState(deckType)?.Palette);
+                        RenderTexture target = runtime.NextTarget(input);
+                        _material.SetTexture(RuntimeTexId, runtimeOutput != null ? runtimeOutput : input);
+                        Graphics.Blit(input, target, _material);
+                        input = target;
+                    }
+                    else if (module.Type == PostEffectType.CrossBlur)
                     {
                         int iterations = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(
                             module.Scale?.Evaluate(moduleContext) ?? 1f)), 1, 12);
@@ -365,6 +377,7 @@ namespace Aetherin
             public bool HistoryValid { get; set; }
             private RenderTexture _ping;
             private RenderTexture _pong;
+            private readonly Dictionary<PostEffectModule, RuntimeShaderPostEffectRenderer> _runtimeShaders = new();
 
             public void Ensure(int width, int height)
             {
@@ -377,6 +390,15 @@ namespace Aetherin
 
             public RenderTexture NextTarget(Texture input) => ReferenceEquals(input, _ping) ? _pong : _ping;
 
+            public RuntimeShaderPostEffectRenderer GetRuntimeShader(PostEffectModule module, Transform parent)
+            {
+                if (_runtimeShaders.TryGetValue(module, out RuntimeShaderPostEffectRenderer renderer))
+                    return renderer;
+                renderer = new RuntimeShaderPostEffectRenderer(parent);
+                _runtimeShaders.Add(module, renderer);
+                return renderer;
+            }
+
             public void Dispose()
             {
                 Release(_ping);
@@ -387,6 +409,9 @@ namespace Aetherin
                 History = null;
                 HistoryValid = false;
                 Activations.Clear();
+                foreach (RuntimeShaderPostEffectRenderer renderer in _runtimeShaders.Values)
+                    renderer.Dispose();
+                _runtimeShaders.Clear();
             }
 
             private static RenderTexture Create(int width, int height, string name)
