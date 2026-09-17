@@ -31,6 +31,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float4 _LightLeakColor;
             float4 _LutParams;
             float _LutEnabled;
+            float _LutIntensity;
             float _KawaseOffset;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
@@ -344,7 +345,9 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 }
                 else if (_EffectType == 20) // LUT
                 {
-                    fx.rgb = _LutEnabled > 0.5 ? sampleLut(src.rgb) : src.rgb;
+                    fx.rgb = _LutEnabled > 0.5
+                        ? lerp(src.rgb, sampleLut(src.rgb), saturate(_LutIntensity))
+                        : src.rgb;
                     fx = lerp(src, fx, saturate(_Strength));
                 }
 

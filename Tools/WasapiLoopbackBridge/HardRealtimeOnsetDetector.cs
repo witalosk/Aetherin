@@ -19,6 +19,10 @@ namespace Aetherin.WasapiLoopbackBridge
         private const int FftSize = 1024;
         private const int HopSize = 256;
         private const float SpectralThreshold = 1.8f;
+        private const float ShortAdaptationSeconds = 0.9f;
+        private const float LongAdaptationSeconds = 10f;
+        private const float LongTermWeight = 0.4f;
+        private const float ClassificationMargin = 0.08f;
 
         public long TotalSamples { get; private set; }
 
@@ -54,6 +58,23 @@ namespace Aetherin.WasapiLoopbackBridge
         private AdaptiveState _snareLowNoise;
         private AdaptiveState _snareHighNoise;
         private bool _spectrumInitialized;
+
+        public void CopyLongTermStatistics(float[] output)
+        {
+            if (output == null || output.Length < 15) return;
+            CopyStatistics(_kickLow, output, 0);
+            CopyStatistics(_kickPunch, output, 3);
+            CopyStatistics(_snareBody, output, 6);
+            CopyStatistics(_snareLowNoise, output, 9);
+            CopyStatistics(_snareHighNoise, output, 12);
+        }
+
+        private static void CopyStatistics(AdaptiveState state, float[] output, int offset)
+        {
+            output[offset] = state.LongMean;
+            output[offset + 1] = state.LongStandardDeviation;
+            output[offset + 2] = state.LongDeviation;
+        }
 
         public HardRealtimeOnsetDetector(WaveFormat format)
         {
@@ -188,6 +209,12 @@ namespace Aetherin.WasapiLoopbackBridge
             float snare = Clamp01(broadNoise * 0.85f + Math.Min(broadNoise, bodyScore) * 0.3f);
             snare *= 1f - kick * 0.4f;
 
+            if (kick >= 0.12f && snare >= 0.12f && Math.Abs(kick - snare) >= ClassificationMargin)
+            {
+                if (kick >= snare) snare = 0f;
+                else kick = 0f;
+            }
+
             if (!_candidatePending || (kick < 0.12f && snare < 0.12f)) return false;
 
             onset.SampleIndex = _candidateSample;
@@ -260,24 +287,49 @@ namespace Aetherin.WasapiLoopbackBridge
 
         private struct AdaptiveState
         {
+            public float LongMean { get { return _longMean; } }
+            public float LongStandardDeviation
+            {
+                get { return (float)Math.Sqrt(Math.Max(0.0000000001f, _longVariance)); }
+            }
+            public float LongDeviation { get; private set; }
+
             private float _mean;
             private float _variance;
+            private float _longMean;
+            private float _longVariance;
 
             public void Initialize(float value)
             {
                 _mean = value;
                 _variance = 0.0000000001f;
+                _longMean = value;
+                _longVariance = 0.0000000001f;
+                LongDeviation = 0f;
             }
 
             public float Evaluate(float value, float threshold, float frameSeconds)
             {
-                float deviation = (value - _mean) / (float)Math.Sqrt(Math.Max(0.0000000001f, _variance));
+                float shortDeviation = (value - _mean) /
+                    (float)Math.Sqrt(Math.Max(0.0000000001f, _variance));
+                float longDeviation = (value - _longMean) /
+                    (float)Math.Sqrt(Math.Max(0.0000000001f, _longVariance));
+                LongDeviation = longDeviation;
+                float deviation = shortDeviation + (longDeviation - shortDeviation) * LongTermWeight;
                 float score = Clamp01((deviation - threshold) / 3f);
-                float adaptation = 1f - (float)Math.Exp(-frameSeconds / 0.9f);
-                if (score > 0.1f) adaptation *= 0.15f;
+                float adaptation = 1f - (float)Math.Exp(-frameSeconds / ShortAdaptationSeconds);
+                float longAdaptation = 1f - (float)Math.Exp(-frameSeconds / LongAdaptationSeconds);
+                if (score > 0.1f)
+                {
+                    adaptation *= 0.15f;
+                    longAdaptation *= 0.05f;
+                }
                 float difference = value - _mean;
                 _mean += difference * adaptation;
                 _variance += (difference * difference - _variance) * adaptation;
+                float longDifference = value - _longMean;
+                _longMean += longDifference * longAdaptation;
+                _longVariance += (longDifference * longDifference - _longVariance) * longAdaptation;
                 return score;
             }
         }

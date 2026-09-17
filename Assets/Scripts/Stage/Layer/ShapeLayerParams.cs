@@ -39,6 +39,8 @@ namespace Aetherin
         public Vector3Parameter Position = new();
         public Vector3Parameter Rotation = new();
         public Vector3Parameter Scale = new(Vector3.one);
+        [Tooltip("Xは高さに応じた横方向、Yは幅に応じた縦方向のスキュー角度（度）")]
+        public Vector2Parameter Skew = new();
         public Vector3Parameter Anchor = new();
         public Vector2Parameter Size = new(new Vector2(2f, 2f));
         public VertexNoiseParams VertexNoise = new();

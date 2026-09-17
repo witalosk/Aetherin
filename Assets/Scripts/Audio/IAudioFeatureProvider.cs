@@ -29,10 +29,10 @@ namespace Aetherin
         /// <summary>Rチャンネルに-1～1の波形を格納した1行のTexture。</summary>
         Texture WaveformTexture { get; }
 
-        /// <summary>Rチャンネルに0～1の線形周波数スペクトラムを格納した1行のTexture。</summary>
+        /// <summary>Rチャンネルに、対数周波数軸とdB正規化振幅の0～1スペクトラムを格納した1行のTexture。</summary>
         Texture SpectrumTexture { get; }
 
-        /// <summary>0～1に正規化した周波数位置のスペクトラム値を返す。</summary>
+        /// <summary>0～1に正規化した対数周波数軸上のスペクトラム値を返す。</summary>
         float GetSpectrumValueNormalized(float normalizedFrequency);
     }
 }

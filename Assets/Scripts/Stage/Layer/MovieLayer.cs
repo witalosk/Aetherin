@@ -15,6 +15,7 @@ namespace Aetherin
         private static readonly int LutTexId = Shader.PropertyToID("_LutTex");
         private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
         private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
+        private static readonly int LutIntensityId = Shader.PropertyToID("_LutIntensity");
 
         [SerializeField] private MovieLayerParams _params = new() { BlendMode = LayerBlendMode.Opaque };
         [SerializeField] private Shader _shader;
@@ -76,7 +77,7 @@ namespace Aetherin
             ApplyTransform(context);
             _material.SetTexture(MainTexId, _videoTexture != null ? _videoTexture : Texture2D.blackTexture);
             _material.SetColor(ColorId, new Color(1f, 1f, 1f, Mathf.Clamp01(_params.Opacity.Evaluate(context))));
-            ApplyLut();
+            ApplyLut(context);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
         }
 
@@ -87,7 +88,7 @@ namespace Aetherin
             if (keys != null && keys.Count > 0) _params.LutKey = keys[0];
         }
 
-        private void ApplyLut()
+        private void ApplyLut(in ModulationContext context)
         {
             Texture2D lut = _params.LutEnabled ? _cameraStage?.ResolveLut(_params.LutKey) : null;
             bool horizontal = lut != null && lut.width == lut.height * lut.height;
@@ -101,6 +102,7 @@ namespace Aetherin
             float size = horizontal ? lut.height : lut.width;
             _material.SetTexture(LutTexId, lut);
             _material.SetVector(LutParamsId, new Vector4(size, vertical ? 1f : 0f, 1f / lut.width, 1f / lut.height));
+            _material.SetFloat(LutIntensityId, Mathf.Clamp01(_params.LutIntensity.Evaluate(context)));
             _material.SetFloat(LutEnabledId, 1f);
         }
 

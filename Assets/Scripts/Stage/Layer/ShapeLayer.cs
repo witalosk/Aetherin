@@ -63,6 +63,7 @@ namespace Aetherin
         private Vector3 _evaluatedVertexNoiseOffset;
         private Vector3 _evaluatedPosition;
         private Vector3 _evaluatedScale;
+        private Vector2 _evaluatedSkew;
         private Vector3 _evaluatedAnchor;
         private Vector2 _evaluatedSize;
         private Vector2 _evaluatedTextureScale = Vector2.one;
@@ -176,6 +177,7 @@ namespace Aetherin
             _params.Position ??= new Vector3Parameter();
             _params.Rotation ??= new Vector3Parameter();
             _params.Scale ??= new Vector3Parameter(Vector3.one);
+            _params.Skew ??= new Vector2Parameter();
             _params.Anchor ??= new Vector3Parameter();
             _params.Size ??= new Vector2Parameter(new Vector2(2f, 2f));
             _params.Points ??= new IntParameter(5);
@@ -269,6 +271,7 @@ namespace Aetherin
                                             _evaluatedPosition,
                                             Quaternion.Euler(rotation),
                                             _evaluatedScale) *
+                                        CreateSkewMatrix(_evaluatedSkew) *
                                         Matrix4x4.Translate(-_evaluatedAnchor);
 
             if (_params.ScreenSpace)
@@ -421,6 +424,7 @@ namespace Aetherin
             _evaluatedRotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
             _evaluatedPosition = _params.Position?.Evaluate(context) ?? Vector3.zero;
             _evaluatedScale = _params.Scale?.Evaluate(context) ?? Vector3.one;
+            _evaluatedSkew = _params.Skew?.Evaluate(context) ?? Vector2.zero;
             _evaluatedAnchor = _params.Anchor?.Evaluate(context) ?? Vector3.zero;
             _evaluatedSize = _params.Size?.Evaluate(context) ?? Vector2.zero;
             _evaluatedSize.x = Mathf.Max(0f, _evaluatedSize.x);
@@ -493,15 +497,31 @@ namespace Aetherin
             Vector3 position = _params.Position?.Evaluate(context) ?? Vector3.zero;
             Vector3 rotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
             Vector3 scale = _params.Scale?.Evaluate(context) ?? Vector3.one;
+            Vector2 skew = _params.Skew?.Evaluate(context) ?? Vector2.zero;
             Vector3 anchor = _params.Anchor?.Evaluate(context) ?? Vector3.zero;
             Matrix4x4 copyMatrix = Matrix4x4.TRS(position, Quaternion.Euler(rotation), scale) *
+                                   CreateSkewMatrix(skew) *
                                    Matrix4x4.Translate(-anchor);
             Matrix4x4 baseMatrix = Matrix4x4.TRS(
                                        _evaluatedPosition,
                                        Quaternion.Euler(_evaluatedRotation),
                                        _evaluatedScale) *
+                                   CreateSkewMatrix(_evaluatedSkew) *
                                    Matrix4x4.Translate(-_evaluatedAnchor);
             return baseMatrix.inverse * copyMatrix;
+        }
+
+        private static Matrix4x4 CreateSkewMatrix(Vector2 skewDegrees)
+        {
+            // 90度ではtanが発散するため、見た目を保ちつつ有限値になる範囲へ制限する。
+            float x = Mathf.Tan(Mathf.Clamp(skewDegrees.x, -89f, 89f) * Mathf.Deg2Rad);
+            float y = Mathf.Tan(Mathf.Clamp(skewDegrees.y, -89f, 89f) * Mathf.Deg2Rad);
+
+            Matrix4x4 skewX = Matrix4x4.identity;
+            skewX.m01 = x;
+            Matrix4x4 skewY = Matrix4x4.identity;
+            skewY.m10 = y;
+            return skewX * skewY;
         }
 
         public float GetRepeaterCopyOpacity(int copyIndex, float phaseOffset)

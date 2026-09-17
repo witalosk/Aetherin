@@ -30,7 +30,8 @@ namespace Aetherin
                     Param("Rotation", p.Rotation), Param("Scale", p.Scale), Param("Anchor", p.Anchor))),
                 ("Appearance", UI.Column(
                     UI.Toggle("LUT", () => p.LutEnabled, value => p.LutEnabled = value),
-                    UI.DynamicElementIf(() => p.LutEnabled, () => lutSelector),
+                    UI.DynamicElementIf(() => p.LutEnabled,
+                        () => UI.Column(lutSelector, Param("LUT Intensity", p.LutIntensity))),
                     Param("Opacity", p.Opacity),
                     UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)))));
         }

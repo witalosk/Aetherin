@@ -96,6 +96,7 @@ namespace Aetherin
                         Param("Position", p.Position),
                         Param("Rotation", p.Rotation),
                         Param("Scale", p.Scale),
+                        Param("Skew", p.Skew),
                         Param("Anchor", p.Anchor))),
                     ("Style", UI.Column(
                         Param("Opacity", p.Opacity),

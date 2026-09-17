@@ -116,6 +116,8 @@ namespace Aetherin
         };
         [Tooltip("Lut Library に登録したLUTテクスチャのファイル名（拡張子なし）")]
         public string LutKey;
+        [Tooltip("元映像とLUT適用結果の混合率")]
+        public FloatParameter LutIntensity = new(1f);
 
         [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableLutKeys;
 
@@ -136,6 +138,7 @@ namespace Aetherin
             };
             LightLeakColor.EnsureInitialized();
             LutKey ??= string.Empty;
+            LutIntensity ??= new FloatParameter(1f);
         }
     }
 

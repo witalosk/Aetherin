@@ -31,11 +31,20 @@ namespace Aetherin
         [Tooltip("周囲の音量へ追従する速さ")]
         [Range(0.05f, 3f)] public float AdaptationTime = 0.9f;
 
+        [Tooltip("フォールバック検出で曲全体の傾向を学習する長期履歴の時定数")]
+        [Range(2f, 30f)] public float LongTermAdaptationTime = 10f;
+
+        [Tooltip("フォールバック検出で、長期履歴を判定に使う割合")]
+        [Range(0f, 1f)] public float LongTermWeight = 0.4f;
+
         [Tooltip("これより小さいRMS入力では検出しない")]
         [Range(0f, 0.1f)] public float NoiseGate = 0.004f;
 
         [Tooltip("Kickが強い瞬間にSnare判定を抑える量")]
         [Range(0f, 1f)] public float KickToSnareRejection = 0.4f;
+
+        [Tooltip("KickとSnare/Clapが同時に候補になったとき、強い方に分類する最小差")]
+        [Range(0f, 0.5f)] public float ClassificationMargin = 0.08f;
 
         [Tooltip("この値を超えたときにパルスを発生させる")]
         [Range(0f, 1f)] public float TriggerThreshold = 0.12f;

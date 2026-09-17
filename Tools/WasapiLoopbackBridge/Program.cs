@@ -12,12 +12,16 @@ namespace Aetherin.WasapiLoopbackBridge
         private const int Magic = 0x324C4541; // "AEL2"
         private const byte AudioPacket = 1;
         private const byte OnsetPacket = 2;
+        private const byte StatisticsPacket = 3;
         private static readonly object OutputLock = new object();
         private static readonly ManualResetEvent StopEvent = new ManualResetEvent(false);
         private static BinaryWriter _output;
         private static volatile bool _ready;
         private static HardRealtimeOnsetDetector _detector;
         private static readonly PercussiveOnset[] OnsetBuffer = new PercussiveOnset[8];
+        private static readonly float[] StatisticsBuffer = new float[15];
+        private static long _nextStatisticsSample;
+        private static int _statisticsIntervalSamples;
 
         private static int Main(string[] args)
         {
@@ -50,6 +54,7 @@ namespace Aetherin.WasapiLoopbackBridge
 
                     _output = new BinaryWriter(Console.OpenStandardOutput());
                     _detector = new HardRealtimeOnsetDetector(format);
+                    _statisticsIntervalSamples = Math.Max(1, format.SampleRate / 10);
                     lock (OutputLock)
                     {
                         _output.Write(Magic);
@@ -92,6 +97,14 @@ namespace Aetherin.WasapiLoopbackBridge
                         _output.Write(OnsetBuffer[i].SampleIndex);
                         _output.Write(OnsetBuffer[i].Kick);
                         _output.Write(OnsetBuffer[i].SnareClap);
+                    }
+                    if (_detector.TotalSamples >= _nextStatisticsSample)
+                    {
+                        _nextStatisticsSample = _detector.TotalSamples + _statisticsIntervalSamples;
+                        _detector.CopyLongTermStatistics(StatisticsBuffer);
+                        _output.Write(StatisticsPacket);
+                        for (int i = 0; i < StatisticsBuffer.Length; i++)
+                            _output.Write(StatisticsBuffer[i]);
                     }
                     _output.Flush();
                 }

@@ -44,6 +44,7 @@ namespace Aetherin
         private static readonly int LutTexId = Shader.PropertyToID("_LutTex");
         private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
         private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
+        private static readonly int LutIntensityId = Shader.PropertyToID("_LutIntensity");
         private static readonly int KawaseOffsetId = Shader.PropertyToID("_KawaseOffset");
 
         private Material _material;
@@ -318,7 +319,7 @@ namespace Aetherin
                     Color lightLeakColor = EvaluatedPaletteColor.Evaluate(
                         module.LightLeakColor, palette, moduleContext).ColorA;
                     _material.SetColor(LightLeakColorId, lightLeakColor);
-                    ApplyLut(module);
+                    ApplyLut(module, moduleContext);
                     if (module.Type == PostEffectType.CrossBlur)
                     {
                         int iterations = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(
@@ -597,7 +598,7 @@ namespace Aetherin
             return _lutLibrary?.GetKeys() ?? Array.Empty<string>();
         }
 
-        private void ApplyLut(PostEffectModule module)
+        private void ApplyLut(PostEffectModule module, in ModulationContext context)
         {
             _material.SetFloat(LutEnabledId, 0f);
             if (module.Type != PostEffectType.Lut) return;
@@ -612,6 +613,7 @@ namespace Aetherin
             _material.SetTexture(LutTexId, lut);
             _material.SetVector(LutParamsId,
                 new Vector4(size, vertical ? 1f : 0f, 1f / lut.width, 1f / lut.height));
+            _material.SetFloat(LutIntensityId, Mathf.Clamp01(module.LutIntensity.Evaluate(context)));
             _material.SetFloat(LutEnabledId, 1f);
         }
 

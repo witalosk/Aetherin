@@ -202,6 +202,7 @@ namespace Aetherin
                         yield return UI.Dropdown("LUT", () => 0, _ => { }, new[] { "LUT未登録" })
                             .SetInteractable(false);
                     }
+                    yield return Param("LUT Intensity", module.LutIntensity);
                     break;
             }
         }

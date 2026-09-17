@@ -33,6 +33,9 @@ namespace Aetherin
         public float LatestSnareClapStrength => Volatile.Read(ref _latestSnareStrength);
         public long LatestKickSampleIndex => Interlocked.Read(ref _latestKickSampleIndex);
         public long LatestSnareClapSampleIndex => Interlocked.Read(ref _latestSnareSampleIndex);
+        public float GetLongTermMean(PercussiveBand band) => GetLongTermStatistic(band, 0);
+        public float GetLongTermStandardDeviation(PercussiveBand band) => GetLongTermStatistic(band, 1);
+        public float GetLongTermDeviation(PercussiveBand band) => GetLongTermStatistic(band, 2);
         public IParams Params => _params;
         public string Category => UiCategory.Settings;
 
@@ -51,6 +54,7 @@ namespace Aetherin
         private long _latestKickSampleIndex = -1;
         private long _latestSnareSampleIndex = -1;
         private bool _bridgeOnsetAvailable;
+        private float[] _bridgeLongTermStatistics = Array.Empty<float>();
 
         private float[] _waveform = Array.Empty<float>();
         private float[] _fftReal = Array.Empty<float>();
@@ -309,6 +313,9 @@ namespace Aetherin
                             case 2:
                                 ReceiveBridgeOnset(reader.ReadInt64(), reader.ReadSingle(), reader.ReadSingle());
                                 break;
+                            case 3:
+                                ReceiveBridgeLongTermStatistics(reader);
+                                break;
                             default:
                                 throw new InvalidDataException($"Unknown bridge packet type: {packetType}");
                         }
@@ -349,6 +356,21 @@ namespace Aetherin
             }
         }
 
+        private void ReceiveBridgeLongTermStatistics(BinaryReader reader)
+        {
+            int valueCount = (int)PercussiveBand.Count * 3;
+            var statistics = new float[valueCount];
+            for (int i = 0; i < valueCount; i++) statistics[i] = reader.ReadSingle();
+            Volatile.Write(ref _bridgeLongTermStatistics, statistics);
+        }
+
+        private float GetLongTermStatistic(PercussiveBand band, int component)
+        {
+            float[] statistics = Volatile.Read(ref _bridgeLongTermStatistics);
+            int index = (int)band * 3 + component;
+            return index >= 0 && index < statistics.Length ? statistics[index] : 0f;
+        }
+
         private string ReadBridgeError()
         {
             try { return _bridgeProcess?.StandardError.ReadToEnd(); }
@@ -359,6 +381,7 @@ namespace Aetherin
         {
             _bridgeStopping = true;
             Volatile.Write(ref _bridgeOnsetAvailable, false);
+            Volatile.Write(ref _bridgeLongTermStatistics, Array.Empty<float>());
             if (_bridgeProcess != null)
             {
                 try

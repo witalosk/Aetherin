@@ -6,7 +6,8 @@ namespace Aetherin
 {
     /// <summary>
     /// IAudioInputから打楽器のオンセットと、シェーダー向けの1次元データTextureを生成する。
-    /// Textureの横方向は、Waveformが時間、Spectrumが0Hz～Nyquist周波数に対応する。
+    /// Textureの横方向は、Waveformが時間、Spectrumが対数周波数軸に対応する。
+    /// Spectrumの振幅は入力側でdBFS変換し、設定されたダイナミックレンジを0～1に正規化した値。
     /// </summary>
     [DefaultExecutionOrder(100)]
     public sealed class AudioFeatureProvider : MonoBehaviour, IAudioFeatureProvider, ISaveAndUiTarget
@@ -101,8 +102,9 @@ namespace Aetherin
 
             ReadOnlySpan<float> waveform = _audioInput.Waveform;
             ReadOnlySpan<float> spectrum = _audioInput.Spectrum;
+            ReadOnlySpan<float> logSpectrum = _audioInput.LogSpectrum;
             UploadTexture(waveform, ref _waveformData, ref _waveformTexture, "Audio Waveform Data");
-            UploadTexture(spectrum, ref _spectrumData, ref _spectrumTexture, "Audio Spectrum Data");
+            UploadTexture(logSpectrum, ref _spectrumData, ref _spectrumTexture, "Audio Log Spectrum Data");
             if (_onsetSource?.IsHardRealtimeOnsetAvailable == true)
             {
                 DecayPulses(Time.unscaledDeltaTime);
@@ -238,13 +240,20 @@ namespace Aetherin
 
             float threshold = Mathf.Max(0.5f, _params.FluxThreshold);
             float adaptationTime = Mathf.Max(0.01f, _params.AdaptationTime);
-            float kickLow = _kickLowState.Evaluate(kickLowFlux, kickLowEnergy, threshold, adaptationTime, deltaTime);
-            float kickPunch = _kickPunchState.Evaluate(kickPunchFlux, kickPunchEnergy, threshold, adaptationTime, deltaTime);
-            float snareBody = _snareBodyState.Evaluate(snareBodyFlux, snareBodyEnergy, threshold, adaptationTime, deltaTime);
+            float longTermAdaptationTime = Mathf.Max(adaptationTime, _params.LongTermAdaptationTime);
+            float longTermWeight = Mathf.Clamp01(_params.LongTermWeight);
+            float kickLow = _kickLowState.Evaluate(kickLowFlux, kickLowEnergy, threshold,
+                adaptationTime, longTermAdaptationTime, longTermWeight, deltaTime);
+            float kickPunch = _kickPunchState.Evaluate(kickPunchFlux, kickPunchEnergy, threshold,
+                adaptationTime, longTermAdaptationTime, longTermWeight, deltaTime);
+            float snareBody = _snareBodyState.Evaluate(snareBodyFlux, snareBodyEnergy, threshold,
+                adaptationTime, longTermAdaptationTime, longTermWeight, deltaTime);
             float snareLowNoise = _snareLowNoiseState.Evaluate(
-                snareLowNoiseFlux, snareLowNoiseEnergy, threshold, adaptationTime, deltaTime);
+                snareLowNoiseFlux, snareLowNoiseEnergy, threshold,
+                adaptationTime, longTermAdaptationTime, longTermWeight, deltaTime);
             float snareHighNoise = _snareHighNoiseState.Evaluate(
-                snareHighNoiseFlux, snareHighNoiseEnergy, threshold, adaptationTime, deltaTime);
+                snareHighNoiseFlux, snareHighNoiseEnergy, threshold,
+                adaptationTime, longTermAdaptationTime, longTermWeight, deltaTime);
 
             // サブとパンチの両方が動くほどKickらしい。片方だけでも完全には捨てない。
             float kickCoherence = Mathf.Sqrt(kickLow * kickPunch);
@@ -263,6 +272,8 @@ namespace Aetherin
 
             snareTransient *= 1f - _params.KickToSnareRejection * kickTransient;
 
+            ResolveCompetingClassification(ref kickTransient, ref snareTransient);
+
             if (_audioInput.RmsLevel < _params.NoiseGate)
             {
                 kickTransient = 0f;
@@ -273,6 +284,20 @@ namespace Aetherin
             UpdatePulse(ref _snareClap, snareTransient, ref _snareCooldown, ref _lastSnareFrame, deltaTime);
 
             spectrum.CopyTo(_previousSpectrum);
+        }
+
+        private void ResolveCompetingClassification(ref float kick, ref float snare)
+        {
+            if (kick < _params.TriggerThreshold || snare < _params.TriggerThreshold) return;
+
+            float difference = kick - snare;
+            float margin = Mathf.Max(0f, _params.ClassificationMargin);
+            if (Mathf.Abs(difference) >= margin)
+            {
+                // 十分に差があるときは、弱い方を帯域間クロストークとして抑える。
+                if (difference >= 0f) snare = 0f;
+                else kick = 0f;
+            }
         }
 
         private void GetBandFeatures(
@@ -302,15 +327,27 @@ namespace Aetherin
 
         private struct AdaptiveBandState
         {
+            public float LongMean => _longFluxMean;
+            public float LongStandardDeviation =>
+                Mathf.Sqrt(Mathf.Max(0.000001f, _longFluxVariance));
+            public float LongDeviation { get; private set; }
+
             private float _fluxMean;
             private float _fluxVariance;
             private float _energyMean;
+            private float _longFluxMean;
+            private float _longFluxVariance;
+            private float _longEnergyMean;
 
             public void Initialize(float flux, float energy)
             {
                 _fluxMean = flux;
                 _fluxVariance = 0.000001f;
                 _energyMean = energy;
+                _longFluxMean = flux;
+                _longFluxVariance = 0.000001f;
+                _longEnergyMean = energy;
+                LongDeviation = 0f;
             }
 
             public float Evaluate(
@@ -318,24 +355,45 @@ namespace Aetherin
                 float energy,
                 float deviationThreshold,
                 float adaptationTime,
+                float longTermAdaptationTime,
+                float longTermWeight,
                 float deltaTime)
             {
-                float standardDeviation = Mathf.Sqrt(Mathf.Max(0.000001f, _fluxVariance));
-                float deviation = (flux - _fluxMean) / standardDeviation;
+                float shortDeviation = (flux - _fluxMean) /
+                    Mathf.Sqrt(Mathf.Max(0.000001f, _fluxVariance));
+                float longDeviation = (flux - _longFluxMean) /
+                    Mathf.Sqrt(Mathf.Max(0.000001f, _longFluxVariance));
+                LongDeviation = longDeviation;
+                float deviation = Mathf.Lerp(shortDeviation, longDeviation, longTermWeight);
                 float fluxScore = Mathf.Clamp01((deviation - deviationThreshold) / 3f);
-                float energyRise = Mathf.Clamp01(
+                float shortEnergyRise = Mathf.Clamp01(
                     Mathf.Max(0f, energy - _energyMean * 1.06f) /
                     Mathf.Max(0.025f, _energyMean * 0.35f));
+                float longEnergyRise = Mathf.Clamp01(
+                    Mathf.Max(0f, energy - _longEnergyMean * 1.06f) /
+                    Mathf.Max(0.025f, _longEnergyMean * 0.35f));
+                float energyRise = Mathf.Lerp(shortEnergyRise, longEnergyRise, longTermWeight);
                 float score = Mathf.Clamp01(fluxScore * 0.8f + energyRise * 0.2f);
 
                 float adaptation = 1f - Mathf.Exp(-deltaTime / adaptationTime);
+                float longAdaptation = 1f - Mathf.Exp(-deltaTime / longTermAdaptationTime);
                 // 強いオンセットを通常値として即座に学習しないよう、発火中だけ追従を遅くする。
-                if (score > 0.1f) adaptation *= 0.15f;
+                if (score > 0.1f)
+                {
+                    adaptation *= 0.15f;
+                    longAdaptation *= 0.05f;
+                }
 
                 float difference = flux - _fluxMean;
                 _fluxMean = Mathf.Lerp(_fluxMean, flux, adaptation);
                 _fluxVariance = Mathf.Lerp(_fluxVariance, difference * difference, adaptation);
                 _energyMean = Mathf.Lerp(_energyMean, energy, adaptation);
+
+                float longDifference = flux - _longFluxMean;
+                _longFluxMean = Mathf.Lerp(_longFluxMean, flux, longAdaptation);
+                _longFluxVariance = Mathf.Lerp(
+                    _longFluxVariance, longDifference * longDifference, longAdaptation);
+                _longEnergyMean = Mathf.Lerp(_longEnergyMean, energy, longAdaptation);
                 return score;
             }
         }
@@ -419,9 +477,8 @@ namespace Aetherin
         {
             if (_uiGraphs == null || Time.unscaledTime < _nextUiGraphUpdateTime) return;
 
-            ReadOnlySpan<float> logSpectrum = _audioInput.LogSpectrum;
-            if (_uiLogSpectrum.Length != logSpectrum.Length) _uiLogSpectrum = new float[logSpectrum.Length];
-            logSpectrum.CopyTo(_uiLogSpectrum);
+            if (_uiLogSpectrum.Length != _spectrumData.Length) _uiLogSpectrum = new float[_spectrumData.Length];
+            _spectrumData.CopyTo(_uiLogSpectrum, 0);
             _uiGraphs.Update(_waveformData, _uiLogSpectrum);
             _uiGraphsCleared = false;
             _nextUiGraphUpdateTime = Time.unscaledTime + UiGraphUpdateInterval;
@@ -441,6 +498,16 @@ namespace Aetherin
                 UI.Label(() => $"Kick sample: {LastKickSampleIndex}   Snare/Clap sample: {LastSnareClapSampleIndex}"),
                 UI.SliderReadOnly("Kick", () => Kick, 0f, 1f),
                 UI.SliderReadOnly("Snare / Clap", () => SnareClap, 0f, 1f),
+                UI.Fold("10 s adaptive statistics",
+                    CreateLongTermStatisticsElement("Kick low 35-80 Hz", PercussiveBand.KickLow),
+                    CreateLongTermStatisticsElement("Kick punch 80-180 Hz", PercussiveBand.KickPunch),
+                    CreateLongTermStatisticsElement("Snare body 180-520 Hz", PercussiveBand.SnareBody),
+                    CreateLongTermStatisticsElement("Snare noise 0.7-2.8 kHz", PercussiveBand.SnareLowNoise),
+                    CreateLongTermStatisticsElement("Snare noise 2.8-9 kHz", PercussiveBand.SnareHighNoise),
+                    UI.Label(() => _onsetSource?.IsHardRealtimeOnsetAvailable == true
+                        ? "History: 10.0 s   Weight: 0.40   (Bridge fixed)"
+                        : $"History: {_params.LongTermAdaptationTime:F1} s   Weight: {_params.LongTermWeight:F2}   (Fallback)"),
+                    UI.Label("Start: 10 s / weight 0.40 / threshold 1.8 / margin 0.08")),
                 UI.Label(() => _waveformTexture == null
                     ? "Waveform: unavailable"
                     : $"Waveform ({_waveformTexture.width} samples / RFloat)"),
@@ -449,11 +516,48 @@ namespace Aetherin
                     .SetHeight(AudioGraphTextures.WaveformHeight),
                 UI.Label(() => _spectrumTexture == null
                     ? "Spectrum: unavailable"
-                    : $"Spectrum ({_spectrumTexture.width} bins / RFloat)"),
+                    : $"Spectrum ({_spectrumTexture.width} bins / RFloat / log frequency / dB amplitude)"),
                 UI.Image(() => _uiGraphs.SpectrumTexture)
                     .SetWidth(AudioGraphTextures.Width)
                     .SetHeight(AudioGraphTextures.SpectrumHeight)
             ).SetWidth(400f);
+        }
+
+        private Element CreateLongTermStatisticsElement(string label, PercussiveBand band)
+        {
+            return UI.Label(() =>
+            {
+                GetLongTermStatistics(band, out float mean, out float standardDeviation, out float deviation);
+                return $"{label}\nmean {mean:E3}   sigma {standardDeviation:E3}   now {deviation:+0.00;-0.00;0.00} sigma";
+            });
+        }
+
+        private void GetLongTermStatistics(
+            PercussiveBand band,
+            out float mean,
+            out float standardDeviation,
+            out float deviation)
+        {
+            if (_onsetSource?.IsHardRealtimeOnsetAvailable == true)
+            {
+                mean = _onsetSource.GetLongTermMean(band);
+                standardDeviation = _onsetSource.GetLongTermStandardDeviation(band);
+                deviation = _onsetSource.GetLongTermDeviation(band);
+                return;
+            }
+
+            AdaptiveBandState state = band switch
+            {
+                PercussiveBand.KickLow => _kickLowState,
+                PercussiveBand.KickPunch => _kickPunchState,
+                PercussiveBand.SnareBody => _snareBodyState,
+                PercussiveBand.SnareLowNoise => _snareLowNoiseState,
+                PercussiveBand.SnareHighNoise => _snareHighNoiseState,
+                _ => default
+            };
+            mean = state.LongMean;
+            standardDeviation = state.LongStandardDeviation;
+            deviation = state.LongDeviation;
         }
 
         private static Element CreatePulseElement(
