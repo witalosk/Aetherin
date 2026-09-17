@@ -167,6 +167,11 @@ namespace Aetherin
             DeckVolumeEffects effects = _params.NextVolume;
             effects.EnsureInitialized();
 
+            if (effects.BloomToggleButton.WasNoteOn)
+                effects.BloomEnabled = !effects.BloomEnabled;
+
+            effects.BloomToggleButton.SetLed(effects.BloomEnabled ? Color.yellow : Color.yellow * 0.15f);
+
             if (_params.Next?.Decks == null) return;
             foreach (PostEffectDeck deck in _params.Next.Decks)
             {
@@ -549,7 +554,19 @@ namespace Aetherin
             in ModulationContext context)
         {
             settings.EnsureInitialized();
-            if (profile.TryGet(out Bloom bloom)) bloom.active = false;
+            if (!profile.TryGet(out Bloom bloom)) bloom = profile.Add<Bloom>(true);
+            // Keep the override active and control the effect with its intensity, as DoF does
+            // with DepthOfFieldMode. Toggling VolumeComponent.active causes the inherited
+            // Bloom state to win on some URP volume-stack updates.
+            bloom.active = true;
+            bloom.intensity.overrideState = true;
+            bloom.intensity.value = settings.BloomEnabled
+                ? Mathf.Max(0f, settings.BloomIntensity.Evaluate(context))
+                : 0f;
+            bloom.threshold.overrideState = true;
+            bloom.threshold.value = Mathf.Max(0f, settings.BloomThreshold.Evaluate(context));
+            bloom.scatter.overrideState = true;
+            bloom.scatter.value = Mathf.Clamp01(settings.BloomScatter.Evaluate(context));
 
             if (!profile.TryGet(out DepthOfField depthOfField)) depthOfField = profile.Add<DepthOfField>(true);
             depthOfField.active = true;

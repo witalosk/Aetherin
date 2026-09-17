@@ -26,6 +26,12 @@ namespace Aetherin
 
             return UI.Column(
                 label,
+                UI.Fold("Bloom", UI.Column(
+                    UI.Toggle("Enabled", () => effects.BloomEnabled, value => effects.BloomEnabled = value),
+                    UI.Field("Toggle Pad", Binder.Create(effects.BloomToggleButton, typeof(MidiBinding))),
+                    Param("Intensity", effects.BloomIntensity),
+                    Param("Threshold", effects.BloomThreshold),
+                    Param("Scatter", effects.BloomScatter))),
                 UI.Fold("Depth Of Field", UI.Column(
                     UI.Field("Mode", () => effects.DepthOfFieldMode, value => effects.DepthOfFieldMode = value))));
         }

@@ -60,10 +60,21 @@ namespace Aetherin
     [Serializable]
     public sealed class DeckVolumeEffects
     {
+        public bool BloomEnabled = true;
+        [Tooltip("Bloomの有効/無効を切り替えるMIDIパッド")]
+        public MidiBinding BloomToggleButton = new();
+        public FloatParameter BloomIntensity = new(1f);
+        public FloatParameter BloomThreshold = new(0.9f);
+        public FloatParameter BloomScatter = new(0.5f);
+
         public VolumeDepthOfFieldMode DepthOfFieldMode = VolumeDepthOfFieldMode.Bokeh;
 
         public void EnsureInitialized()
         {
+            BloomToggleButton ??= new MidiBinding();
+            BloomIntensity ??= new FloatParameter(1f);
+            BloomThreshold ??= new FloatParameter(0.9f);
+            BloomScatter ??= new FloatParameter(0.5f);
         }
     }
 
