@@ -9,6 +9,12 @@ namespace Aetherin
         Opaque,
         Transparent,
         Additive,
+        Multiply,
+        Screen,
+        Subtract,
+        Darken,
+        Lighten,
+        Invert,
     }
 
     public enum LayerRandomPriority
@@ -44,6 +50,8 @@ namespace Aetherin
     {
         private static readonly int SrcBlendId = Shader.PropertyToID("_SrcBlend");
         private static readonly int DstBlendId = Shader.PropertyToID("_DstBlend");
+        private static readonly int BlendOpId = Shader.PropertyToID("_BlendOp");
+        private static readonly int InvertBlendId = Shader.PropertyToID("_InvertBlend");
         private static readonly int ZWriteId = Shader.PropertyToID("_ZWrite");
 
         public static void ApplyBlendMode(Material material, LayerBlendMode mode)
@@ -52,6 +60,7 @@ namespace Aetherin
 
             BlendMode srcBlend;
             BlendMode dstBlend;
+            BlendOp blendOp = BlendOp.Add;
             bool zWrite;
             bool opaque = mode == LayerBlendMode.Opaque;
 
@@ -67,6 +76,39 @@ namespace Aetherin
                     dstBlend = BlendMode.One;
                     zWrite = false;
                     break;
+                case LayerBlendMode.Multiply:
+                    srcBlend = BlendMode.DstColor;
+                    dstBlend = BlendMode.Zero;
+                    zWrite = false;
+                    break;
+                case LayerBlendMode.Screen:
+                    srcBlend = BlendMode.OneMinusDstColor;
+                    dstBlend = BlendMode.One;
+                    zWrite = false;
+                    break;
+                case LayerBlendMode.Subtract:
+                    srcBlend = BlendMode.One;
+                    dstBlend = BlendMode.One;
+                    blendOp = BlendOp.ReverseSubtract;
+                    zWrite = false;
+                    break;
+                case LayerBlendMode.Darken:
+                    srcBlend = BlendMode.One;
+                    dstBlend = BlendMode.One;
+                    blendOp = BlendOp.Min;
+                    zWrite = false;
+                    break;
+                case LayerBlendMode.Lighten:
+                    srcBlend = BlendMode.One;
+                    dstBlend = BlendMode.One;
+                    blendOp = BlendOp.Max;
+                    zWrite = false;
+                    break;
+                case LayerBlendMode.Invert:
+                    srcBlend = BlendMode.OneMinusDstColor;
+                    dstBlend = BlendMode.OneMinusSrcAlpha;
+                    zWrite = false;
+                    break;
                 default:
                     srcBlend = BlendMode.SrcAlpha;
                     dstBlend = BlendMode.OneMinusSrcAlpha;
@@ -76,6 +118,8 @@ namespace Aetherin
 
             material.SetFloat(SrcBlendId, (float)srcBlend);
             material.SetFloat(DstBlendId, (float)dstBlend);
+            material.SetFloat(BlendOpId, (float)blendOp);
+            material.SetFloat(InvertBlendId, mode == LayerBlendMode.Invert ? 1f : 0f);
             material.SetFloat(ZWriteId, zWrite ? 1f : 0f);
             material.renderQueue = opaque ? (int)RenderQueue.Geometry : (int)RenderQueue.Transparent;
             material.SetOverrideTag("RenderType", opaque ? "Opaque" : "Transparent");

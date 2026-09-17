@@ -14,6 +14,8 @@ Shader "Aetherin/Shape Fill"
         [HideInInspector] _StageTime ("Stage Time", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
     }
 
@@ -31,6 +33,7 @@ Shader "Aetherin/Shape Fill"
             Name "ShapeFill"
             Tags { "LightMode" = "UniversalForward" }
 
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             Cull Off
             ZWrite [_ZWrite]
@@ -71,6 +74,7 @@ Shader "Aetherin/Shape Fill"
                 half4 _ColorB;
                 float4 _GradientParams;
                 float _UseGradient;
+                float _InvertBlend;
                 float _UsePaletteRandom;
                 float _PaletteRandomSeed;
                 half4 _PaletteColor0;
@@ -199,7 +203,9 @@ Shader "Aetherin/Shape Fill"
                 surfaceData.normalTS = half3(0, 0, 1);
                 surfaceData.occlusion = 1;
                 surfaceData.alpha = color.a;
-                return UniversalFragmentPBR(inputData, surfaceData);
+                half4 outputColor = UniversalFragmentPBR(inputData, surfaceData);
+                if (_InvertBlend > 0.5) outputColor.rgb = outputColor.aaa;
+                return outputColor;
             }
             ENDHLSL
         }

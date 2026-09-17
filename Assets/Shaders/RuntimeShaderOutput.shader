@@ -8,12 +8,15 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
     }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" "RenderType"="Transparent" }
         Pass
         {
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             Cull Off
@@ -29,6 +32,7 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
             SAMPLER(sampler_MainTex);
             float _AetherinOpacity;
             float _AlphaClip;
+            float _InvertBlend;
 
             Varyings Vert(Attributes input)
             {
@@ -43,6 +47,7 @@ Shader "Hidden/Aetherin/Runtime Shader Output"
                 half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv);
                 color.a *= _AetherinOpacity;
                 if (_AlphaClip > 0.5) clip(color.a - 0.1);
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

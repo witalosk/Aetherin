@@ -10,12 +10,15 @@ Shader "Aetherin/Sprite Sheet Billboard"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
     }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Transparent" "RenderType"="Transparent" }
         Pass
         {
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             Cull Off
@@ -26,7 +29,7 @@ Shader "Aetherin/Sprite Sheet Billboard"
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
             TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
-            float4 _Color; float4 _UvRect; float _ColorMode; float _AlphaClip;
+            float4 _Color; float4 _UvRect; float _ColorMode; float _AlphaClip; float _InvertBlend;
             Varyings Vert(Attributes input)
             {
                 Varyings output;
@@ -44,6 +47,7 @@ Shader "Aetherin/Sprite Sheet Billboard"
                     ? half4(_Color.rgb, _Color.a * source.a * luminance)
                     : source * _Color;
                 if (_AlphaClip > .5) clip(color.a - .1);
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

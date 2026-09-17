@@ -11,6 +11,8 @@ Shader "Aetherin/Primitive 3D Unlit"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
     }
 
     SubShader
@@ -27,6 +29,7 @@ Shader "Aetherin/Primitive 3D Unlit"
             Name "Primitive3DUnlit"
             Tags { "LightMode" = "UniversalForward" }
 
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             Cull Back
             ZTest LEqual
@@ -71,6 +74,7 @@ Shader "Aetherin/Primitive 3D Unlit"
             CBUFFER_START(UnityPerMaterial)
                 half4 _BaseColor;
                 half4 _ColorB;
+                float _InvertBlend;
                 float4 _UvParams;
                 float4 _LightDirection;
                 float _ColorMode;
@@ -253,10 +257,13 @@ Shader "Aetherin/Primitive 3D Unlit"
                         half fresnel = Pow4(1.0 - saturate(dot(inputData.normalWS, inputData.viewDirectionWS)));
                         surfaceData.emission += EnvironmentBRDFSpecular(brdfData, fresnel) * (_SolidReflectionColor.rgb - reflection);
                     }
-                    return UniversalFragmentPBR(inputData, surfaceData);
+                    half4 outputColor = UniversalFragmentPBR(inputData, surfaceData);
+                    if (_InvertBlend > 0.5) outputColor.rgb = outputColor.aaa;
+                    return outputColor;
                 }
 
                 color.a *= input.color.a;
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

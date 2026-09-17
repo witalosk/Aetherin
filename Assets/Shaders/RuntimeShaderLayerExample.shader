@@ -4,6 +4,8 @@ Shader "Aetherin/Runtime Shader Layer Example"
     {
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
     }
     SubShader
@@ -11,6 +13,7 @@ Shader "Aetherin/Runtime Shader Layer Example"
         Tags { "RenderPipeline"="UniversalPipeline" "RenderType"="Transparent" "Queue"="Transparent" }
         Pass
         {
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             Cull Off
             ZWrite [_ZWrite]
@@ -23,6 +26,7 @@ Shader "Aetherin/Runtime Shader Layer Example"
 
             struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
             struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
+            float _InvertBlend;
 
             Varyings Vert(Attributes input)
             {
@@ -42,6 +46,7 @@ Shader "Aetherin/Runtime Shader Layer Example"
                 half4 color = lerp(_AccentColor1, _AccentColor2, input.uv.y + wave * 0.15);
                 color.rgb *= 0.6 + _AetherinAudio.x * 2.0 + beat;
                 color.a *= mask * _AetherinOpacity;
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

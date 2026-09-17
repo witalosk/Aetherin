@@ -11,12 +11,15 @@ Shader "Aetherin/Movie Billboard"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 1
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 1
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 0
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
     }
     SubShader
     {
         Tags { "RenderPipeline"="UniversalPipeline" "Queue"="Geometry" "RenderType"="Opaque" }
         Pass
         {
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             Cull Off
@@ -32,6 +35,7 @@ Shader "Aetherin/Movie Billboard"
             float4 _LutParams;
             float _LutEnabled;
             float _LutIntensity;
+            float _InvertBlend;
 
             half3 ApplyLut(half3 color)
             {
@@ -74,6 +78,7 @@ Shader "Aetherin/Movie Billboard"
                 half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
                 if (_LutEnabled > 0.5)
                     color.rgb = lerp(color.rgb, ApplyLut(color.rgb), saturate(_LutIntensity));
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

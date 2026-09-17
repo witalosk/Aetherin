@@ -7,6 +7,8 @@ Shader "Aetherin/GPU Particle"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
         [HideInInspector] _AlphaClip ("Alpha Clip", Float) = 0
     }
     SubShader
@@ -16,6 +18,7 @@ Shader "Aetherin/GPU Particle"
         {
             Name "GpuParticle"
             Tags { "LightMode"="UniversalForward" }
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             ZTest LEqual
@@ -62,6 +65,7 @@ Shader "Aetherin/GPU Particle"
             CBUFFER_START(UnityPerMaterial)
                 half4 _ColorA;
                 half4 _ColorB;
+                float _InvertBlend;
                 float4x4 _LayerMatrix;
                 float _ParticleSize;
                 int _ParticleShape;
@@ -167,6 +171,7 @@ Shader "Aetherin/GPU Particle"
                 half4 color = input.color;
                 color.a *= alpha;
                 if (_AlphaClip > 0.5) clip(color.a - 0.1);
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

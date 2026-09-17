@@ -8,6 +8,8 @@ Shader "Aetherin/Model Layer Surface"
         _GradientParams("Gradient", Vector) = (0,0,2,0)
         [HideInInspector] _SrcBlend("Src Blend", Float) = 1
         [HideInInspector] _DstBlend("Dst Blend", Float) = 0
+        [HideInInspector] _BlendOp("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend("Invert Blend", Float) = 0
         [HideInInspector] _ZWrite("Z Write", Float) = 1
         [HideInInspector] _StageTime("Stage Time", Float) = 0
     }
@@ -18,6 +20,7 @@ Shader "Aetherin/Model Layer Surface"
         {
             Name "ModelLayerSurface"
             Tags { "LightMode"="UniversalForward" }
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             HLSLPROGRAM
@@ -43,6 +46,7 @@ Shader "Aetherin/Model Layer Surface"
             float _GlassChromaticAberration, _GlassDistortion, _GlassDistortionScale;
             float _ReflectionSource;
             float _StageTime;
+            float _InvertBlend;
             half4 _SolidReflectionColor;
             CBUFFER_END
             Varyings vert(Attributes v)
@@ -98,8 +102,11 @@ Shader "Aetherin/Model Layer Surface"
                         half fresnel = Pow4(1.0 - saturate(dot(inputData.normalWS, inputData.viewDirectionWS)));
                         surfaceData.emission += EnvironmentBRDFSpecular(brdfData, fresnel) * (_SolidReflectionColor.rgb - reflection);
                     }
-                    return UniversalFragmentPBR(inputData, surfaceData);
+                    half4 outputColor = UniversalFragmentPBR(inputData, surfaceData);
+                    if (_InvertBlend > 0.5) outputColor.rgb = outputColor.aaa;
+                    return outputColor;
                 }
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;
             }
             ENDHLSL

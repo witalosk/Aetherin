@@ -7,6 +7,8 @@ Shader "Aetherin/GPU Particle Trail"
         [HideInInspector] _ZWrite ("ZWrite", Float) = 0
         [HideInInspector] _SrcBlend ("Src Blend", Float) = 5
         [HideInInspector] _DstBlend ("Dst Blend", Float) = 10
+        [HideInInspector] _BlendOp ("Blend Op", Float) = 0
+        [HideInInspector] _InvertBlend ("Invert Blend", Float) = 0
     }
     SubShader
     {
@@ -15,6 +17,7 @@ Shader "Aetherin/GPU Particle Trail"
         {
             Name "GpuParticleTrail"
             Tags { "LightMode"="UniversalForward" }
+            BlendOp [_BlendOp]
             Blend [_SrcBlend] [_DstBlend]
             ZWrite [_ZWrite]
             ZTest LEqual
@@ -46,6 +49,7 @@ Shader "Aetherin/GPU Particle Trail"
             CBUFFER_START(UnityPerMaterial)
                 half4 _ColorA;
                 half4 _ColorB;
+                float _InvertBlend;
                 float4x4 _LayerMatrix;
                 float _ParticleSize;
                 float _Opacity;
@@ -135,7 +139,9 @@ Shader "Aetherin/GPU Particle Trail"
             half4 Frag(Varyings input) : SV_Target 
             {
                 if (input.color.a <= 0.0) discard;
-                return input.color;
+                half4 color = input.color;
+                if (_InvertBlend > 0.5) color.rgb = color.aaa;
+                return color;
             }
             ENDHLSL
         }
