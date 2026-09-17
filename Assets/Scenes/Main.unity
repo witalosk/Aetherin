@@ -1223,6 +1223,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1956795052608103968, guid: c93b7f1dfa28b8a418506fa1b2e073a8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7702004306104022600, guid: c93b7f1dfa28b8a418506fa1b2e073a8, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7702004306534041664, guid: c93b7f1dfa28b8a418506fa1b2e073a8, type: 3}
       propertyPath: m_Name
       value: UniStats
@@ -2080,23 +2088,6 @@ MonoBehaviour:
   _manualBinders: []
   _projectContainerPrefabName: ProjectContainer
   _isIncludeInactive: 1
---- !u!114 &1915598372
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1915598369}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a9b052b75a0e4cc0926c8d970d2c8d49, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.StageAssetCatalog
-  _modelLibrary: {fileID: 1994971893}
-  _textureLibrary: {fileID: 910745198}
-  _lutLibrary: {fileID: 221290746}
-  _vfxGraphLibrary: {fileID: 0}
-  _fontAssetLibrary: {fileID: 2093487957}
 --- !u!4 &1915598371
 Transform:
   m_ObjectHideFlags: 0
@@ -2112,6 +2103,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 2138134442}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1915598372
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1915598369}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9b052b75a0e4cc0926c8d970d2c8d49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.StageAssetCatalog
+  _modelLibrary: {fileID: 1994971893}
+  _textureLibrary: {fileID: 910745198}
+  _lutLibrary: {fileID: 221290746}
+  _vfxGraphLibrary: {fileID: 0}
+  _fontAssetLibrary: {fileID: 2093487957}
 --- !u!1 &1953477466
 GameObject:
   m_ObjectHideFlags: 0

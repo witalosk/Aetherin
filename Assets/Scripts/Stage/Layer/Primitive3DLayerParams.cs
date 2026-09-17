@@ -38,6 +38,7 @@ namespace Aetherin
         Standard,
         Glass,
         Lit,
+        Unlit,
     }
 
     [Serializable]

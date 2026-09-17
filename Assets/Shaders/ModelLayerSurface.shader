@@ -77,6 +77,11 @@ Shader "Aetherin/Model Layer Surface"
                     color.rgb = lerp(refracted, refracted * color.rgb, _GlassTint) + _ColorB.rgb * fresnel;
                     return color;
                 }
+                if (_MaterialMode > 2.5)
+                {
+                    if (_InvertBlend > 0.5) color.rgb = color.aaa;
+                    return color;
+                }
                 if (_MaterialMode < 0.5 || _MaterialMode > 1.5)
                 {
                     InputData inputData = (InputData)0;

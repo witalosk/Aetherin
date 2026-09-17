@@ -219,6 +219,13 @@ Shader "Aetherin/Primitive 3D Unlit"
 
                 color *= mappedTexture;
 
+                if (_MaterialMode > 2.5)
+                {
+                    color.a *= input.color.a;
+                    if (_InvertBlend > 0.5) color.rgb = color.aaa;
+                    return color;
+                }
+
                 if (_MaterialMode < 0.5 || _MaterialMode > 1.5)
                 {
                     InputData inputData = (InputData)0;

@@ -16,6 +16,7 @@ namespace Aetherin
     {
         Standard,
         Lit,
+        Unlit,
     }
 
     [Serializable]

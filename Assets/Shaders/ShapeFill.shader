@@ -184,6 +184,12 @@ Shader "Aetherin/Shape Fill"
                     color *= SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, textureUv);
                 }
 
+                if (_MaterialMode > 1.5)
+                {
+                    if (_InvertBlend > 0.5) color.rgb = color.aaa;
+                    return color;
+                }
+
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;
                 inputData.positionCS = input.positionCS;

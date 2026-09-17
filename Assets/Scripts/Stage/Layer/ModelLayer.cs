@@ -326,7 +326,8 @@ namespace Aetherin
                 {
                     bool glass = _params.MaterialMode == ModelLayerMaterialMode.Glass;
                     bool lit = _params.MaterialMode == ModelLayerMaterialMode.Lit;
-                    material.SetFloat(MaterialModeId, lit ? 2f : glass ? 1f : 0f);
+                    bool unlit = _params.MaterialMode == ModelLayerMaterialMode.Unlit;
+                    material.SetFloat(MaterialModeId, unlit ? 3f : lit ? 2f : glass ? 1f : 0f);
                     material.SetFloat(MetallicId, Mathf.Clamp01(_params.Metallic.Evaluate(context)));
                     material.SetFloat(SmoothnessId, Mathf.Clamp01(_params.Smoothness.Evaluate(context)));
                     material.SetFloat(GlassRefractionId, Mathf.Max(0f, _params.GlassRefraction.Evaluate(context)));
