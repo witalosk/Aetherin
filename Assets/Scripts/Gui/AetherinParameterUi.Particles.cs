@@ -39,6 +39,10 @@ namespace Aetherin
                             () => p.RenderBackend == ParticleRenderBackend.VfxGraph,
                             () => vfxGraphSelector),
                         UI.DynamicElementIf(
+                            () => p.RenderBackend is ParticleRenderBackend.IndirectQuad
+                                or ParticleRenderBackend.VfxGraph,
+                            () => UI.Toggle("Billboard", () => p.Billboard, value => p.Billboard = value)),
+                        UI.DynamicElementIf(
                             () => p.RenderBackend == ParticleRenderBackend.Trail,
                             () => UI.Column(
                                 UI.Field("Trail Length", () => p.TrailLength, value => p.TrailLength = value),
@@ -70,6 +74,8 @@ namespace Aetherin
                         UI.Field("Seed", () => p.Seed, value => p.Seed = value),
                         Param("Emitter Offset", p.EmitterOffset),
                         Param("Emitter Size", p.EmitterSize),
+                        UI.Toggle("Spherical Emitter", () => p.SphericalEmitter,
+                            value => p.SphericalEmitter = value),
                         CreateParticleRandomRangeElement("Lifetime", p.Lifetime),
                         CreateParticleRandomRangeElement("Initial Speed", p.InitialSpeed))),
                     ("Appearance", UI.Column(

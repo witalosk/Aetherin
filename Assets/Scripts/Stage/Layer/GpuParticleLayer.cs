@@ -29,6 +29,7 @@ namespace Aetherin
         private static readonly int TargetId = Shader.PropertyToID("_Target");
         private static readonly int EmitterSizeId = Shader.PropertyToID("_EmitterSize");
         private static readonly int EmitterOffsetId = Shader.PropertyToID("_EmitterOffset");
+        private static readonly int SphericalEmitterId = Shader.PropertyToID("_SphericalEmitter");
         private static readonly int LifetimeRangeId = Shader.PropertyToID("_LifetimeRange");
         private static readonly int InitialSpeedRangeId = Shader.PropertyToID("_InitialSpeedRange");
         private static readonly int ParticleSizeRangeId = Shader.PropertyToID("_ParticleSizeRange");
@@ -41,6 +42,7 @@ namespace Aetherin
         private static readonly int ColorBId = Shader.PropertyToID("_ColorB");
         private static readonly int ParticleSizeId = Shader.PropertyToID("_ParticleSize");
         private static readonly int ParticleShapeId = Shader.PropertyToID("_ParticleShape");
+        private static readonly int BillboardId = Shader.PropertyToID("_Billboard");
         private static readonly int LayerMatrixId = Shader.PropertyToID("_LayerMatrix");
         private static readonly int OpacityId = Shader.PropertyToID("_Opacity");
         private static readonly int AlphaClipId = Shader.PropertyToID("_AlphaClip");
@@ -352,6 +354,7 @@ namespace Aetherin
         {
             _compute.SetVector(EmitterOffsetId, _params.EmitterOffset?.Evaluate(context) ?? Vector3.zero);
             _compute.SetVector(EmitterSizeId, _params.EmitterSize?.Evaluate(context) ?? Vector3.one);
+            _compute.SetInt(SphericalEmitterId, _params.SphericalEmitter ? 1 : 0);
             _compute.SetVector(LifetimeRangeId, _params.Lifetime?.Evaluate(context) ?? new Vector3(5f, 5f, 1f));
             _compute.SetVector(InitialSpeedRangeId,
                 _params.InitialSpeed?.Evaluate(context) ?? new Vector3(0f, 0f, 1f));
@@ -409,6 +412,7 @@ namespace Aetherin
             _material.SetColor(ColorBId, color.ColorB);
             _material.SetFloat(ParticleSizeId, particleSize);
             _material.SetInt(ParticleShapeId, (int)_params.Shape);
+            _material.SetInt(BillboardId, _params.Billboard ? 1 : 0);
             _material.SetFloat(OpacityId, opacity);
             _material.SetFloat(AlphaClipId, _params.BlendMode == LayerBlendMode.Opaque ? 1f : 0f);
             ApplyPaletteRandom(_material, color);
@@ -635,6 +639,7 @@ namespace Aetherin
             if (_visualEffect.HasVector4("ColorB")) _visualEffect.SetVector4("ColorB", color.ColorB);
             if (_visualEffect.HasFloat("ParticleSize")) _visualEffect.SetFloat("ParticleSize", particleSize);
             if (_visualEffect.HasInt("ParticleShape")) _visualEffect.SetInt("ParticleShape", (int)_params.Shape);
+            if (_visualEffect.HasBool("Billboard")) _visualEffect.SetBool("Billboard", _params.Billboard);
             if (_visualEffect.HasFloat("Opacity")) _visualEffect.SetFloat("Opacity", opacity);
         }
 

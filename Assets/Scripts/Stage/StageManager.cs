@@ -1431,7 +1431,9 @@ namespace Aetherin
                     Color color = GetLayerColor(layer);
                     element.SetBackgroundColor(_inspectedLayer == layer ? color : layer.Visible ? color * 0.8f : color * 0.5f);
                 })
-                .RegisterVisualElementAttachedCallback(element => AttachLayerDragManipulator(element, stage, layer));
+                .RegisterVisualElementAttachedCallback(
+                    element => AttachLayerDragCallbacks(element, stage, layer),
+                    DetachLayerDragCallbacks);
             var header = UI.Row(
                 UI.Space().SetWidth(layer is GroupLayer ? 0f : 18f),
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(8f),
@@ -1454,7 +1456,7 @@ namespace Aetherin
             });
         }
 
-        private void AttachLayerDragManipulator(
+        private void AttachLayerDragCallbacks(
             VisualElement layerButton,
             CameraStage stage,
             StageLayer layer)
@@ -1465,14 +1467,12 @@ namespace Aetherin
             int activePointerId = -1;
             VisualElement dropTarget = null;
 
-            layerButton.userData = new LayerDragTarget(stage, layer);
-
             layerButton.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
             layerButton.RegisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.TrickleDown);
             layerButton.RegisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.TrickleDown);
             layerButton.RegisterCallback<PointerCancelEvent>(OnPointerCancel, TrickleDown.TrickleDown);
             layerButton.RegisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
-            layerButton.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+            layerButton.userData = new LayerDragTarget(stage, layer, UnregisterCallbacks);
 
             void OnPointerDown(PointerDownEvent evt)
             {
@@ -1483,6 +1483,7 @@ namespace Aetherin
                 pointerPosition = pointerStart;
                 moved = false;
                 dropTarget = null;
+                InspectLayer(stage, layer);
                 layerButton.CapturePointer(activePointerId);
                 evt.StopImmediatePropagation();
             }
@@ -1526,16 +1527,17 @@ namespace Aetherin
                 activePointerId = -1;
             }
 
-            void OnDetachFromPanel(DetachFromPanelEvent _)
+            void UnregisterCallbacks()
             {
-                ResetDragVisuals();
+                int pointerId = activePointerId;
                 activePointerId = -1;
+                ResetDragVisuals();
+                if (pointerId >= 0 && layerButton.HasPointerCapture(pointerId)) layerButton.ReleasePointer(pointerId);
                 layerButton.UnregisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
                 layerButton.UnregisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.TrickleDown);
                 layerButton.UnregisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.TrickleDown);
                 layerButton.UnregisterCallback<PointerCancelEvent>(OnPointerCancel, TrickleDown.TrickleDown);
                 layerButton.UnregisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
-                layerButton.UnregisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
             }
 
             void FinishPointerInteraction(EventBase evt, bool commit)
@@ -1543,11 +1545,7 @@ namespace Aetherin
                 int pointerId = activePointerId;
                 activePointerId = -1;
 
-                if (commit && !moved)
-                {
-                    InspectLayer(stage, layer);
-                }
-                else if (commit && dropTarget?.userData is LayerDragTarget target && target.Layer != layer)
+                if (commit && moved && dropTarget?.userData is LayerDragTarget target && target.Layer != layer)
                 {
                     var siblings = layer.transform.parent.GetComponentsInChildren<StageLayer>(true)
                         .Where(item => item != null && item.transform.parent == layer.transform.parent)
@@ -1609,12 +1607,23 @@ namespace Aetherin
         {
             public readonly CameraStage Stage;
             public readonly StageLayer Layer;
+            private readonly Action _unregisterCallbacks;
 
-            public LayerDragTarget(CameraStage stage, StageLayer layer)
+            public LayerDragTarget(CameraStage stage, StageLayer layer, Action unregisterCallbacks)
             {
                 Stage = stage;
                 Layer = layer;
+                _unregisterCallbacks = unregisterCallbacks;
             }
+
+            public void UnregisterCallbacks() => _unregisterCallbacks?.Invoke();
+        }
+
+        private static void DetachLayerDragCallbacks(VisualElement layerButton)
+        {
+            if (layerButton.userData is not LayerDragTarget target) return;
+            target.UnregisterCallbacks();
+            layerButton.userData = null;
         }
 
         private void PasteLayer(CameraStage stage, StageLayer referenceLayer)

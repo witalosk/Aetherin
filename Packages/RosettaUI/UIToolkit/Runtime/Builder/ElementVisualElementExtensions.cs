@@ -30,5 +30,22 @@ namespace RosettaUI
 
             return element;
         }
+
+        public static T RegisterVisualElementAttachedCallback<T>(
+            this T element,
+            Action<VisualElement> attachedCallback,
+            Action<VisualElement> detachedCallback)
+            where T : Element
+        {
+            if (element == null) throw new ArgumentNullException(nameof(element));
+            if (attachedCallback == null) throw new ArgumentNullException(nameof(attachedCallback));
+            if (detachedCallback == null) throw new ArgumentNullException(nameof(detachedCallback));
+
+            return element.RegisterVisualElementAttachedCallback(visualElement =>
+            {
+                attachedCallback(visualElement);
+                element.GetViewBridge().onUnsubscribe += () => detachedCallback(visualElement);
+            });
+        }
     }
 }

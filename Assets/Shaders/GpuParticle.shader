@@ -69,6 +69,7 @@ Shader "Aetherin/GPU Particle"
                 float4x4 _LayerMatrix;
                 float _ParticleSize;
                 int _ParticleShape;
+                int _Billboard;
                 float _Opacity;
                 int _PaletteRandomMode;
                 int _PaletteRandomSeed;
@@ -118,10 +119,18 @@ Shader "Aetherin/GPU Particle"
                 float3 corner = RotateEuler(float3(input.positionOS.xy, 0.0) * size, particle.rotation);
 
                 float3 centerWS = mul(_LayerMatrix, float4(particle.position, 1.0)).xyz;
-                float3 cameraRight = UNITY_MATRIX_I_V._m00_m10_m20;
-                float3 cameraUp = UNITY_MATRIX_I_V._m01_m11_m21;
-                float3 cameraForward = -UNITY_MATRIX_I_V._m02_m12_m22;
-                float3 positionWS = centerWS + cameraRight * corner.x + cameraUp * corner.y + cameraForward * corner.z;
+                float3 positionWS;
+                if (_Billboard != 0)
+                {
+                    float3 cameraRight = UNITY_MATRIX_I_V._m00_m10_m20;
+                    float3 cameraUp = UNITY_MATRIX_I_V._m01_m11_m21;
+                    float3 cameraForward = -UNITY_MATRIX_I_V._m02_m12_m22;
+                    positionWS = centerWS + cameraRight * corner.x + cameraUp * corner.y + cameraForward * corner.z;
+                }
+                else
+                {
+                    positionWS = mul(_LayerMatrix, float4(particle.position + corner, 1.0)).xyz;
+                }
                 output.positionCS = TransformWorldToHClip(positionWS);
                 output.uv = input.uv;
                 output.color = lerp(_ColorA, _ColorB, particle.color.r);

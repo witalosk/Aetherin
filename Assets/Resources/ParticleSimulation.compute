@@ -72,6 +72,7 @@ int _PlexusNeighborSamples;
 float _OverLifeCurve[64];
 float3 _EmitterOffset;
 float3 _EmitterSize;
+int _SphericalEmitter;
 float3 _LifetimeRange;
 float3 _InitialSpeedRange;
 float3 _ParticleSizeRange;
@@ -126,8 +127,17 @@ void Respawn(inout ParticleData particle, uint id, float ageOffset)
 {
     particle.generation += 1u;
     uint state = Hash(id + (uint)_Seed * 747796405u + 2891336453u);
-    particle.position = _EmitterOffset +
-        (float3(Random01(state), Random01(state), Random01(state)) - 0.5) * _EmitterSize;
+    float3 emitterPosition;
+    if (_SphericalEmitter != 0)
+    {
+        float radius = pow(Random01(state), 1.0 / 3.0);
+        emitterPosition = RandomDirection(state) * radius * 0.5 * _EmitterSize;
+    }
+    else
+    {
+        emitterPosition = (float3(Random01(state), Random01(state), Random01(state)) - 0.5) * _EmitterSize;
+    }
+    particle.position = _EmitterOffset + emitterPosition;
     particle.velocity = RandomDirection(state) * SampleRange(_InitialSpeedRange, state);
     particle.lifetime = max(0.01, SampleRange(_LifetimeRange, state));
     particle.age = ageOffset;

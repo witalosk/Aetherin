@@ -166,6 +166,8 @@ namespace Aetherin
         public int Seed = 1;
         public Vector3Parameter EmitterOffset = new();
         public Vector3Parameter EmitterSize = new(new Vector3(8f, 5f, 2f));
+        [Tooltip("Emitter Sizeを直径とする球／楕円体の内部から放出します")]
+        public bool SphericalEmitter;
         public ParticleRandomRangeParameter Lifetime = new(6f);
         public ParticleRandomRangeParameter InitialSpeed = new(0.4f);
         public FloatParameter SimulationSpeed = new(1f);
@@ -175,6 +177,8 @@ namespace Aetherin
         public Vector3Parameter AngularVelocity = new();
         public Vector3Parameter AngularVelocityRandom = new();
         public ParticleRenderShape Shape = ParticleRenderShape.Circle;
+        [Tooltip("パーティクルを常にカメラへ正対させます")]
+        public bool Billboard = true;
         public PaletteColorParameter Color = new();
 
         public List<ParticleSimulationModule> Modules = new()
