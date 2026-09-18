@@ -164,6 +164,10 @@ namespace Aetherin
             BuildDecks();
             ApplyPendingCameraStageData();
 
+            // 起動時はシリアライズされたStageTimeSpeedを優先する。
+            // 現在のCC値を観測済みとして記録し、CCが実際に動いたときだけ追従を開始する。
+            TrackStageTimeSpeedCc(GetStage(_nextStages, _params.NextStageIndex), true);
+
             if (_outputRenderer != null) _outputRenderer.material.SetTexture(MainTexId, OutputTexture);
         }
 
@@ -494,9 +498,18 @@ namespace Aetherin
         private void SelectNextStage(int index)
         {
             if (_isPreparingNext || _nextStages == null || _nextStages.Count == 0) return;
+            StageBase previous = GetStage(_nextStages, _params.NextStageIndex);
             int selected = Mathf.Clamp(index, 0, _nextStages.Count - 1);
             _params.NextStageIndex = selected;
-            _nextStages[selected]?.ResetStageTime();
+            StageBase next = _nextStages[selected];
+            if (next != null)
+            {
+                if (previous != null) next.SetStageTimeSpeed(previous.StageTimeSpeed);
+                next.ResetStageTime();
+
+                // Next切替では直前の速度を優先し、CCが実際に動いたときだけ追従を再開する。
+                TrackStageTimeSpeedCc(next, true);
+            }
             _deckRevision++;
         }
 
