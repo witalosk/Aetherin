@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using RosettaUI;
 using UnityEngine;
+using UnityEngine.UIElements;
 using UnitySimpleContainer;
 
 namespace Aetherin
@@ -1423,16 +1424,19 @@ namespace Aetherin
         private Element CreateLayerHeader(CameraStage stage, StageLayer layer)
         {
             bool insideGroup = layer.transform.parent != null && layer.transform.parent.GetComponent<GroupLayer>() != null;
+            Element layerButton = UI.Button(UI.Label(() => layer.gameObject.name), () => { })
+                .SetMinWidth(150f).SetFlexGrow(1f).SetHeight(30f)
+                .RegisterUpdateCallback(element =>
+                {
+                    Color color = GetLayerColor(layer);
+                    element.SetBackgroundColor(_inspectedLayer == layer ? color : layer.Visible ? color * 0.8f : color * 0.5f);
+                })
+                .RegisterVisualElementAttachedCallback(element => AttachLayerDragManipulator(element, stage, layer));
             var header = UI.Row(
                 UI.Space().SetWidth(layer is GroupLayer ? 0f : 18f),
                 UI.Label(() => _inspectedLayer == layer ? "▶" : " ").SetWidth(8f),
                 UI.Toggle(null, () => layer.Visible, value => layer.Visible = value).SetWidth(28f),
-                UI.Button(UI.Label(() => layer.gameObject.name), () => InspectLayer(stage, layer)).SetMinWidth(150f).SetFlexGrow(1f).SetHeight(30f)
-                    .RegisterUpdateCallback(element =>
-                    {
-                        Color color = GetLayerColor(layer);
-                        element.SetBackgroundColor( _inspectedLayer == layer ? color * 1f : layer.Visible ? color * 0.8f : color * 0.5f);
-                    }),
+                layerButton,
                 UI.Button("▲", () => stage.MoveLayer(layer, -1)).SetWidth(16f),
                 UI.Button("▼", () => stage.MoveLayer(layer, 1)).SetWidth(16f)
             );
@@ -1448,6 +1452,169 @@ namespace Aetherin
                     menuItems.Add(new MenuItem("Out", () => stage.MoveLayerOutOfGroup(layer)));
                 return menuItems;
             });
+        }
+
+        private void AttachLayerDragManipulator(
+            VisualElement layerButton,
+            CameraStage stage,
+            StageLayer layer)
+        {
+            Vector2 pointerStart = default;
+            Vector2 pointerPosition = default;
+            bool moved = false;
+            int activePointerId = -1;
+            VisualElement dropTarget = null;
+
+            layerButton.userData = new LayerDragTarget(stage, layer);
+
+            layerButton.RegisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
+            layerButton.RegisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.TrickleDown);
+            layerButton.RegisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.TrickleDown);
+            layerButton.RegisterCallback<PointerCancelEvent>(OnPointerCancel, TrickleDown.TrickleDown);
+            layerButton.RegisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
+            layerButton.RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+
+            void OnPointerDown(PointerDownEvent evt)
+            {
+                if (evt.button != 0 || activePointerId >= 0 || stage == null || layer == null) return;
+
+                activePointerId = evt.pointerId;
+                pointerStart = evt.position;
+                pointerPosition = pointerStart;
+                moved = false;
+                dropTarget = null;
+                layerButton.CapturePointer(activePointerId);
+                evt.StopImmediatePropagation();
+            }
+
+            void OnPointerMove(PointerMoveEvent evt)
+            {
+                if (evt.pointerId != activePointerId || !layerButton.HasPointerCapture(activePointerId)) return;
+
+                pointerPosition = evt.position;
+                Vector2 delta = pointerPosition - pointerStart;
+                if (!moved && delta.sqrMagnitude < 16f) return;
+
+                moved = true;
+                layerButton.style.opacity = 0.65f;
+
+                VisualElement target = FindNearestLayerDropTarget(layerButton, stage, layer, pointerPosition);
+                if (target != dropTarget)
+                {
+                    if (dropTarget != null) dropTarget.style.opacity = StyleKeyword.Null;
+                    dropTarget = target;
+                    if (dropTarget != null && dropTarget != layerButton) dropTarget.style.opacity = 0.65f;
+                }
+                evt.StopImmediatePropagation();
+            }
+
+            void OnPointerUp(PointerUpEvent evt)
+            {
+                if (evt.pointerId != activePointerId) return;
+                FinishPointerInteraction(evt, commit: true);
+            }
+
+            void OnPointerCancel(PointerCancelEvent evt)
+            {
+                if (evt.pointerId != activePointerId) return;
+                FinishPointerInteraction(evt, commit: false);
+            }
+
+            void OnPointerCaptureOut(PointerCaptureOutEvent _)
+            {
+                if (activePointerId >= 0) ResetDragVisuals();
+                activePointerId = -1;
+            }
+
+            void OnDetachFromPanel(DetachFromPanelEvent _)
+            {
+                ResetDragVisuals();
+                activePointerId = -1;
+                layerButton.UnregisterCallback<PointerDownEvent>(OnPointerDown, TrickleDown.TrickleDown);
+                layerButton.UnregisterCallback<PointerMoveEvent>(OnPointerMove, TrickleDown.TrickleDown);
+                layerButton.UnregisterCallback<PointerUpEvent>(OnPointerUp, TrickleDown.TrickleDown);
+                layerButton.UnregisterCallback<PointerCancelEvent>(OnPointerCancel, TrickleDown.TrickleDown);
+                layerButton.UnregisterCallback<PointerCaptureOutEvent>(OnPointerCaptureOut);
+                layerButton.UnregisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
+            }
+
+            void FinishPointerInteraction(EventBase evt, bool commit)
+            {
+                int pointerId = activePointerId;
+                activePointerId = -1;
+
+                if (commit && !moved)
+                {
+                    InspectLayer(stage, layer);
+                }
+                else if (commit && dropTarget?.userData is LayerDragTarget target && target.Layer != layer)
+                {
+                    var siblings = layer.transform.parent.GetComponentsInChildren<StageLayer>(true)
+                        .Where(item => item != null && item.transform.parent == layer.transform.parent)
+                        .OrderBy(item => item.Order)
+                        .ToList();
+                    stage.MoveLayerToIndex(layer, siblings.IndexOf(target.Layer));
+                }
+
+                ResetDragVisuals();
+                if (pointerId >= 0 && layerButton.HasPointerCapture(pointerId)) layerButton.ReleasePointer(pointerId);
+                evt.StopImmediatePropagation();
+            }
+
+            void ResetDragVisuals()
+            {
+                layerButton.style.opacity = StyleKeyword.Null;
+                if (dropTarget != null) dropTarget.style.opacity = StyleKeyword.Null;
+                dropTarget = null;
+            }
+        }
+
+        private static VisualElement FindNearestLayerDropTarget(
+            VisualElement source,
+            CameraStage stage,
+            StageLayer layer,
+            Vector2 pointerPosition)
+        {
+            if (source.panel == null || layer == null) return null;
+
+            var targets = source.panel.visualTree.Query<VisualElement>().ToList()
+                .Where(element => element.userData is LayerDragTarget binding &&
+                                  binding.Stage == stage && binding.Layer != null &&
+                                  binding.Layer.transform.parent == layer.transform.parent)
+                .ToList();
+            if (targets.Count < 2) return null;
+
+            Rect dropBounds = targets[0].worldBound;
+            for (int i = 1; i < targets.Count; i++)
+            {
+                Rect bounds = targets[i].worldBound;
+                dropBounds = Rect.MinMaxRect(
+                    Mathf.Min(dropBounds.xMin, bounds.xMin),
+                    Mathf.Min(dropBounds.yMin, bounds.yMin),
+                    Mathf.Max(dropBounds.xMax, bounds.xMax),
+                    Mathf.Max(dropBounds.yMax, bounds.yMax));
+            }
+            dropBounds.xMin -= 12f;
+            dropBounds.xMax += 12f;
+            dropBounds.yMin -= 12f;
+            dropBounds.yMax += 12f;
+            if (!dropBounds.Contains(pointerPosition)) return null;
+
+            return targets
+                .OrderBy(element => (element.worldBound.center - pointerPosition).sqrMagnitude)
+                .First();
+        }
+
+        private sealed class LayerDragTarget
+        {
+            public readonly CameraStage Stage;
+            public readonly StageLayer Layer;
+
+            public LayerDragTarget(CameraStage stage, StageLayer layer)
+            {
+                Stage = stage;
+                Layer = layer;
+            }
         }
 
         private void PasteLayer(CameraStage stage, StageLayer referenceLayer)

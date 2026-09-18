@@ -355,6 +355,23 @@ namespace Aetherin
             RefreshLayers();
         }
 
+        public void MoveLayerToIndex(StageLayer layer, int targetIndex)
+        {
+            if (layer == null || layer.GetComponentInParent<CameraStage>(true) != this) return;
+
+            Transform parent = layer.transform.parent;
+            var ordered = parent.GetComponentsInChildren<StageLayer>(true)
+                .Where(item => item != null && item.transform.parent == parent)
+                .OrderBy(item => item.Order).ToList();
+            int currentIndex = ordered.IndexOf(layer);
+            if (currentIndex < 0 || targetIndex < 0 || targetIndex >= ordered.Count || currentIndex == targetIndex) return;
+
+            ordered.RemoveAt(currentIndex);
+            ordered.Insert(targetIndex, layer);
+            for (int i = 0; i < ordered.Count; i++) ordered[i].Order = i;
+            RefreshLayers();
+        }
+
         public void MoveLayerToGroup(StageLayer layer, GroupLayer group)
         {
             if (layer == null || group == null || layer == group) return;
