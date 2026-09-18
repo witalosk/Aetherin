@@ -37,35 +37,44 @@ Shader "Aetherin/Movie Billboard"
             float _LutIntensity;
             float _InvertBlend;
 
-            half3 ApplyLut(half3 color)
-            {
-                float size = _LutParams.x;
-                float blue = saturate(color.b) * (size - 1.0);
-                float slice0 = floor(blue);
-                float slice1 = min(slice0 + 1.0, size - 1.0);
-                float2 texel = _LutParams.zw;
-                float2 uv0;
-                float2 uv1;
+half3 ApplyLut(half3 color)
+{
+    float size = _LutParams.x;
+    float blue = saturate(color.b) * (size - 1.0);
+    float slice0 = floor(blue);
+    float slice1 = min(slice0 + 1.0, size - 1.0);
+    float2 texel = _LutParams.zw;
+    float2 uv0;
+    float2 uv1;
 
-                if (_LutParams.y < 0.5)
-                {
-                    uv0 = float2((slice0 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
-                        (saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
-                    uv1 = float2((slice1 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
-                        uv0.y);
-                }
-                else
-                {
-                    uv0 = float2((saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
-                        (slice0 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
-                    uv1 = float2(uv0.x,
-                        (slice1 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
-                }
+    // RとGのピクセル内座標 (0.0 ～ size - 1.0)
+    float redOffset = saturate(color.r) * (size - 1.0);
+    // This LUT library stores G=0 on the top row, while texture UV.y=0 is the bottom row.
+    float greenOffset = (1.0 - saturate(color.g)) * (size - 1.0);
 
-                half3 color0 = SAMPLE_TEXTURE2D(_LutTex, sampler_LutTex, uv0).rgb;
-                half3 color1 = SAMPLE_TEXTURE2D(_LutTex, sampler_LutTex, uv1).rgb;
-                return lerp(color0, color1, frac(blue));
-            }
+    if (_LutParams.y < 0.5) // 横長LUT (Horizontal Strip)
+    {
+        // 修正点: (ピクセル位置 + 0.5) * texel
+        uv0 = float2((slice0 * size + redOffset + 0.5) * texel.x,
+                     (greenOffset + 0.5) * texel.y);
+        uv1 = float2((slice1 * size + redOffset + 0.5) * texel.x,
+                     uv0.y);
+    }
+    else // 縦長LUT (Vertical Strip)
+    {
+        uv0 = float2((redOffset + 0.5) * texel.x,
+                     (slice0 * size + greenOffset + 0.5) * texel.y);
+        uv1 = float2(uv0.x,
+                     (slice1 * size + greenOffset + 0.5) * texel.y);
+    }
+
+    // The flattened LUT is an atlas. Force mip 0 so screen-space derivatives at movie edges
+    // cannot make the sampler bleed into an adjacent blue slice.
+    half3 color0 = SAMPLE_TEXTURE2D_LOD(_LutTex, sampler_LutTex, uv0, 0).rgb;
+    half3 color1 = SAMPLE_TEXTURE2D_LOD(_LutTex, sampler_LutTex, uv1, 0).rgb;
+
+    return lerp(color0, color1, frac(blue));
+}
             Varyings Vert(Attributes input)
             {
                 Varyings output;

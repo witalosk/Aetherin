@@ -10,7 +10,7 @@ namespace Aetherin
     public sealed class ModelLayer : StageLayer
     {
         private const int MaxPooledModelsPerSource = 8;
-        private static readonly Dictionary<GameObject, Stack<PooledModel>> ModelPool = new();
+        private static readonly Dictionary<ModelPoolKey, Stack<PooledModel>> ModelPool = new();
         private static Transform _poolRoot;
 
         private static readonly int ColorAId = Shader.PropertyToID("_ColorA");
@@ -43,6 +43,7 @@ namespace Aetherin
         private GameObject _modelInstance;
         private GameObject _loadedSource;
         private string _loadedKey;
+        private bool _loadedWithSourceMaterials;
         private readonly List<Renderer> _surfaceRenderers = new();
         private readonly List<Renderer> _wireRenderers = new();
         private readonly List<Material> _materials = new();
@@ -129,14 +130,16 @@ namespace Aetherin
         {
             _cameraStage ??= GetComponentInParent<CameraStage>();
             string key = _params.ModelKey ?? string.Empty;
-            if (_loadedKey == key && _modelInstance != null) return;
+            bool useSourceMaterials = _params.MaterialMode == ModelLayerMaterialMode.SourceMaterials;
+            if (_loadedKey == key && _loadedWithSourceMaterials == useSourceMaterials && _modelInstance != null) return;
             ClearModel();
             _loadedKey = key;
+            _loadedWithSourceMaterials = useSourceMaterials;
             GameObject source = _cameraStage != null ? _cameraStage.ResolveModel(key) : null;
             if (source == null) return;
 
             _loadedSource = source;
-            if (TryRentModel(source, out PooledModel pooled))
+            if (TryRentModel(source, useSourceMaterials, out PooledModel pooled))
             {
                 _modelInstance = pooled.Instance;
                 _surfaceRenderers.AddRange(pooled.SurfaceRenderers);
@@ -154,10 +157,13 @@ namespace Aetherin
             {
                 if (renderer is not MeshRenderer && renderer is not SkinnedMeshRenderer) continue;
                 _surfaceRenderers.Add(renderer);
-                var material = new Material(_surfaceShader) { name = "Model Layer Surface (Runtime)" };
-                renderer.sharedMaterials = BuildMaterialArray(renderer.sharedMaterials.Length, material);
-                ApplyLitReflectionSource(renderer);
-                _materials.Add(material);
+                if (!useSourceMaterials)
+                {
+                    var material = new Material(_surfaceShader) { name = "Model Layer Surface (Runtime)" };
+                    renderer.sharedMaterials = BuildMaterialArray(renderer.sharedMaterials.Length, material);
+                    ApplyLitReflectionSource(renderer);
+                    _materials.Add(material);
+                }
                 CreateWireRenderer(renderer);
             }
         }
@@ -292,7 +298,8 @@ namespace Aetherin
             ColorPalette palette = Application.isPlaying && _deckState != null
                 ? _deckState.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
                 : PaletteColorParameter.FallbackPalette;
-            ApplyColors(EvaluatedPaletteColor.Evaluate(_params.Color, palette, context), false, layerOpacity, context);
+            if (_params.MaterialMode != ModelLayerMaterialMode.SourceMaterials)
+                ApplyColors(EvaluatedPaletteColor.Evaluate(_params.Color, palette, context), false, layerOpacity, context);
             ApplyColors(EvaluatedPaletteColor.Evaluate(_params.WireColor, palette, context), true, layerOpacity, context);
             float speed = _params.AnimationSpeed.Evaluate(context);
             if (_modelInstance != null)
@@ -382,7 +389,7 @@ namespace Aetherin
         {
             if (_modelInstance != null && Application.isPlaying && _loadedSource != null)
             {
-                ReturnModel(_loadedSource, new PooledModel(
+                ReturnModel(_loadedSource, _loadedWithSourceMaterials, new PooledModel(
                     _modelInstance,
                     _surfaceRenderers.ToArray(),
                     _wireRenderers.ToArray(),
@@ -405,9 +412,9 @@ namespace Aetherin
 
         private void OnDestroy() => ClearModel();
 
-        private static bool TryRentModel(GameObject source, out PooledModel pooled)
+        private static bool TryRentModel(GameObject source, bool useSourceMaterials, out PooledModel pooled)
         {
-            if (ModelPool.TryGetValue(source, out Stack<PooledModel> models))
+            if (ModelPool.TryGetValue(new ModelPoolKey(source, useSourceMaterials), out Stack<PooledModel> models))
             {
                 while (models.Count > 0)
                 {
@@ -420,15 +427,16 @@ namespace Aetherin
             return false;
         }
 
-        private static void ReturnModel(GameObject source, PooledModel pooled)
+        private static void ReturnModel(GameObject source, bool useSourceMaterials, PooledModel pooled)
         {
             pooled.Instance.SetActive(false);
             pooled.Instance.transform.SetParent(GetPoolRoot(), false);
 
-            if (!ModelPool.TryGetValue(source, out Stack<PooledModel> models))
+            var key = new ModelPoolKey(source, useSourceMaterials);
+            if (!ModelPool.TryGetValue(key, out Stack<PooledModel> models))
             {
                 models = new Stack<PooledModel>();
-                ModelPool.Add(source, models);
+                ModelPool.Add(key, models);
             }
 
             if (models.Count < MaxPooledModelsPerSource)
@@ -489,6 +497,31 @@ namespace Aetherin
                 WireRenderers = wireRenderers;
                 Materials = materials;
                 WireMeshes = wireMeshes;
+            }
+        }
+
+        private readonly struct ModelPoolKey
+        {
+            private readonly GameObject _source;
+            private readonly bool _usesSourceMaterials;
+
+            public ModelPoolKey(GameObject source, bool usesSourceMaterials)
+            {
+                _source = source;
+                _usesSourceMaterials = usesSourceMaterials;
+            }
+
+            public override bool Equals(object obj) =>
+                obj is ModelPoolKey other &&
+                _source == other._source &&
+                _usesSourceMaterials == other._usesSourceMaterials;
+
+            public override int GetHashCode()
+            {
+                unchecked
+                {
+                    return ((_source != null ? _source.GetHashCode() : 0) * 397) ^ _usesSourceMaterials.GetHashCode();
+                }
             }
         }
 

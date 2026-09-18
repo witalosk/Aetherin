@@ -29,6 +29,10 @@ namespace Aetherin
         public MidiBinding RandomLayerHighButton = new();
         public MidiBinding RandomLayerMidButton = new();
         public MidiBinding RandomLayerLowButton = new();
+        [Tooltip("選択中StageのDefault LUTを有効化し、登録済みLUTからランダムに切り替えるPad")]
+        public MidiBinding RandomStageLutButton = new();
+        [Tooltip("選択中StageのDefault LUTを無効化するPad")]
+        public MidiBinding DisableStageLutButton = new();
         [Tooltip("選択中Next Stageの時間速度を切り替えるPad。Speed 0で停止、1で等速")]
         public List<StageTimeSpeedPad> StageTimeSpeedPads = new();
         [Tooltip("選択中Next Stageの時間速度を連続操作するMIDI CC")]
@@ -242,12 +246,16 @@ namespace Aetherin
             string duplicateName = $"{sourceName} Copy";
             List<CameraStageLayerSaveData> layers = source.CaptureLayers();
             List<CameraWorkDeck> cameraWorkDecks = source.CaptureCameraWorkDecks();
+            StageDefaultLutSettings defaultLut = source.CaptureDefaultLut();
             CameraStage next = AddCameraStage(duplicateName);
             int newIndex = _stages.Count - 1;
+            _stages[newIndex]?.RestoreDefaultLut(defaultLut);
+            next?.RestoreDefaultLut(defaultLut);
             next?.RestoreLayers(layers);
             next?.RestoreCameraWorkDecks(cameraWorkDecks);
             if (_currentStages[newIndex] is CameraStage current)
             {
+                current.RestoreDefaultLut(defaultLut);
                 current.RestoreLayers(layers);
                 current.RestoreCameraWorkDecks(cameraWorkDecks);
             }
@@ -391,6 +399,7 @@ namespace Aetherin
                 UpdateBackgroundToggleButton();
                 UpdateLayerToggleButtons();
                 UpdateRandomLayerButtons();
+                UpdateStageDefaultLutButtons();
                 UpdateCameraWorkButtons();
             }
             UpdateStageActivity();
@@ -402,16 +411,18 @@ namespace Aetherin
                 GetCameraStage(_currentStages, _params.CurrentStageIndex)?.StageCamera,
                 GetCameraStage(_nextStages, _params.NextStageIndex)?.StageCamera);
 
-            var currentTexture = GetStageTexture(_currentStages, _params.CurrentStageIndex);
+            StageBase currentStage = GetStage(_currentStages, _params.CurrentStageIndex);
+            var currentTexture = GetStageTexture(currentStage);
             // Swap直後はNextを数フレームかけて再構築するため、選択中スロットも一時的にnullになる。
             // nullを黒へフォールバックすると、フェーダー位置やPost FX次第でOutputに黒フレームが混ざる。
             // 準備中は直前まで表示していたCurrentを両入力に使い、次の絵が描画可能になるまで出力を維持する。
-            var nextTexture = _isPreparingNext
-                ? currentTexture
-                : GetStageTexture(_nextStages, _params.NextStageIndex);
+            StageBase nextStage = _isPreparingNext
+                ? currentStage
+                : GetStage(_nextStages, _params.NextStageIndex);
+            var nextTexture = _isPreparingNext ? currentTexture : GetStageTexture(nextStage);
 
-            _currentPostTexture = _postEffectManager.ProcessCurrent(currentTexture);
-            _nextPostTexture = _postEffectManager.ProcessNext(nextTexture);
+            _currentPostTexture = _postEffectManager.ProcessCurrent(currentTexture, currentStage?.DefaultLut);
+            _nextPostTexture = _postEffectManager.ProcessNext(nextTexture, nextStage?.DefaultLut);
 
             _crossFadeMaterial.SetTexture(TexAId, _currentPostTexture);
             _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
@@ -701,6 +712,66 @@ namespace Aetherin
         }
 
         /// <summary>
+        /// 操作対象StageのDefault LUTをランダム選択または無効化する。
+        /// 通常時はNext、Immediate中はCurrentを対象にする。
+        /// </summary>
+        private void UpdateStageDefaultLutButtons()
+        {
+            _params.RandomStageLutButton ??= new MidiBinding();
+            _params.DisableStageLutButton ??= new MidiBinding();
+
+            CameraStage stage = GetCameraStage(EditingStages, EditingStageIndex);
+            if (stage == null)
+            {
+                _params.RandomStageLutButton.ClearLed();
+                _params.DisableStageLutButton.ClearLed();
+                return;
+            }
+
+            if (_params.RandomStageLutButton.WasNoteOn)
+                RandomizeStageDefaultLut(stage);
+
+            // 両Padを同じフレームに押した場合は、明示的なOffを優先する。
+            if (_params.DisableStageLutButton.WasNoteOn)
+                stage.DefaultLut.Enabled = false;
+
+            bool enabled = stage.DefaultLut.Enabled;
+            _params.RandomStageLutButton.SetLed(enabled ? Color.magenta : Color.magenta * 0.15f);
+            _params.DisableStageLutButton.SetLed(enabled ? Color.red * 0.15f : Color.red);
+        }
+
+        private static void RandomizeStageDefaultLut(CameraStage stage)
+        {
+            if (stage == null) return;
+
+            IReadOnlyList<string> keys = stage.GetLutKeys();
+            if (keys == null || keys.Count == 0) return;
+
+            StageDefaultLutSettings settings = stage.DefaultLut;
+            int selectedIndex = UnityEngine.Random.Range(0, keys.Count);
+            if (keys.Count > 1 && keys[selectedIndex] == settings.LutKey)
+            {
+                int currentIndex = -1;
+                for (int i = 0; i < keys.Count; i++)
+                {
+                    if (keys[i] != settings.LutKey) continue;
+                    currentIndex = i;
+                    break;
+                }
+
+                if (currentIndex >= 0)
+                {
+                    // 現在値を除いた範囲を一様に選び、押すたびに必ず別のLUTへ切り替える。
+                    selectedIndex = UnityEngine.Random.Range(0, keys.Count - 1);
+                    if (selectedIndex >= currentIndex) selectedIndex++;
+                }
+            }
+
+            settings.LutKey = keys[selectedIndex];
+            settings.Enabled = true;
+        }
+
+        /// <summary>
         /// レイヤー種別に対応する色を返す。UIとPadで同じ関数を使うため、
         /// 同じ種別のレイヤーは配置順にかかわらず常に同じ色になる。
         /// </summary>
@@ -919,11 +990,14 @@ namespace Aetherin
             if (retired != null) Destroy(retired.gameObject);
         }
 
-        private static Texture GetStageTexture(List<StageBase> stages, int index)
+        private static StageBase GetStage(List<StageBase> stages, int index)
         {
-            if (stages == null || stages.Count == 0) return Texture2D.blackTexture;
+            if (stages == null || stages.Count == 0) return null;
+            return stages[Mathf.Clamp(index, 0, stages.Count - 1)];
+        }
 
-            var stage = stages[Mathf.Clamp(index, 0, stages.Count - 1)];
+        private static Texture GetStageTexture(StageBase stage)
+        {
             return stage != null && stage.OutputTexture != null ? stage.OutputTexture : Texture2D.blackTexture;
         }
 
@@ -1048,8 +1122,43 @@ namespace Aetherin
                         : UI.Row(UI.Field("Background", () => selectedCameraStage.BackgroundMode, value => selectedCameraStage.BackgroundMode = value))
 
                 ),
+                CreateStageDefaultLutElement(selectedCameraStage),
                 CreateStageListElement(stageNames)
             );
+        }
+
+        private Element CreateStageDefaultLutElement(CameraStage stage)
+        {
+            if (stage == null) return UI.Label("Default LUT: CameraStageを選択してください");
+
+            StageDefaultLutSettings settings = stage.DefaultLut;
+            IReadOnlyList<string> keys = stage.GetLutKeys();
+            Element selector;
+            if (keys != null && keys.Count > 0)
+            {
+                selector = UI.Dropdown("LUT", () =>
+                {
+                    for (int i = 0; i < keys.Count; i++)
+                        if (keys[i] == settings.LutKey) return i;
+                    return 0;
+                }, value => settings.LutKey = keys[Mathf.Clamp(value, 0, keys.Count - 1)], keys);
+            }
+            else
+            {
+                selector = UI.Dropdown("LUT", () => 0, _ => { }, new[] { "LUT未登録" })
+                    .SetInteractable(false);
+            }
+
+            return UI.Fold("Default LUT", UI.Column(
+                UI.Toggle("Enabled", () => settings.Enabled, value =>
+                {
+                    settings.Enabled = value;
+                    if (value && string.IsNullOrWhiteSpace(settings.LutKey) && keys != null && keys.Count > 0)
+                        settings.LutKey = keys[0];
+                }),
+                UI.DynamicElementIf(() => settings.Enabled, () => UI.Column(
+                    selector,
+                    UI.Field("Intensity", Binder.Create(settings.Intensity, typeof(FloatParameter)))))));
         }
 
         private Element CreateCameraWorkListElement(int stageIndex)

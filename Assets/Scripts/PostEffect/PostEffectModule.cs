@@ -14,7 +14,7 @@ namespace Aetherin
         Scanline,
         Posterize,
         Invert,
-        CrossBlur,
+        CrossFilter,
         LedDisplay,
         HorizontalFold,
         HashInvertBlocks,
@@ -99,6 +99,22 @@ namespace Aetherin
         [Tooltip("エフェクトごとの補助パラメータ")]
         public FloatParameter Secondary = new(0.5f);
 
+        [Header("Cross Filter")]
+        [Tooltip("光条を生成する最低輝度")]
+        public FloatParameter CrossFilterThreshold = new(1f);
+        [Tooltip("抽出した高輝度成分の露出")]
+        public FloatParameter CrossFilterExposure = new(1f);
+        [Tooltip("放射状に生成する光条の本数")]
+        public IntParameter CrossFilterLineCount = new(4);
+        [Tooltip("8タップ再帰ブラーの反復回数")]
+        public IntParameter CrossFilterPassCount = new(3);
+        [Tooltip("光条のサンプル間隔")]
+        public FloatParameter CrossFilterSampleLength = new(1f);
+        [Tooltip("光条の減衰率")]
+        public FloatParameter CrossFilterAttenuation = new(0.85f);
+        [Tooltip("光条全体の回転角（度）")]
+        public FloatParameter CrossFilterRotation = new(0f);
+
         [Tooltip("HSV Levels: 色相の回転（-1..1 が1周）")] public FloatParameter Hue = new(0f);
         [Tooltip("HSV Levels: 彩度の倍率")] public FloatParameter Saturation = new(1f);
         [Tooltip("HSV Levels: 明度の倍率")] public FloatParameter Value = new(1f);
@@ -158,6 +174,13 @@ namespace Aetherin
             Strength ??= new FloatParameter(1f); Amount ??= new FloatParameter(0.02f);
             Scale ??= new FloatParameter(4f); Speed ??= new FloatParameter(1f);
             Secondary ??= new FloatParameter(0.5f); Hue ??= new FloatParameter(0f);
+            CrossFilterThreshold ??= new FloatParameter(1f);
+            CrossFilterExposure ??= new FloatParameter(1f);
+            CrossFilterLineCount ??= new IntParameter(4);
+            CrossFilterPassCount ??= new IntParameter(3);
+            CrossFilterSampleLength ??= new FloatParameter(1f);
+            CrossFilterAttenuation ??= new FloatParameter(0.85f);
+            CrossFilterRotation ??= new FloatParameter(0f);
             Saturation ??= new FloatParameter(1f); Value ??= new FloatParameter(1f);
             BlackLevel ??= new FloatParameter(0f); WhiteLevel ??= new FloatParameter(1f);
             Gamma ??= new FloatParameter(1f);

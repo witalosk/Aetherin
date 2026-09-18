@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.IO;
 using Klak.Hap;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -35,6 +37,8 @@ namespace Aetherin
         private string _loadedPath;
         private MoviePathMode _loadedPathMode;
         private int _stageTimeRevision = -1;
+        private readonly List<string> _directoryMoviePaths = new();
+        private int _directoryMovieIndex = -1;
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -146,11 +150,18 @@ namespace Aetherin
             if (!Application.isPlaying || _cameraStage == null) return;
             int cameraWork = _cameraStage.CurrentCameraWork;
             string path = ResolvePath(cameraWork);
+            bool sourceUnchanged = _loadedPath == path && _loadedPathMode == _params.PathMode;
+            if (sourceUnchanged && _loadedCameraWork != cameraWork && IsDirectoryPlaylist)
+            {
+                _loadedCameraWork = cameraWork;
+                AdvanceDirectoryMovie();
+                return;
+            }
             if (_loadedCameraWork == cameraWork && _loadedPath == path && _loadedPathMode == _params.PathMode)
             {
                 if (_player != null)
                 {
-                    _player.loop = _params.Loop;
+                    _player.loop = !IsDirectoryPlaylist || _params.Loop && _directoryMoviePaths.Count == 1;
                     StageBase stage = GetComponentInParent<StageBase>();
                     _player.speed = _params.PlaybackSpeed * (stage != null ? stage.StageTimeSpeed : 1f);
                     if (stage != null && _stageTimeRevision != stage.StageTimeRevision)
@@ -158,13 +169,16 @@ namespace Aetherin
                         _stageTimeRevision = stage.StageTimeRevision;
                         _player.time = 0f;
                     }
+
+                    if (IsDirectoryPlaylist && _player.speed > 0f && _player.time >= _player.streamDuration)
+                        AdvanceDirectoryMovie();
                 }
                 return;
             }
             _loadedCameraWork = cameraWork;
             _loadedPath = path;
             _loadedPathMode = _params.PathMode;
-            OpenMovie(path);
+            OpenMoviePath(path);
         }
 
         private string ResolvePath(int cameraWork)
@@ -174,13 +188,64 @@ namespace Aetherin
             return string.IsNullOrWhiteSpace(_params.VideoPaths[index]) ? null : _params.VideoPaths[index].Trim();
         }
 
-        private void OpenMovie(string path)
+        private bool IsDirectoryPlaylist => _directoryMovieIndex >= 0;
+
+        private void OpenMoviePath(string path)
+        {
+            _directoryMoviePaths.Clear();
+            _directoryMovieIndex = -1;
+            if (string.IsNullOrEmpty(path))
+            {
+                OpenMovie(null, false);
+                return;
+            }
+
+            string directoryPath = _params.PathMode == MoviePathMode.StreamingAssets
+                ? Path.Combine(Application.streamingAssetsPath, path)
+                : path;
+            if (Directory.Exists(directoryPath))
+            {
+                foreach (string filePath in Directory.GetFiles(directoryPath, "*.mov", SearchOption.TopDirectoryOnly))
+                    _directoryMoviePaths.Add(_params.PathMode == MoviePathMode.StreamingAssets
+                        ? Path.Combine(path, Path.GetFileName(filePath))
+                        : filePath);
+                _directoryMoviePaths.Sort(System.StringComparer.OrdinalIgnoreCase);
+                if (_directoryMoviePaths.Count > 0)
+                {
+                    _directoryMovieIndex = 0;
+                    OpenMovie(_directoryMoviePaths[_directoryMovieIndex], true);
+                    return;
+                }
+
+                OpenMovie(null, false);
+                return;
+            }
+
+            OpenMovie(path, false);
+        }
+
+        private void AdvanceDirectoryMovie()
+        {
+            if (_directoryMoviePaths.Count == 0) return;
+            if (_directoryMovieIndex + 1 >= _directoryMoviePaths.Count)
+            {
+                if (!_params.Loop) return;
+                _directoryMovieIndex = 0;
+            }
+            else
+            {
+                _directoryMovieIndex++;
+            }
+            OpenMovie(_directoryMoviePaths[_directoryMovieIndex], true);
+        }
+
+        private void OpenMovie(string path, bool directoryPlaylist)
         {
             ReleasePlayer();
             if (string.IsNullOrEmpty(path)) return;
 
             _player = gameObject.AddComponent<HapPlayer>();
-            _player.loop = _params.Loop;
+            _player.loop = !directoryPlaylist || _params.Loop && _directoryMoviePaths.Count == 1;
             StageBase stage = GetComponentInParent<StageBase>();
             _player.speed = _params.PlaybackSpeed * (stage != null ? stage.StageTimeSpeed : 1f);
             _stageTimeRevision = stage != null ? stage.StageTimeRevision : -1;

@@ -24,8 +24,6 @@ namespace Aetherin
 
         public static LutLibrary FindBestAvailable(LutLibrary preferred = null)
         {
-            if (preferred != null && preferred.Count > 0) return preferred;
-
             LutLibrary best = preferred;
             foreach (LutLibrary library in FindObjectsByType<LutLibrary>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))

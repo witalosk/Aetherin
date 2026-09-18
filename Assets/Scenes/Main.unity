@@ -94,7 +94,7 @@ LightmapSettings:
     m_TrainingDataDestination: TrainingData
     m_LightProbeSampleCountMultiplier: 4
   m_LightingDataAsset: {fileID: 112000000, guid: 194853fb4da57944da8e0f060b5c969c, type: 2}
-  m_LightingSettings: {fileID: 0}
+  m_LightingSettings: {fileID: 4890085278179872738, guid: e2d2c8448e0bd904395700e96a990dac, type: 2}
 --- !u!196 &4
 NavMeshSettings:
   serializedVersion: 2
@@ -478,6 +478,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.LutLibrary
   _textures:
+  - {fileID: 2800000, guid: c90d940152a7c1541944b5ce35201977, type: 3}
   - {fileID: 2800000, guid: f2a0cdefb12ea4c319055558352f97b3, type: 3}
   - {fileID: 2800000, guid: 441c27c78433f4bf582ef92c938ae995, type: 3}
   - {fileID: 2800000, guid: 24d1a9f36648547fc81b92fa445e023e, type: 3}
@@ -520,6 +521,7 @@ MonoBehaviour:
   - {fileID: 2800000, guid: 3cc1fae7e118a491e844f05944dda64c, type: 3}
   - {fileID: 2800000, guid: a42280902c44f4e808838fcfc64e4eaa, type: 3}
   - {fileID: 2800000, guid: 9de46428bcb004ee88919d3a3a420e53, type: 3}
+  - {fileID: 2800000, guid: 365d14ca42e9b0546b075571302c7385, type: 3}
 --- !u!1 &227302514
 GameObject:
   m_ObjectHideFlags: 0
@@ -874,6 +876,13 @@ MonoBehaviour:
   _stageName: TestStage
   _tex: {fileID: 0}
   _stageTimeSpeed: 1
+  _defaultLut:
+    Enabled: 0
+    LutKey: 
+    Intensity:
+      BaseValue: 1
+      Modulation:
+        Modulators: []
   _shader: {fileID: 4800000, guid: 87790690f7b442489498db6c9920fad3, type: 3}
 --- !u!4 &735597824
 Transform:
@@ -1205,6 +1214,13 @@ MonoBehaviour:
   _stageName: CameraStage
   _tex: {fileID: 0}
   _stageTimeSpeed: 1
+  _defaultLut:
+    Enabled: 0
+    LutKey: 
+    Intensity:
+      BaseValue: 1
+      Modulation:
+        Modulators: []
   _camera: {fileID: 174343825}
   _backgroundMode: 0
   _backgroundColor: 0
@@ -1290,7 +1306,6 @@ GameObject:
   m_Component:
   - component: {fileID: 910745197}
   - component: {fileID: 910745198}
-  - component: {fileID: 910745199}
   m_Layer: 0
   m_Name: TextureLibrarly
   m_TagString: Untagged
@@ -1330,19 +1345,6 @@ MonoBehaviour:
     Texture: {fileID: 2800000, guid: 860376efed7c0994dad1d3d4eea556c2, type: 3}
   - Key: hyoshiki
     Texture: {fileID: 2800000, guid: 6c52e56b1f6c3d844a535e04483388d0, type: 3}
---- !u!114 &910745199
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 910745196}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e5f5ec29cf9465eae51d31c0d4463a0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.LutLibrary
-  _textures: []
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -1433,6 +1435,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: RosettaUIRootUIToolkit
       objectReference: {fileID: 0}
+    - target: {fileID: 1745894312262942092, guid: 4ed1865184a851c448a44589b9f302b9, type: 3}
+      propertyPath: m_PanelSettings
+      value: 
+      objectReference: {fileID: 11400000, guid: cda6a22322086a645b9bb765595b9ead, type: 2}
     - target: {fileID: 2287126204365735152, guid: 4ed1865184a851c448a44589b9f302b9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 1.75991
@@ -2213,6 +2219,8 @@ MonoBehaviour:
     Model: {fileID: 2869347680299580818, guid: e8abb4a9a02c22c46bab317756cac17e, type: 3}
   - Key: rose
     Model: {fileID: 919132149155446097, guid: 682173a6c8bbd704a83b665546887040, type: 3}
+  - Key: neonDistrict
+    Model: {fileID: 1147950861311227912, guid: 15c9a3b9662a98543802f375732b84a9, type: 3}
 --- !u!4 &1994971894
 Transform:
   m_ObjectHideFlags: 0
@@ -2457,7 +2465,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PostEffectManager
   _shader: {fileID: 4800000, guid: 09e24602631035546aba142dec7dc527, type: 3}
-  _lutLibrary: {fileID: 910745199}
+  _crossFilterShader: {fileID: 0}
+  _lutLibrary: {fileID: 0}
   _params:
     EditMode: 0
     Current:

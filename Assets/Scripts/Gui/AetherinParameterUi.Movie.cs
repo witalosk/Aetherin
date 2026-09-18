@@ -21,7 +21,7 @@ namespace Aetherin
 
             return UI.Column(UI.Tabs(
                 ("Movie", UI.Column(
-                    UI.List("Video Paths", () => p.VideoPaths, value => p.VideoPaths = value),
+                    UI.List("Video Paths (.mov or folder)", () => p.VideoPaths, value => p.VideoPaths = value),
                     UI.Field("Path Mode", () => p.PathMode, value => p.PathMode = value),
                     UI.Toggle("Loop", () => p.Loop, value => p.Loop = value),
                     UI.Field("Playback Speed", () => p.PlaybackSpeed, value => p.PlaybackSpeed = value),

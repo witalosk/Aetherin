@@ -134,9 +134,14 @@ namespace Aetherin
                 case PostEffectType.Posterize:
                     yield return Param("Levels", module.Scale);
                     break;
-                case PostEffectType.CrossBlur:
-                    yield return Param("Radius", module.Amount);
-                    yield return Param("Iterations", module.Scale);
+                case PostEffectType.CrossFilter:
+                    yield return Param("Threshold", module.CrossFilterThreshold);
+                    yield return Param("Exposure", module.CrossFilterExposure);
+                    yield return Param("Lines", module.CrossFilterLineCount);
+                    yield return Param("Passes", module.CrossFilterPassCount);
+                    yield return Param("Sample Length", module.CrossFilterSampleLength);
+                    yield return Param("Attenuation", module.CrossFilterAttenuation);
+                    yield return Param("Rotation", module.CrossFilterRotation);
                     break;
                 case PostEffectType.LedDisplay:
                     yield return Param("Dot Size", module.Amount);

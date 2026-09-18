@@ -17,6 +17,7 @@ namespace Aetherin
         Glass,
         Lit,
         Unlit,
+        SourceMaterials,
     }
 
     [Serializable]

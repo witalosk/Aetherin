@@ -33,7 +33,6 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float4 _LutParams;
             float _LutEnabled;
             float _LutIntensity;
-            float _KawaseOffset;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float3 sampleLut(float3 color)
@@ -48,17 +47,23 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 if (_LutParams.y < 0.5)
                 {
                     uv0 = float2((slice0 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
-                        (saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                        ((1.0 - saturate(color.g)) * (size - 1.0) + 0.5) * texel.y);
                     uv1 = float2((slice1 * size + saturate(color.r) * (size - 1.0) + 0.5) * texel.x, uv0.y);
                 }
                 else
                 {
                     uv0 = float2((saturate(color.r) * (size - 1.0) + 0.5) * texel.x,
-                        (slice0 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                        (slice0 * size + (1.0 - saturate(color.g)) * (size - 1.0) + 0.5) * texel.y);
                     uv1 = float2(uv0.x,
-                        (slice1 * size + saturate(color.g) * (size - 1.0) + 0.5) * texel.y);
+                        (slice1 * size + (1.0 - saturate(color.g)) * (size - 1.0) + 0.5) * texel.y);
                 }
-                return lerp(tex2D(_LutTex, uv0).rgb, tex2D(_LutTex, uv1).rgb, frac(blue));
+                // A flattened LUT is an atlas, not an ordinary image. Implicit derivatives can
+                // select/filter across neighboring blue slices at high-contrast screen edges.
+                // Always sample the base level so screen-space color gradients cannot bleed slices.
+                return lerp(
+                    tex2Dlod(_LutTex, float4(uv0, 0.0, 0.0)).rgb,
+                    tex2Dlod(_LutTex, float4(uv1, 0.0, 0.0)).rgb,
+                    frac(blue));
             }
 
             float noise21(float2 p)
@@ -191,16 +196,8 @@ Shader "Hidden/Aetherin/PostEffectStack"
                     fx.rgb = 1.0 - src.rgb;
                     fx = lerp(src, fx, saturate(_Strength));
                 }
-                else if (_EffectType == 9) // Cross blur
-                {
-                    float2 offset = _MainTex_TexelSize.xy * max(0.0, _KawaseOffset);
-                    fx = (
-                        tex2D(_MainTex, saturate(uv + float2(-offset.x, -offset.y))) +
-                        tex2D(_MainTex, saturate(uv + float2( offset.x, -offset.y))) +
-                        tex2D(_MainTex, saturate(uv + float2(-offset.x,  offset.y))) +
-                        tex2D(_MainTex, saturate(uv + float2( offset.x,  offset.y)))) * 0.25;
-                    fx = lerp(src, fx, saturate(_Strength));
-                }
+                else if (_EffectType == 9) // Cross filter is rendered by Hidden/Aetherin/CrossFilter.
+                    fx = src;
                 else if (_EffectType == 10) // LED display
                 {
                     float leds = max(2.0, abs(_Scale));
@@ -360,5 +357,6 @@ Shader "Hidden/Aetherin/PostEffectStack"
             }
             ENDHLSL
         }
+
     }
 }

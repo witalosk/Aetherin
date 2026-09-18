@@ -29,6 +29,7 @@ namespace Aetherin
                     StageIndex = i,
                     BackgroundMode = stage.BackgroundMode,
                     BackgroundColor = stage.BackgroundColor,
+                    DefaultLut = stage.CaptureDefaultLut(),
                     Layers = stage.CaptureLayers(),
                     CameraWorkDecks = stage.CaptureCameraWorkDecks(),
                 });
@@ -71,6 +72,10 @@ namespace Aetherin
                     _nextStages[stageIndex]?.SetIdentity(savedStage.StageId, stageName);
                 }
 
+                _stages[stageIndex]?.RestoreDefaultLut(savedStage.DefaultLut);
+                _currentStages[stageIndex]?.RestoreDefaultLut(savedStage.DefaultLut);
+                _nextStages[stageIndex]?.RestoreDefaultLut(savedStage.DefaultLut);
+
                 if (_nextStages[stageIndex] is CameraStage nextStage)
                 {
                     nextStage.RestoreLayers(savedStage.Layers);
@@ -98,7 +103,7 @@ namespace Aetherin
     [Serializable]
     public sealed class CameraStageSaveData
     {
-        public int Version = 2;
+        public int Version = 3;
         public List<CameraStageLayersSaveData> Stages = new();
     }
 
@@ -111,6 +116,7 @@ namespace Aetherin
         public int StageIndex;
         public CameraStageBackgroundMode BackgroundMode;
         public PaletteColorSource BackgroundColor = PaletteColorSource.BackgroundColor1;
+        public StageDefaultLutSettings DefaultLut = new();
         public List<CameraStageLayerSaveData> Layers = new();
         public List<CameraWorkDeck> CameraWorkDecks = new();
     }

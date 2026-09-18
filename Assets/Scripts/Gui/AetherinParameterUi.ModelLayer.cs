@@ -28,11 +28,13 @@ namespace Aetherin
                         Param(UI.Label("Scale"), p.Scale),
                         Param(UI.Label("Anchor"), p.Anchor))),
                     ("Appearance", UI.Column(
-                        Param(UI.Label("Color"), p.Color),
                         Param(UI.Label("Wire Color"), p.WireColor),
-                        Param(UI.Label("Opacity"), p.Opacity),
-                        UI.DynamicElementIf(() => p.MaterialMode != ModelLayerMaterialMode.Glass,
-                            () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)),
+                        UI.DynamicElementIf(() => p.MaterialMode != ModelLayerMaterialMode.SourceMaterials,
+                            () => UI.Column(
+                                Param(UI.Label("Color"), p.Color),
+                                Param(UI.Label("Opacity"), p.Opacity),
+                                UI.DynamicElementIf(() => p.MaterialMode != ModelLayerMaterialMode.Glass,
+                                    () => UI.Field("Blend Mode", () => p.BlendMode, value => p.BlendMode = value)))),
                         UI.DynamicElementOnStatusChanged(() => p.MaterialMode, mode => mode == ModelLayerMaterialMode.Lit
                             ? UI.Column(Param("Metallic", p.Metallic), Param("Smoothness", p.Smoothness),
                                 UI.Field("Reflection Source", () => p.LitReflectionSource, value => p.LitReflectionSource = value))

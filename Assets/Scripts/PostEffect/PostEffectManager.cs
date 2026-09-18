@@ -16,6 +16,7 @@ namespace Aetherin
         public bool FoldParams => true;
 
         [SerializeField] private Shader _shader;
+        [SerializeField] private Shader _crossFilterShader;
         [SerializeField] private LutLibrary _lutLibrary;
         [SerializeField] private PostEffectManagerParams _params = new();
 
@@ -42,10 +43,17 @@ namespace Aetherin
         private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
         private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
         private static readonly int LutIntensityId = Shader.PropertyToID("_LutIntensity");
-        private static readonly int KawaseOffsetId = Shader.PropertyToID("_KawaseOffset");
+        private static readonly int CrossTexId = Shader.PropertyToID("_CrossTex");
+        private static readonly int CrossThresholdId = Shader.PropertyToID("_CrossThreshold");
+        private static readonly int CrossExposureId = Shader.PropertyToID("_CrossExposure");
+        private static readonly int CrossDirectionId = Shader.PropertyToID("_CrossDirection");
+        private static readonly int CrossStepId = Shader.PropertyToID("_CrossStep");
+        private static readonly int CrossAttenuationId = Shader.PropertyToID("_CrossAttenuation");
+        private static readonly int CrossIntensityId = Shader.PropertyToID("_CrossIntensity");
         private static readonly int RuntimeTexId = Shader.PropertyToID("_RuntimeTex");
 
         private Material _material;
+        private Material _crossFilterMaterial;
         private StackRuntime _current = new();
         private StackRuntime _next = new();
         private StackRuntime _output = new();
@@ -75,6 +83,11 @@ namespace Aetherin
             EnsureLutLibrary();
             Shader shader = _shader != null ? _shader : Shader.Find("Hidden/Aetherin/PostEffectStack");
             if (shader != null) _material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            Shader crossFilterShader = _crossFilterShader != null
+                ? _crossFilterShader
+                : Shader.Find("Hidden/Aetherin/CrossFilter");
+            if (crossFilterShader != null)
+                _crossFilterMaterial = new Material(crossFilterShader) { hideFlags = HideFlags.HideAndDontSave };
         }
 
         private void Start()
@@ -82,7 +95,7 @@ namespace Aetherin
             _deckStateProvider.NextPromoted += PromoteNextToCurrent;
         }
 
-        public Texture ProcessCurrent(Texture source)
+        public Texture ProcessCurrent(Texture source, StageDefaultLutSettings stageLut)
         {
             RefreshEditingDeckState();
             bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Current) ?? false;
@@ -91,10 +104,11 @@ namespace Aetherin
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
             _params.Next ??= new PostEffectStack();
-            return Process(source, _params.Current, _current, context, StageDeck.Current);
+            Texture input = ProcessStageDefaultLut(source, stageLut, _current, context);
+            return Process(input, _params.Current, _current, context, StageDeck.Current);
         }
 
-        public Texture ProcessNext(Texture source) 
+        public Texture ProcessNext(Texture source, StageDefaultLutSettings stageLut)
         {
             RefreshEditingDeckState();
             bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Next) ?? true;
@@ -102,7 +116,8 @@ namespace Aetherin
                 Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
-            return Process(source, _params.Next, _next, context, StageDeck.Next);
+            Texture input = ProcessStageDefaultLut(source, stageLut, _next, context);
+            return Process(input, _params.Next, _next, context, StageDeck.Next);
         }
 
         /// <summary>
@@ -241,7 +256,8 @@ namespace Aetherin
                     if (strength <= 0f) continue;
 
                     _material.SetTexture(SourceTexId, input);
-                    _material.SetTexture(HistoryTexId, runtime.HistoryValid ? runtime.History : input);
+                    _material.SetTexture(HistoryTexId,
+                        runtime.BackBufferValid ? runtime.BackBuffer : input);
                     _material.SetInt(EffectTypeId, (int)module.Type);
                     _material.SetFloat(StrengthId, strength);
                     _material.SetFloat(AmountId, module.Amount?.Evaluate(moduleContext) ?? 0f);
@@ -269,33 +285,24 @@ namespace Aetherin
                         Texture runtimeOutput = runtimeShader.Process(input, module, moduleContext,
                             _audioFeatureProvider, _beatManager,
                             _deckStateProvider?.GetState(deckType)?.Palette);
-                        RenderTexture target = runtime.NextTarget(input);
+                        runtime.Buffers.Reset(input);
+                        RenderTexture target = runtime.Buffers.Write;
                         _material.SetTexture(RuntimeTexId, runtimeOutput != null ? runtimeOutput : input);
                         Graphics.Blit(input, target, _material);
-                        input = target;
+                        runtime.Buffers.Swap();
+                        input = runtime.Buffers.Read;
                     }
-                    else if (module.Type == PostEffectType.CrossBlur)
+                    else if (module.Type == PostEffectType.CrossFilter)
                     {
-                        int iterations = Mathf.Clamp(Mathf.RoundToInt(Mathf.Abs(
-                            module.Scale?.Evaluate(moduleContext) ?? 1f)), 1, 12);
-                        float radius = Mathf.Max(0f, module.Amount?.Evaluate(moduleContext) ?? 0f);
-                        float passStrength = 1f - Mathf.Pow(1f - strength, 1f / iterations);
-                        _material.SetFloat(StrengthId, passStrength);
-                        for (int pass = 0; pass < iterations; pass++)
-                        {
-                            RenderTexture target = runtime.NextTarget(input);
-                            _material.SetTexture(SourceTexId, input);
-                            _material.SetFloat(KawaseOffsetId,
-                                radius * Mathf.Min(input.width, input.height) * (pass + 0.5f) / iterations);
-                            Graphics.Blit(input, target, _material);
-                            input = target;
-                        }
+                        input = ProcessCrossFilter(input, module, runtime, moduleContext, strength);
                     }
                     else
                     {
-                        RenderTexture target = runtime.NextTarget(input);
+                        runtime.Buffers.Reset(input);
+                        RenderTexture target = runtime.Buffers.Write;
                         Graphics.Blit(input, target, _material);
-                        input = target;
+                        runtime.Buffers.Swap();
+                        input = runtime.Buffers.Read;
                     }
                     wroteAny = true;
                 }
@@ -303,16 +310,94 @@ namespace Aetherin
 
             if (wroteAny)
             {
-                Graphics.Blit(input, runtime.History);
-                runtime.HistoryValid = true;
+                Graphics.Blit(input, runtime.BackBuffer);
+                runtime.BackBufferValid = true;
             }
             else if (outputOnly)
             {
                 // Padを離した後に、前回の押下中の履歴を次回へ持ち越さない。
-                runtime.HistoryValid = false;
+                runtime.BackBufferValid = false;
             }
 
             return input;
+        }
+
+        private Texture ProcessCrossFilter(Texture source, PostEffectModule module, StackRuntime runtime,
+            in ModulationContext context, float strength)
+        {
+            if (_crossFilterMaterial == null) return source;
+
+            int lineCount = Mathf.Clamp(module.CrossFilterLineCount.Evaluate(context), 1, 12);
+            int passCount = Mathf.Clamp(module.CrossFilterPassCount.Evaluate(context), 1, 6);
+            float sampleLength = Mathf.Max(0f, module.CrossFilterSampleLength.Evaluate(context));
+            float attenuation = Mathf.Clamp(module.CrossFilterAttenuation.Evaluate(context), 0.01f, 1f);
+            float rotation = module.CrossFilterRotation.Evaluate(context) * Mathf.Deg2Rad;
+
+            RenderTexture original = GetCrossFilterTemporary(source, "Cross Filter Original");
+            RenderTexture bright = GetCrossFilterTemporary(source, "Cross Filter Bright");
+            RenderTexture accumulation = GetCrossFilterTemporary(source, "Cross Filter Accumulation");
+            try
+            {
+                Graphics.Blit(source, original);
+                _crossFilterMaterial.SetFloat(CrossThresholdId,
+                    Mathf.Max(0f, module.CrossFilterThreshold.Evaluate(context)));
+                _crossFilterMaterial.SetFloat(CrossExposureId,
+                    Mathf.Max(0f, module.CrossFilterExposure.Evaluate(context)));
+                Graphics.Blit(original, bright, _crossFilterMaterial, 0);
+                Graphics.Blit(Texture2D.blackTexture, accumulation);
+
+                for (int directionIndex = 0; directionIndex < lineCount; directionIndex++)
+                {
+                    float angle = rotation + Mathf.PI * 2f * directionIndex / lineCount;
+                    _crossFilterMaterial.SetVector(CrossDirectionId,
+                        new Vector4(Mathf.Sin(angle), Mathf.Cos(angle), 0f, 0f));
+                    Texture lineInput = bright;
+                    float step = sampleLength;
+                    float passAttenuation = attenuation;
+
+                    for (int pass = 0; pass < passCount; pass++)
+                    {
+                        runtime.Buffers.Reset(lineInput);
+                        _crossFilterMaterial.SetFloat(CrossStepId, step);
+                        _crossFilterMaterial.SetFloat(CrossAttenuationId, passAttenuation);
+                        Graphics.Blit(lineInput, runtime.Buffers.Write, _crossFilterMaterial, 1);
+                        runtime.Buffers.Swap();
+                        lineInput = runtime.Buffers.Read;
+                        step *= 8f;
+                        passAttenuation = Mathf.Pow(passAttenuation, 8f);
+                    }
+
+                    runtime.Buffers.Reset(lineInput);
+                    _crossFilterMaterial.SetTexture(CrossTexId, lineInput);
+                    Graphics.Blit(accumulation, runtime.Buffers.Write, _crossFilterMaterial, 2);
+                    runtime.Buffers.Swap();
+                    Graphics.Blit(runtime.Buffers.Read, accumulation);
+                }
+
+                runtime.Buffers.Reset(runtime.Buffers.Read);
+                _crossFilterMaterial.SetTexture(CrossTexId, accumulation);
+                _crossFilterMaterial.SetFloat(CrossIntensityId, 1f / lineCount);
+                _crossFilterMaterial.SetFloat(StrengthId, strength);
+                Graphics.Blit(original, runtime.Buffers.Write, _crossFilterMaterial, 3);
+                runtime.Buffers.Swap();
+                return runtime.Buffers.Read;
+            }
+            finally
+            {
+                RenderTexture.ReleaseTemporary(original);
+                RenderTexture.ReleaseTemporary(bright);
+                RenderTexture.ReleaseTemporary(accumulation);
+            }
+        }
+
+        private static RenderTexture GetCrossFilterTemporary(Texture source, string name)
+        {
+            RenderTexture texture = RenderTexture.GetTemporary(
+                source.width, source.height, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.sRGB);
+            texture.name = name;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.wrapMode = TextureWrapMode.Clamp;
+            return texture;
         }
 
         public void Dispose()
@@ -325,6 +410,11 @@ namespace Aetherin
             {
                 if (Application.isPlaying) UnityEngine.Object.Destroy(_material);
                 else UnityEngine.Object.DestroyImmediate(_material);
+            }
+            if (_crossFilterMaterial != null)
+            {
+                if (Application.isPlaying) UnityEngine.Object.Destroy(_crossFilterMaterial);
+                else UnityEngine.Object.DestroyImmediate(_crossFilterMaterial);
             }
         }
 
@@ -359,36 +449,63 @@ namespace Aetherin
             int lutIndex = Mathf.Clamp(module.LutIndex.Evaluate(context), 0, keys.Count - 1);
             module.LutKey = keys[lutIndex];
             Texture2D lut = _lutLibrary.Resolve(module.LutKey);
+            ConfigureLut(lut, module.LutIntensity.Evaluate(context));
+        }
+
+        private Texture ProcessStageDefaultLut(Texture source, StageDefaultLutSettings settings,
+            StackRuntime runtime, in ModulationContext context)
+        {
+            if (source == null || _material == null || settings?.Enabled != true) return source;
+            settings.EnsureInitialized();
+            if (string.IsNullOrWhiteSpace(settings.LutKey)) return source;
+
+            EnsureLutLibrary();
+            Texture2D lut = _lutLibrary?.Resolve(settings.LutKey);
+            if (!ConfigureLut(lut, settings.Intensity.Evaluate(context))) return source;
+
+            runtime.Ensure(source.width, source.height);
+            _material.SetTexture(SourceTexId, source);
+            _material.SetTexture(HistoryTexId, source);
+            _material.SetInt(EffectTypeId, (int)PostEffectType.Lut);
+            _material.SetFloat(StrengthId, 1f);
+            runtime.Buffers.Reset(source);
+            Graphics.Blit(source, runtime.Buffers.Write, _material);
+            runtime.Buffers.Swap();
+            return runtime.Buffers.Read;
+        }
+
+        private bool ConfigureLut(Texture2D lut, float intensity)
+        {
+            _material.SetFloat(LutEnabledId, 0f);
             bool horizontal = lut != null && lut.width == lut.height * lut.height;
             bool vertical = lut != null && lut.height == lut.width * lut.width;
-            if (!horizontal && !vertical) return;
+            if (!horizontal && !vertical) return false;
 
             float size = horizontal ? lut.height : lut.width;
             _material.SetTexture(LutTexId, lut);
             _material.SetVector(LutParamsId,
                 new Vector4(size, vertical ? 1f : 0f, 1f / lut.width, 1f / lut.height));
-            _material.SetFloat(LutIntensityId, Mathf.Clamp01(module.LutIntensity.Evaluate(context)));
+            _material.SetFloat(LutIntensityId, Mathf.Clamp01(intensity));
             _material.SetFloat(LutEnabledId, 1f);
+            return true;
         }
         private sealed class StackRuntime : IDisposable
         {
             public readonly ActivationTracker Activations = new();
-            public RenderTexture History { get; private set; }
-            public bool HistoryValid { get; set; }
-            private RenderTexture _ping;
-            private RenderTexture _pong;
+            public readonly SwapableRenderTexture Buffers = new();
+            public RenderTexture BackBuffer { get; private set; }
+            public bool BackBufferValid { get; set; }
             private readonly Dictionary<PostEffectModule, RuntimeShaderPostEffectRenderer> _runtimeShaders = new();
 
             public void Ensure(int width, int height)
             {
-                if (_ping != null && _ping.width == width && _ping.height == height) return;
+                if (Buffers.Matches(width, height) && BackBuffer != null &&
+                    BackBuffer.width == width && BackBuffer.height == height) return;
                 Dispose();
-                _ping = Create(width, height, "Post FX Ping");
-                _pong = Create(width, height, "Post FX Pong");
-                History = Create(width, height, "Post FX History");
+                // CrossFilterの高輝度成分を保持できるよう、共有バッファはHDR形式にする。
+                Buffers.Ensure(width, height, "Post FX Swap", RenderTextureFormat.ARGBHalf);
+                BackBuffer = Create(width, height, "Post FX Back Buffer");
             }
-
-            public RenderTexture NextTarget(Texture input) => ReferenceEquals(input, _ping) ? _pong : _ping;
 
             public RuntimeShaderPostEffectRenderer GetRuntimeShader(PostEffectModule module, Transform parent)
             {
@@ -401,22 +518,20 @@ namespace Aetherin
 
             public void Dispose()
             {
-                Release(_ping);
-                Release(_pong);
-                Release(History);
-                _ping = null;
-                _pong = null;
-                History = null;
-                HistoryValid = false;
+                Buffers.Dispose();
+                Release(BackBuffer);
+                BackBuffer = null;
+                BackBufferValid = false;
                 Activations.Clear();
                 foreach (RuntimeShaderPostEffectRenderer renderer in _runtimeShaders.Values)
                     renderer.Dispose();
                 _runtimeShaders.Clear();
             }
 
-            private static RenderTexture Create(int width, int height, string name)
+            private static RenderTexture Create(int width, int height, string name,
+                RenderTextureFormat format = RenderTextureFormat.ARGB32)
             {
-                var texture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB)
+                var texture = new RenderTexture(width, height, 0, format, RenderTextureReadWrite.sRGB)
                 {
                     name = name,
                     filterMode = FilterMode.Bilinear,

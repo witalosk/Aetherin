@@ -13,7 +13,7 @@ namespace Aetherin
     [Serializable]
     public sealed class MovieLayerParams : StageLayerParams
     {
-        [Tooltip("カメラワーク番号に対応するHAP動画パス。末尾まで進むと先頭へ戻ります")]
+        [Tooltip("カメラワーク番号に対応するHAP動画ファイルまたはディレクトリ。ディレクトリ指定では直下の .mov を名前順に再生します")]
         public List<string> VideoPaths = new();
         public MoviePathMode PathMode = MoviePathMode.LocalFileSystem;
         public bool Loop = true;
