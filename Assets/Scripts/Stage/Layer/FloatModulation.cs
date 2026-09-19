@@ -28,13 +28,6 @@ namespace Aetherin
         Override,
     }
 
-    public enum ElapsedTimeCurve
-    {
-        Linear,
-        Power,
-        Logarithm,
-    }
-
     public enum LfoWaveform
     {
         Sine,
@@ -133,10 +126,13 @@ namespace Aetherin
         public LfoWaveform LfoWaveform;
         public bool LfoUnipolar;
 
-        [Tooltip("Elapsed Timeへ適用するカーブ")]
-        public ElapsedTimeCurve ElapsedTimeCurve;
-        [Tooltip("Power は指数、Logarithm は底。Logarithm は log(1 + t) を使用します")]
-        [Min(0.001f)] public float ElapsedTimeCurveValue = 2f;
+        [Min(0f)]
+        [Tooltip("Cue / Layer activationから、このModulationのAnimation Curveを開始するまでの秒数")]
+        public float ElapsedTimeStartOffset;
+        [Tooltip("ONのときだけ、Elapsed TimeをAnimation Curveで変換します")]
+        public bool ElapsedTimeUseAnimationCurve;
+        [Tooltip("横軸はStart Offset後の秒数、縦軸はAmount適用前の出力値")]
+        public AnimationCurve ElapsedTimeAnimationCurve = AnimationCurve.Linear(0f, 0f, 1f, 1f);
         [Tooltip("EveryBar と AfterNEvents は Beat Manager のイベントを基準に経過時間を0へ戻します")]
         public AccumulatorResetMode ElapsedTimeReset;
         [Min(1)] public int ElapsedTimeResetAfterEvents = 4;
@@ -217,14 +213,13 @@ namespace Aetherin
 
         private float EvaluateElapsedTime(in ModulationContext context)
         {
-            float time = EvaluateElapsedTimeReset(context) + context.AnimationPhaseOffset;
-            time = ApplyElapsedTimeLimit(Mathf.Max(0f, time));
-            return ElapsedTimeCurve switch
-            {
-                ElapsedTimeCurve.Power => Mathf.Pow(time, Mathf.Max(0.001f, ElapsedTimeCurveValue)),
-                ElapsedTimeCurve.Logarithm => Mathf.Log(1f + time, Mathf.Max(1.001f, ElapsedTimeCurveValue)),
-                _ => time,
-            };
+            float time = Mathf.Max(0f,
+                EvaluateElapsedTimeReset(context) + context.AnimationPhaseOffset -
+                Mathf.Max(0f, ElapsedTimeStartOffset));
+            time = ApplyElapsedTimeLimit(time);
+            return ElapsedTimeUseAnimationCurve && ElapsedTimeAnimationCurve != null
+                ? ElapsedTimeAnimationCurve.Evaluate(time)
+                : time;
         }
 
         private float EvaluateElapsedTimeReset(in ModulationContext context)

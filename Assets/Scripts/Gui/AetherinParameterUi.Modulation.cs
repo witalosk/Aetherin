@@ -202,14 +202,14 @@ namespace Aetherin
 
                 case FloatModulationSource.ElapsedTime:
                     return UI.Column(
-                        UI.Field("Curve", () => modulator.ElapsedTimeCurve,
-                            value => modulator.ElapsedTimeCurve = value),
+                        UI.Field("Start Offset (sec)", () => modulator.ElapsedTimeStartOffset,
+                            value => modulator.ElapsedTimeStartOffset = Math.Max(0f, value)),
+                        UI.Toggle("Use Animation Curve", () => modulator.ElapsedTimeUseAnimationCurve,
+                            value => modulator.ElapsedTimeUseAnimationCurve = value),
                         UI.DynamicElementIf(
-                            () => modulator.ElapsedTimeCurve != ElapsedTimeCurve.Linear,
-                            () => UI.Field(
-                                modulator.ElapsedTimeCurve == ElapsedTimeCurve.Power ? "Exponent" : "Log Base",
-                                () => modulator.ElapsedTimeCurveValue,
-                                value => modulator.ElapsedTimeCurveValue = Math.Max(0.001f, value))),
+                            () => modulator.ElapsedTimeUseAnimationCurve,
+                            () => UI.Field("Animation Curve", () => modulator.ElapsedTimeAnimationCurve,
+                                value => modulator.ElapsedTimeAnimationCurve = value)),
                         UI.Field("Reset", () => modulator.ElapsedTimeReset,
                             value => modulator.ElapsedTimeReset = value),
                         UI.DynamicElementIf(
