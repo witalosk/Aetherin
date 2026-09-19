@@ -4,6 +4,11 @@ using UnityEngine.Rendering;
 
 namespace Aetherin
 {
+    public interface IStageLayerTimeSource
+    {
+        bool TryGetElapsedTime(out double elapsedTime);
+    }
+
     public enum LayerBlendMode
     {
         Opaque,
@@ -216,7 +221,8 @@ namespace Aetherin
             if (renderer != null)
             {
                 renderer.forceRenderingOff = !effectiveVisible;
-                renderer.sortingOrder = layerParams.Order;
+                IStageLayerHost host = GetComponentInParent<IStageLayerHost>();
+                renderer.sortingOrder = host?.ResolveLayerSortingOrder(this, layerParams.Order) ?? layerParams.Order;
             }
 
             ApplyCustomLayerState(effectiveVisible, layerParams.Order);
@@ -233,6 +239,11 @@ namespace Aetherin
         protected ModulationContext CreateModulationContext(
             double time, IAudioFeatureProvider audio, IBeatManager beat, bool allowMidi)
         {
+            IStageLayerTimeSource cueTime = GetComponentInParent<IStageLayerTimeSource>();
+            if (cueTime != null && cueTime.TryGetElapsedTime(out double cueElapsedTime))
+                return new ModulationContext(time, audio, beat, allowMidi,
+                    elapsedTime: Math.Max(0d, cueElapsedTime));
+
             if (Application.isPlaying)
             {
                 _timeStage ??= GetComponentInParent<StageBase>();
@@ -243,6 +254,13 @@ namespace Aetherin
             _elapsedTimeActive = active;
             return new ModulationContext(time, audio, beat, allowMidi,
                 elapsedTime: active ? Math.Max(0d, time - _elapsedTimeStart) : 0d);
+        }
+
+        /// <summary>Forces activation-relative modulation to restart on the next evaluation.</summary>
+        public void RestartElapsedTime()
+        {
+            _elapsedTimeActive = false;
+            _elapsedTimeStart = 0d;
         }
 
         private bool IsEffectivelyVisible()

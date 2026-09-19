@@ -22,7 +22,7 @@ namespace Aetherin
         private Vector3[][] _baseVertices;
         private Color32[][] _baseColors;
         private int _layoutHash;
-        private CameraStage _cameraStage;
+        private IStageLayerHost _layerHost;
         private string _loadedFontAssetKey;
         private string _loadedFontFamily;
         private string _loadedFontStyle;
@@ -81,10 +81,10 @@ namespace Aetherin
         private void Initialize()
         {
             _stage = GetComponentInParent<StageBase>();
-            _cameraStage = GetComponentInParent<CameraStage>();
+            _layerHost = GetComponentInParent<IStageLayerHost>();
             _params ??= new TextLayerParams();
             _params.EnsureInitialized();
-            _params.GetAvailableFontAssetKeys = _cameraStage != null ? _cameraStage.GetFontAssetKeys : null;
+            _params.GetAvailableFontAssetKeys = _layerHost != null ? _layerHost.GetLayerFontKeys : null;
             _params.GetAvailableTextManagerKeys = () => TextManager.Active?.Keys ?? Array.Empty<string>();
             var keys = _params.GetAvailableFontAssetKeys?.Invoke();
             if (string.IsNullOrWhiteSpace(_params.FontAssetKey) && keys != null && keys.Count > 0)
@@ -105,7 +105,8 @@ namespace Aetherin
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 _audio, _beat,
-                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
+                Application.isPlaying && (_layerHost?.LayerAllowsMidi ??
+                    (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next))));
             _resolvedText = ResolveText(context);
             EvaluateLayout(context);
             ApplyCharacterAnimators(context);
@@ -121,19 +122,20 @@ namespace Aetherin
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
                 _audio, _beat,
-                Application.isPlaying && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
+                Application.isPlaying && (_layerHost?.LayerAllowsMidi ??
+                    (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next))));
             ApplyTransform(context);
         }
 
         private void EnsureFont()
         {
             if (_text == null) return;
-            _cameraStage ??= GetComponentInParent<CameraStage>();
+            _layerHost ??= GetComponentInParent<IStageLayerHost>();
 
             string assetKey = _params.FontAssetKey?.Trim();
             if (!string.IsNullOrWhiteSpace(assetKey))
             {
-                TMP_FontAsset libraryFontAsset = _cameraStage?.ResolveFontAsset(assetKey);
+                TMP_FontAsset libraryFontAsset = _layerHost?.ResolveLayerFont(assetKey);
                 string libraryRequestKey = $"asset\n{assetKey}";
                 if (_fontAsset != null && !_ownsFontAsset && _loadedFontAssetKey == assetKey &&
                     _fontAsset == libraryFontAsset) return;
@@ -309,7 +311,8 @@ namespace Aetherin
             if (_baseVertices == null || _text.textInfo == null) return;
 
             TMP_TextInfo info = _text.textInfo;
-            ColorPalette palette = _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Current).Palette;
+            ColorPalette palette = _layerHost?.LayerPalette ??
+                                   _deckStateProvider?.GetState(_stage != null ? _stage.Deck : StageDeck.Current).Palette;
             int stateHash = CalculateGeometryStateHash(palette);
             if (!_geometryDirty && !HasDynamicGeometryInput(baseContext) && stateHash == _geometryStateHash)
                 return;
@@ -617,8 +620,8 @@ namespace Aetherin
                 return;
             }
 
-            _cameraStage ??= GetComponentInParent<CameraStage>();
-            Camera camera = _cameraStage?.StageCamera;
+            _layerHost ??= GetComponentInParent<IStageLayerHost>();
+            Camera camera = _layerHost?.LayerCamera;
             if (camera == null) return;
 
             float depth = camera.orthographic

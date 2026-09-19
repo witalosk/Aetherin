@@ -15,6 +15,7 @@ namespace Aetherin
         public string CaptureSaveData()
         {
             var data = new CameraStageSaveData();
+            data.OutputOverlay = CaptureOutputOverlaySaveData();
             List<StageBase> stages = EditingStages;
             if (stages == null) return JsonUtility.ToJson(data);
 
@@ -96,6 +97,7 @@ namespace Aetherin
             _params.CurrentStageIndex = Mathf.Clamp(currentStageIndex, 0, maxIndex);
             _params.NextStageIndex = Mathf.Clamp(nextStageIndex, 0, maxIndex);
             _deckRevision++;
+            RestoreOutputOverlaySaveData(_pendingCameraStageData.OutputOverlay);
             _pendingCameraStageData = null;
         }
     }
@@ -103,8 +105,9 @@ namespace Aetherin
     [Serializable]
     public sealed class CameraStageSaveData
     {
-        public int Version = 3;
+        public int Version = 4;
         public List<CameraStageLayersSaveData> Stages = new();
+        public OutputOverlaySaveData OutputOverlay = new();
     }
 
     [Serializable]

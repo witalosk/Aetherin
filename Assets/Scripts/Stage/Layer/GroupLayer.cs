@@ -14,6 +14,7 @@ namespace Aetherin
         private IBeatManager _beat;
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
+        private IStageLayerHost _layerHost;
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -44,6 +45,7 @@ namespace Aetherin
         {
             EnsureParameters();
             _stage = GetComponentInParent<StageBase>();
+            _layerHost = GetComponentInParent<IStageLayerHost>();
             EvaluateTransform();
         }
 
@@ -68,7 +70,8 @@ namespace Aetherin
             bool runtime = Application.isPlaying;
             var context = CreateModulationContext(runtime ? Time.timeAsDouble : 0d,
                 runtime ? _audio : null, runtime ? _beat : null,
-                runtime && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
+                runtime && (_layerHost?.LayerAllowsMidi ??
+                    (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next))));
             Vector3 position = _params.Position.Evaluate(context);
             Vector3 rotation = _params.Rotation.Evaluate(context);
             Vector3 scale = _params.Scale.Evaluate(context);

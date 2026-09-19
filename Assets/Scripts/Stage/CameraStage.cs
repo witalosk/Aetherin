@@ -27,7 +27,7 @@ namespace Aetherin
     /// カメラと被写体はこのオブジェクトの子に置く想定
     /// (Nextとして複製されたときはStageManagerがワールドオフセットを加えるため、複製元と互いに映り込まない)
     /// </summary>
-    public partial class CameraStage : StageBase
+    public partial class CameraStage : StageBase, IStageLayerHost
     {
         private const string CurrentRenderingLayerName = "StageCurrent";
         private const string NextRenderingLayerName = "StageNext";
@@ -354,6 +354,14 @@ namespace Aetherin
             for (int i = 0; i < ordered.Count; i++) ordered[i].Order = i;
             RefreshLayers();
         }
+        public Camera LayerCamera => StageCamera;
+        public bool LayerAllowsMidi => _deckStateProvider?.IsDeckEditable(Deck) ?? Deck == StageDeck.Next;
+        public ColorPalette LayerPalette => _deckStateProvider?.GetState(Deck).Palette;
+        public int ResolveLayerSortingOrder(StageLayer layer, int localOrder) => localOrder;
+        public Texture2D ResolveLayerTexture(string key) => ResolveTexture(key);
+        public IReadOnlyList<string> GetLayerTextureKeys() => GetTextureKeys();
+        public TMP_FontAsset ResolveLayerFont(string key) => ResolveFontAsset(key);
+        public IReadOnlyList<string> GetLayerFontKeys() => GetFontAssetKeys();
 
         public void MoveLayerToIndex(StageLayer layer, int targetIndex)
         {

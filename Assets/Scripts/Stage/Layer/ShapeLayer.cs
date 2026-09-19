@@ -81,7 +81,7 @@ namespace Aetherin
         private IBeatManager _beatManager;
         private IDeckStateProvider _deckStateProvider;
         private StageBase _stage;
-        private CameraStage _cameraStage;
+        private IStageLayerHost _layerHost;
         private Bounds _geometryBounds;
 
         // Geometry更新時に使い回す。要素数が増えた場合だけList内部の容量が拡張される。
@@ -125,15 +125,15 @@ namespace Aetherin
             _beatManager = beatManager;
             _deckStateProvider = deckStateProvider;
             _stage = GetComponentInParent<StageBase>();
-            _cameraStage = GetComponentInParent<CameraStage>();
-            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
+            _layerHost = GetComponentInParent<IStageLayerHost>();
+            _params.GetAvailableTextureKeys = _layerHost != null ? _layerHost.GetLayerTextureKeys : null;
         }
 
         private void Awake()
         {
             _stage = GetComponentInParent<StageBase>();
-            _cameraStage = GetComponentInParent<CameraStage>();
-            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
+            _layerHost = GetComponentInParent<IStageLayerHost>();
+            _params.GetAvailableTextureKeys = _layerHost != null ? _layerHost.GetLayerTextureKeys : null;
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -144,8 +144,8 @@ namespace Aetherin
         private void OnEnable()
         {
             _stage = GetComponentInParent<StageBase>();
-            _cameraStage = GetComponentInParent<CameraStage>();
-            _params.GetAvailableTextureKeys = _cameraStage != null ? _cameraStage.GetTextureKeys : null;
+            _layerHost = GetComponentInParent<IStageLayerHost>();
+            _params.GetAvailableTextureKeys = _layerHost != null ? _layerHost.GetLayerTextureKeys : null;
             EnsureResources();
             EvaluateParameters(Application.isPlaying);
             RebuildGeometry();
@@ -277,8 +277,8 @@ namespace Aetherin
 
             if (_params.ScreenSpace)
             {
-                _cameraStage ??= GetComponentInParent<CameraStage>();
-                Camera camera = _cameraStage?.StageCamera;
+                _layerHost ??= GetComponentInParent<IStageLayerHost>();
+                Camera camera = _layerHost?.LayerCamera;
                 if (camera != null)
                 {
                     float depth = camera.orthographic
@@ -341,13 +341,13 @@ namespace Aetherin
             material.SetFloat(MetallicId, _evaluatedMetallic);
             material.SetFloat(SmoothnessId, _evaluatedSmoothness);
             bool useTexture = allowTexture && _params.TextureEnabled;
-            _cameraStage ??= GetComponentInParent<CameraStage>();
-            if (useTexture && string.IsNullOrWhiteSpace(_params.TextureKey) && _cameraStage != null)
+            _layerHost ??= GetComponentInParent<IStageLayerHost>();
+            if (useTexture && string.IsNullOrWhiteSpace(_params.TextureKey) && _layerHost != null)
             {
-                IReadOnlyList<string> keys = _cameraStage.GetTextureKeys();
+                IReadOnlyList<string> keys = _layerHost.GetLayerTextureKeys();
                 if (keys.Count > 0) _params.TextureKey = keys[0];
             }
-            Texture2D texture = useTexture ? _cameraStage?.ResolveTexture(_params.TextureKey) : null;
+            Texture2D texture = useTexture ? _layerHost?.ResolveLayerTexture(_params.TextureKey) : null;
             material.SetTexture(MainTexId, texture != null ? texture : Texture2D.whiteTexture);
             material.SetFloat(UseTextureId, texture != null ? 1f : 0f);
             material.SetVector(TextureTransformId, new Vector4(
@@ -419,7 +419,8 @@ namespace Aetherin
                 useRuntimeSources ? Time.timeAsDouble : 0d,
                 useRuntimeSources ? _audioFeatureProvider : null,
                 useRuntimeSources ? _beatManager : null,
-                useRuntimeSources && (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
+                useRuntimeSources && (_layerHost?.LayerAllowsMidi ??
+                    (_stage == null || (_deckStateProvider?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next))));
             _modulationContext = context;
 
             _evaluatedRotation = _params.Rotation?.Evaluate(context) ?? Vector3.zero;
@@ -450,8 +451,10 @@ namespace Aetherin
             _evaluatedVertexNoiseSpeed = _params.VertexNoise?.Speed?.Evaluate(context) ?? Vector4.one;
             _evaluatedVertexNoiseOffset = _params.VertexNoise?.Offset?.Evaluate(context) ?? Vector3.zero;
 
-            var palette = Application.isPlaying && _deckStateProvider != null
-                ? _deckStateProvider.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
+            var palette = Application.isPlaying
+                ? _layerHost?.LayerPalette ?? (_deckStateProvider != null
+                    ? _deckStateProvider.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette
+                    : null)
                 : null;
             _evaluatedFillColor = EvaluatedPaletteColor.Evaluate(_params.FillColor, palette, context);
             _evaluatedStrokeColor = EvaluatedPaletteColor.Evaluate(_params.StrokeColor, palette, context);

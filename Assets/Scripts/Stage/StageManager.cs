@@ -126,6 +126,8 @@ namespace Aetherin
         private WindowElement _inspectorWindow;
         private int _selectedStageUiIndex;
         private CameraStageLayerSaveData _layerClipboard;
+        private OutputOverlayCueRuntime _inspectedOverlayCue;
+        private StageLayer _inspectedOverlayLayer;
 
         private readonly DeckState _currentState = new();
 
@@ -134,6 +136,9 @@ namespace Aetherin
         private Material _crossFadeMaterial;
         private RenderTexture _crossFadeTexture;
         private IPostEffectManager _postEffectManager;
+        private IAudioFeatureProvider _audioFeatureProvider;
+        private IBeatManager _beatManager;
+        private IStageAssetCatalog _stageAssetCatalog;
         private Texture _currentPostTexture;
         private Texture _nextPostTexture;
         private readonly HashSet<string> _runtimeStageIds = new();
@@ -142,11 +147,20 @@ namespace Aetherin
         private float _lastStageTimeCcValue = float.NaN;
 
         [Inject]
-        public void Construct(IContainer container, IApplicationManager applicationManager, IPostEffectManager postEffectManager)
+        public void Construct(
+            IContainer container,
+            IApplicationManager applicationManager,
+            IPostEffectManager postEffectManager,
+            IAudioFeatureProvider audioFeatureProvider,
+            IBeatManager beatManager,
+            [Nullable] IStageAssetCatalog stageAssetCatalog)
         {
             _container = container;
             _applicationManager = applicationManager;
             _postEffectManager = postEffectManager;
+            _audioFeatureProvider = audioFeatureProvider;
+            _beatManager = beatManager;
+            _stageAssetCatalog = StageAssetCatalog.FindBestAvailable(stageAssetCatalog);
         }
 
         public DeckState GetState(StageDeck deck) => deck == StageDeck.Current ? _currentState : NextState;
@@ -162,6 +176,7 @@ namespace Aetherin
             _crossFadeTexture = new RenderTexture(_applicationManager.Resolution.x, _applicationManager.Resolution.y, 0,
                 RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
             _crossFadeMaterial = new Material(_crossFadeShader);
+            InitializeOutputOverlay();
             BuildDecks();
             ApplyPendingCameraStageData();
 
@@ -433,7 +448,8 @@ namespace Aetherin
             _crossFadeMaterial.SetTexture(TexBId, _nextPostTexture);
             _crossFadeMaterial.SetFloat(FadeId, IsImmediateMode ? 0f : CrossFade);
             Graphics.Blit(null, _crossFadeTexture, _crossFadeMaterial);
-            Texture outputTexture = _postEffectManager.ProcessOutput(_crossFadeTexture);
+            Texture preOutputTexture = CompositeOutputOverlay(_crossFadeTexture);
+            Texture outputTexture = _postEffectManager.ProcessOutput(preOutputTexture);
             Graphics.Blit(outputTexture, OutputTexture);
 
             if (_currentPreviewRenderer != null) _currentPreviewRenderer.material.SetTexture(MainTexId, _currentPostTexture);
@@ -931,6 +947,7 @@ namespace Aetherin
             UpdateStageActivity();
             _isPreparingNext = true;
             NextPromoted?.Invoke();
+            TriggerStageChangeOverlayCues();
 
             _deckRevision++;
             StartCoroutine(RebuildRemainingNextDeck(retiredStages, selectedIndex));
@@ -1024,6 +1041,7 @@ namespace Aetherin
             if (OutputTexture != null) OutputTexture.Release();
             if (_crossFadeTexture != null) _crossFadeTexture.Release();
             if (_crossFadeMaterial != null) Destroy(_crossFadeMaterial);
+            DisposeOutputOverlay();
         }
 
         /// <summary>
@@ -1685,6 +1703,8 @@ namespace Aetherin
 
         private Element CreateInspectorElement()
         {
+            if (_inspectedOverlayCue != null && _inspectedOverlayLayer != null)
+                return CreateOutputOverlayLayerInspectorElement();
             if (_inspectedLayer != null && _inspectedLayerStage != null)
                 return CreateLayerInspectorElement();
             if (_inspectedCameraWork != null && _inspectedCameraWorkStage != null)
@@ -1726,7 +1746,8 @@ namespace Aetherin
             _stages ??= new List<StageBase>();
             _inspectorElement = UI.DynamicElementOnStatusChanged(
                 () => (_deckRevision, _inspectedLayerStage, _inspectedLayer,
-                    _inspectedCameraWorkStage, _inspectedCameraWork),
+                    _inspectedCameraWorkStage, _inspectedCameraWork,
+                    _inspectedOverlayCue, _inspectedOverlayLayer),
                 _ => CreateInspectorElement());
             _inspectorWindow = UI.Window("Inspector", _inspectorElement).SetWidth(460f);
             return UI.Column(
@@ -1735,8 +1756,13 @@ namespace Aetherin
                     UI.Toggle("Immediate Mode", () => IsImmediateMode, SetImmediateMode),
                     UI.WindowLauncher("Inspector", _inspectorWindow)
                 ),
+                CreateMainEditModeElement(),
                 UI.DynamicElementIf(() => _isPreparingNext, () => UI.Label("Preparing Next...")),
-                UI.DynamicElementOnStatusChanged(() => _deckRevision, _ => CreateStageManagementElement()),
+                UI.DynamicElementOnStatusChanged(
+                    () => (_mainEditMode, _deckRevision),
+                    status => status._mainEditMode == StageManagerEditMode.Stage
+                        ? CreateStageManagementElement()
+                        : CreateOutputOverlayElement()),
                 UI.Label(() => IsImmediateMode ? "<b>IMMEDIATE: EDITING CURRENT</b>" : _isFaderFlipped ? "FADER: Down to next" : "FADER: Up to next")
             );
         }
