@@ -90,6 +90,7 @@ namespace Aetherin
         public int CameraWorkRevision { get; private set; }
         public int SelectedCameraWorkDeck => _selectedCameraWorkDeck;
         public int CurrentCameraWork => _currentCameraWork;
+        public int CameraWorkChangeCount => _cameraWorkChangeCount;
         public int CinemachineChannelIndex { get; private set; } = -1;
         public CameraWorkRecipe ActiveCameraWorkRecipe
         {
@@ -108,6 +109,7 @@ namespace Aetherin
         private CinemachineCamera _cinemachineCamera;
         [SerializeField] private int _selectedCameraWorkDeck;
         [SerializeField] private int _currentCameraWork;
+        [SerializeField, HideInInspector] private int _cameraWorkChangeCount;
         private Vector3 _followPosition;
         private bool _followInitialized;
         private Vector3 _baseCameraLocalPosition;
@@ -184,8 +186,8 @@ namespace Aetherin
 
             if (ShouldAdvanceCameraWork())
             {
-                _currentCameraWork = (_currentCameraWork + 1) % deck.Recipes.Count;
-                _followInitialized = false;
+                SetCameraWorkSelection(_selectedCameraWorkDeck,
+                    (_currentCameraWork + 1) % deck.Recipes.Count);
             }
 
             _currentCameraWork = Mathf.Clamp(_currentCameraWork, 0, deck.Recipes.Count - 1);
@@ -195,7 +197,8 @@ namespace Aetherin
 
             bool allowMidi = _deckStateProvider?.IsDeckEditable(Deck) ?? Deck == StageDeck.Next;
             double stageTime = StageTime;
-            var context = new ModulationContext(stageTime, _audioFeatureProvider, _beatManager, allowMidi);
+            var context = new ModulationContext(stageTime, _audioFeatureProvider, _beatManager, allowMidi,
+                cameraWorkChangeCount: CameraWorkChangeCount);
             Vector3 position = recipe.Position.Evaluate(context);
             Vector3 lookAt = recipe.LookAt.Evaluate(context);
             Vector3 orbitRotation = recipe.OrbitRotation.Evaluate(context);
@@ -273,8 +276,7 @@ namespace Aetherin
         public void SelectCameraWorkDeck(int index)
         {
             if (_cameraWorkDecks == null || _cameraWorkDecks.Count == 0) return;
-            _selectedCameraWorkDeck = Mathf.Clamp(index, 0, _cameraWorkDecks.Count - 1);
-            ResetCameraWork();
+            SetCameraWorkSelection(Mathf.Clamp(index, 0, _cameraWorkDecks.Count - 1), 0);
         }
 
         public void SelectCameraWork(int deckIndex, int recipeIndex)
@@ -283,15 +285,12 @@ namespace Aetherin
             CameraWorkDeck deck = _cameraWorkDecks[deckIndex];
             if (deck?.Recipes == null || recipeIndex < 0 || recipeIndex >= deck.Recipes.Count) return;
 
-            _selectedCameraWorkDeck = deckIndex;
-            _currentCameraWork = recipeIndex;
-            _followInitialized = false;
+            SetCameraWorkSelection(deckIndex, recipeIndex);
         }
 
         public void ResetCameraWork()
         {
-            _currentCameraWork = 0;
-            _followInitialized = false;
+            SetCameraWorkSelection(_selectedCameraWorkDeck, 0);
         }
 
         public void AdvanceCameraWork()
@@ -299,8 +298,17 @@ namespace Aetherin
             CameraWorkDeck deck = GetSelectedCameraWorkDeck();
             if (deck?.Recipes == null || deck.Recipes.Count == 0) return;
 
-            _currentCameraWork = (_currentCameraWork + 1) % deck.Recipes.Count;
+            SetCameraWorkSelection(_selectedCameraWorkDeck,
+                (_currentCameraWork + 1) % deck.Recipes.Count);
+        }
+
+        private void SetCameraWorkSelection(int deckIndex, int recipeIndex)
+        {
+            bool changed = deckIndex != _selectedCameraWorkDeck || recipeIndex != _currentCameraWork;
+            _selectedCameraWorkDeck = deckIndex;
+            _currentCameraWork = recipeIndex;
             _followInitialized = false;
+            if (changed) _cameraWorkChangeCount++;
         }
 
         public CameraWorkDeck AddCameraWorkDeck()
@@ -374,7 +382,10 @@ namespace Aetherin
             string json = JsonUtility.ToJson(new CameraWorkDeckList { Decks = decks ?? new List<CameraWorkDeck>() });
             _cameraWorkDecks = JsonUtility.FromJson<CameraWorkDeckList>(json)?.Decks ?? new List<CameraWorkDeck>();
             foreach (CameraWorkDeck deck in _cameraWorkDecks) deck?.EnsureInitialized();
-            ResetCameraWork();
+            _selectedCameraWorkDeck = 0;
+            _currentCameraWork = 0;
+            _cameraWorkChangeCount = 0;
+            _followInitialized = false;
             CameraWorkRevision++;
         }
     }

@@ -48,6 +48,7 @@ namespace Aetherin
         private readonly List<Renderer> _wireRenderers = new();
         private readonly List<Material> _materials = new();
         private readonly List<Mesh> _wireMeshes = new();
+        private readonly List<PrefabMaterialModulator> _materialModulators = new();
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -146,7 +147,9 @@ namespace Aetherin
                 _wireRenderers.AddRange(pooled.WireRenderers);
                 _materials.AddRange(pooled.Materials);
                 _wireMeshes.AddRange(pooled.WireMeshes);
+                _materialModulators.AddRange(pooled.MaterialModulators);
                 AttachModelInstance(key, source);
+                InitializeMaterialModulators();
                 return;
             }
 
@@ -166,6 +169,8 @@ namespace Aetherin
                 }
                 CreateWireRenderer(renderer);
             }
+            _materialModulators.AddRange(_modelInstance.GetComponentsInChildren<PrefabMaterialModulator>(true));
+            InitializeMaterialModulators();
         }
 
         private void AttachModelInstance(string key, GameObject source)
@@ -305,6 +310,8 @@ namespace Aetherin
             if (_modelInstance != null)
                 foreach (var animator in _modelInstance.GetComponentsInChildren<Animator>(true))
                     animator.speed = _params.PlayAnimation ? speed : 0f;
+            for (int i = 0; i < _materialModulators.Count; i++)
+                _materialModulators[i]?.Apply(context);
             // Apply the effective visibility, including every ancestor GroupLayer.
             // Calling ApplyCustomLayerState with _params.Visible here used to
             // overwrite the group state on every Update.
@@ -394,7 +401,8 @@ namespace Aetherin
                     _surfaceRenderers.ToArray(),
                     _wireRenderers.ToArray(),
                     _materials.ToArray(),
-                    _wireMeshes.ToArray()));
+                    _wireMeshes.ToArray(),
+                    _materialModulators.ToArray()));
             }
             else
             {
@@ -408,6 +416,7 @@ namespace Aetherin
             _wireMeshes.Clear();
             _surfaceRenderers.Clear();
             _wireRenderers.Clear();
+            _materialModulators.Clear();
         }
 
         private void OnDestroy() => ClearModel();
@@ -470,6 +479,12 @@ namespace Aetherin
                 particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
+        private void InitializeMaterialModulators()
+        {
+            for (int i = 0; i < _materialModulators.Count; i++)
+                _materialModulators[i]?.Initialize();
+        }
+
         private static void DestroyPooledModel(PooledModel pooled)
         {
             if (pooled.Instance != null) DestroyRuntimeObject(pooled.Instance);
@@ -484,19 +499,22 @@ namespace Aetherin
             public readonly Renderer[] WireRenderers;
             public readonly Material[] Materials;
             public readonly Mesh[] WireMeshes;
+            public readonly PrefabMaterialModulator[] MaterialModulators;
 
             public PooledModel(
                 GameObject instance,
                 Renderer[] surfaceRenderers,
                 Renderer[] wireRenderers,
                 Material[] materials,
-                Mesh[] wireMeshes)
+                Mesh[] wireMeshes,
+                PrefabMaterialModulator[] materialModulators)
             {
                 Instance = instance;
                 SurfaceRenderers = surfaceRenderers;
                 WireRenderers = wireRenderers;
                 Materials = materials;
                 WireMeshes = wireMeshes;
+                MaterialModulators = materialModulators;
             }
         }
 

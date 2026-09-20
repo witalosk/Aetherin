@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Aetherin
@@ -6,6 +7,18 @@ namespace Aetherin
     [Serializable]
     public class CounterParams : IParams
     {
+        [Tooltip("独立したカウンターの一覧。ModulationのCounter #はこの並び順です")]
+        public List<CounterChannelParams> Counters = new()
+        {
+            new() { Name = "Counter 1" },
+        };
+    }
+
+    [Serializable]
+    public class CounterChannelParams
+    {
+        public string Name = "Counter";
+
         [Tooltip("押すたびにカウントを1増やすPad")]
         public MidiBinding IncrementPad = new();
 
@@ -20,7 +33,7 @@ namespace Aetherin
     }
 
     /// <summary>MIDI Padで操作し、FXのモジュレーション入力として使える整数カウンター。</summary>
-    public class Counter : MonoBehaviour, ICounter, ISaveAndUiTarget
+    public class Counter : MonoBehaviour, ICounter, ICounterBank, ISaveAndUiTarget
     {
         private static Counter _active;
 
@@ -35,11 +48,14 @@ namespace Aetherin
 
         public IParams Params => _params;
         public string Category => UiCategory.Settings;
-        public int Value { get; private set; }
-        public float AnimatedValue { get; private set; }
-        public double LastIncrementTime { get; private set; } = double.NegativeInfinity;
+        public int Value => PrimaryCounter?.Value ?? 0;
+        public float AnimatedValue => PrimaryCounter?.AnimatedValue ?? 0f;
+        public double LastIncrementTime => PrimaryCounter?.LastIncrementTime ?? double.NegativeInfinity;
+        public int CounterCount => _params?.Counters?.Count ?? 0;
 
         [SerializeField] private CounterParams _params = new();
+        private readonly List<CounterChannelState> _states = new();
+        private CounterChannelState PrimaryCounter => GetCounter(0) as CounterChannelState;
 
         private void Awake() => _active = this;
 
@@ -51,30 +67,70 @@ namespace Aetherin
         private void Update()
         {
             _params ??= new CounterParams();
+            _params.Counters ??= new List<CounterChannelParams>();
+            if (_params.Counters.Count == 0)
+                _params.Counters.Add(new CounterChannelParams { Name = "Counter 1" });
 
-            if (_params.IncrementPad.WasNoteOn) Increment();
-            if (_params.ResetPad.WasNoteOn) Reset();
-
-            float speed = Mathf.Max(0f, _params.AnimationSpeed);
-            AnimatedValue = speed <= 0f
-                ? Value
-                : Mathf.MoveTowards(AnimatedValue, Value, speed * Time.unscaledDeltaTime);
-
-            _params.IncrementPad.SetLed(_params.IncrementColor * _params.IdleBrightness);
-            _params.ResetPad.SetLed(_params.ResetColor * _params.IdleBrightness);
+            EnsureStates();
+            for (int i = 0; i < _params.Counters.Count; i++)
+                _states[i].Update(_params.Counters[i]);
         }
 
-        public void Increment()
+        public void Increment() => PrimaryCounter?.Increment();
+
+        public void Reset() => PrimaryCounter?.Reset();
+
+        public ICounter GetCounter(int index)
         {
-            Value++;
-            LastIncrementTime = Time.unscaledTimeAsDouble;
+            EnsureStates();
+            return index >= 0 && index < _states.Count
+                ? _states[index]
+                : null;
         }
 
-        public void Reset()
+        private void EnsureStates()
         {
-            Value = 0;
-            AnimatedValue = 0f;
-            LastIncrementTime = double.NegativeInfinity;
+            int count = _params?.Counters?.Count ?? 0;
+            while (_states.Count < count) _states.Add(new CounterChannelState());
+            if (_states.Count > count) _states.RemoveRange(count, _states.Count - count);
+        }
+
+        private sealed class CounterChannelState : ICounter
+        {
+            public int Value { get; private set; }
+            public float AnimatedValue { get; private set; }
+            public double LastIncrementTime { get; private set; } = double.NegativeInfinity;
+
+            public void Update(CounterChannelParams parameters)
+            {
+                if (parameters == null) return;
+                parameters.IncrementPad ??= new MidiBinding();
+                parameters.ResetPad ??= new MidiBinding();
+
+                if (parameters.IncrementPad.WasNoteOn) Increment();
+                if (parameters.ResetPad.WasNoteOn) Reset();
+
+                float speed = Mathf.Max(0f, parameters.AnimationSpeed);
+                AnimatedValue = speed <= 0f
+                    ? Value
+                    : Mathf.MoveTowards(AnimatedValue, Value, speed * Time.unscaledDeltaTime);
+
+                parameters.IncrementPad.SetLed(parameters.IncrementColor * parameters.IdleBrightness);
+                parameters.ResetPad.SetLed(parameters.ResetColor * parameters.IdleBrightness);
+            }
+
+            public void Increment()
+            {
+                Value++;
+                LastIncrementTime = Time.unscaledTimeAsDouble;
+            }
+
+            public void Reset()
+            {
+                Value = 0;
+                AnimatedValue = 0f;
+                LastIncrementTime = double.NegativeInfinity;
+            }
         }
     }
 }

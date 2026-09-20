@@ -26,15 +26,22 @@ Shader "Aetherin/Sprite Sheet Billboard"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; };
-            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; };
+            struct Attributes { float4 positionOS : POSITION; float2 uv : TEXCOORD0; float4 color : COLOR; };
+            struct Varyings { float4 positionCS : SV_POSITION; float2 uv : TEXCOORD0; float opacity : TEXCOORD1; };
             TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
             float4 _Color; float4 _UvRect; float _ColorMode; float _AlphaClip; float _InvertBlend;
+            float _AnimationRow; float _RowCount; float _RepeaterRowIncrement;
             Varyings Vert(Attributes input)
             {
                 Varyings output;
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-                output.uv = input.uv * _UvRect.xy + _UvRect.zw;
+                float rowCount = max(1.0, round(_RowCount));
+                float row = _AnimationRow + round(input.color.r) * round(_RepeaterRowIncrement);
+                row = fmod(fmod(row, rowCount) + rowCount, rowCount);
+                output.uv = float2(
+                    input.uv.x * _UvRect.x + _UvRect.z,
+                    input.uv.y * _UvRect.y + (rowCount - 1.0 - row) / rowCount);
+                output.opacity = input.color.a;
                 return output;
             }
             half4 Frag(Varyings input) : SV_Target
@@ -46,6 +53,7 @@ Shader "Aetherin/Sprite Sheet Billboard"
                 half4 color = _ColorMode > .5h
                     ? half4(_Color.rgb, _Color.a * source.a * luminance)
                     : source * _Color;
+                color.a *= input.opacity;
                 if (_AlphaClip > .5) clip(color.a - .1);
                 if (_InvertBlend > 0.5) color.rgb = color.aaa;
                 return color;

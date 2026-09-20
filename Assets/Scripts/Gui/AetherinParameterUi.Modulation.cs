@@ -159,22 +159,28 @@ namespace Aetherin
             var modulator = binder.Get();
             if (modulator == null) return UI.Label("-");
 
+            var sourceSettings = UI.DynamicElementOnStatusChanged(
+                readStatus: () => modulator.Source,
+                build: source => UI.Column(
+                    UI.Row(
+                        UI.Field(IsAccumulator(source) ? "Step" : "Amount",
+                            () => modulator.Amount, value => modulator.Amount = value).SetFlexGrow(1f),
+                        UI.Field("Offset", () => modulator.Offset,
+                            value => modulator.Offset = value).SetFlexGrow(1f)
+                    ),
+                    CreateModulatorSourceElement(modulator, source)));
+
             return UI.Column(
                 UI.Row(
                     UI.Toggle(null, () => modulator.Enabled, value => modulator.Enabled = value).SetWidth(20f),
-                    UI.Field(null, () => modulator.Source, value => modulator.Source = value).SetFlexGrow(1f),
+                    UI.Field(null, () => modulator.Source, value =>
+                    {
+                        modulator.Source = value;
+                        sourceSettings.CheckAndRebuild();
+                    }).SetFlexGrow(1f),
                     UI.Field(null, () => modulator.Operation, value => modulator.Operation = value).SetFlexGrow(1f)
                 ),
-                UI.DynamicElementOnStatusChanged(
-                    readStatus: () => modulator.Source,
-                    build: source => UI.Column(
-                        UI.Row(
-                            UI.Field(IsAccumulator(source) ? "Step" : "Amount",
-                                () => modulator.Amount, value => modulator.Amount = value).SetFlexGrow(1f),
-                            UI.Field("Offset", () => modulator.Offset,
-                                value => modulator.Offset = value).SetFlexGrow(1f)
-                        ),
-                        CreateModulatorSourceElement(modulator, source)))
+                sourceSettings
             );
         }
 
@@ -228,14 +234,21 @@ namespace Aetherin
                             )));
 
                 case FloatModulationSource.Beat:
-                case FloatModulationSource.Beat2And4:
                 case FloatModulationSource.Bar:
-                    return UI.Field("Sharpness",
-                        () => modulator.BeatPulseSharpness,
+                    return UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
                         value => modulator.BeatPulseSharpness = value);
+
+                case FloatModulationSource.Beat2And4:
+                    return UI.Column(
+                        UI.Field("Direction", () => modulator.Beat2And4PulseDirection,
+                            value => modulator.Beat2And4PulseDirection = value),
+                        UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
+                            value => modulator.BeatPulseSharpness = value));
 
                 case FloatModulationSource.Counter:
                     return UI.Column(
+                        UI.Field("Counter #", () => modulator.CounterIndex + 1,
+                            value => modulator.CounterIndex = Math.Max(0, value - 1)),
                         UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
                             value => modulator.BeatPulseSharpness = value),
                         UI.Field("Mode", () => modulator.CounterValueMode,
@@ -255,6 +268,8 @@ namespace Aetherin
 
                 case FloatModulationSource.CounterPulse:
                     return UI.Column(
+                        UI.Field("Counter #", () => modulator.CounterIndex + 1,
+                            value => modulator.CounterIndex = Math.Max(0, value - 1)),
                         UI.Field("Sharpness", () => modulator.BeatPulseSharpness,
                             value => modulator.BeatPulseSharpness = value),
                         UI.Field("Duration", () => modulator.CounterPulseDuration,

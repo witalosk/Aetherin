@@ -100,7 +100,8 @@ namespace Aetherin
             RefreshEditingDeckState();
             bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Current) ?? false;
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter,
+                cameraWorkChangeCount: _deckStateProvider?.GetCameraWorkChangeCount(StageDeck.Current) ?? 0);
             _params ??= new PostEffectManagerParams();
             _params.Current ??= new PostEffectStack();
             _params.Next ??= new PostEffectStack();
@@ -113,7 +114,8 @@ namespace Aetherin
             RefreshEditingDeckState();
             bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Next) ?? true;
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter,
+                cameraWorkChangeCount: _deckStateProvider?.GetCameraWorkChangeCount(StageDeck.Next) ?? 0);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
             Texture input = ProcessStageDefaultLut(source, stageLut, _next, context);
@@ -127,7 +129,8 @@ namespace Aetherin
         public Texture ProcessOutput(Texture source)
         {
             var context = new ModulationContext(
-                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter);
+                Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, true, counter: _counter,
+                cameraWorkChangeCount: _deckStateProvider?.GetCameraWorkChangeCount(StageDeck.Next) ?? 0);
             _params ??= new PostEffectManagerParams();
             _params.Next ??= new PostEffectStack();
             return Process(source, _params.Next, _output, context, StageDeck.Next, true);

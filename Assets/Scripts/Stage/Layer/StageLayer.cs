@@ -239,10 +239,12 @@ namespace Aetherin
         protected ModulationContext CreateModulationContext(
             double time, IAudioFeatureProvider audio, IBeatManager beat, bool allowMidi)
         {
+            int cameraWorkChangeCount = GetComponentInParent<CameraStage>()?.CameraWorkChangeCount ?? 0;
             IStageLayerTimeSource cueTime = GetComponentInParent<IStageLayerTimeSource>();
             if (cueTime != null && cueTime.TryGetElapsedTime(out double cueElapsedTime))
                 return new ModulationContext(time, audio, beat, allowMidi,
-                    elapsedTime: Math.Max(0d, cueElapsedTime));
+                    elapsedTime: Math.Max(0d, cueElapsedTime),
+                    cameraWorkChangeCount: cameraWorkChangeCount);
 
             if (Application.isPlaying)
             {
@@ -253,7 +255,8 @@ namespace Aetherin
             if (active && (!_elapsedTimeActive || time < _elapsedTimeStart)) _elapsedTimeStart = time;
             _elapsedTimeActive = active;
             return new ModulationContext(time, audio, beat, allowMidi,
-                elapsedTime: active ? Math.Max(0d, time - _elapsedTimeStart) : 0d);
+                elapsedTime: active ? Math.Max(0d, time - _elapsedTimeStart) : 0d,
+                cameraWorkChangeCount: cameraWorkChangeCount);
         }
 
         /// <summary>Forces activation-relative modulation to restart on the next evaluation.</summary>

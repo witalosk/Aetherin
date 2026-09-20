@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnitySimpleContainer;
@@ -7,13 +8,24 @@ namespace Aetherin
     /// <summary>横方向にフレームを並べたスプライトシートを、常に水平を保ってカメラへ向けて描画する。</summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
-    public sealed class SpriteSheetLayer : StageLayer
+    public sealed class SpriteSheetLayer : StageLayer, IRepeaterCopyProvider
     {
+        private const int MaxRepeaterCopies = 128;
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
         private static readonly int ColorModeId = Shader.PropertyToID("_ColorMode");
         private static readonly int UvRectId = Shader.PropertyToID("_UvRect");
         private static readonly int AlphaClipId = Shader.PropertyToID("_AlphaClip");
+        private static readonly int AnimationRowId = Shader.PropertyToID("_AnimationRow");
+        private static readonly int RowCountId = Shader.PropertyToID("_RowCount");
+        private static readonly int RepeaterRowIncrementId = Shader.PropertyToID("_RepeaterRowIncrement");
+
+        private static readonly Vector3[] QuadVertices =
+        {
+            new(-.5f, -.5f), new(.5f, -.5f), new(.5f, .5f), new(-.5f, .5f),
+        };
+        private static readonly Vector2[] QuadUvs = { Vector2.zero, Vector2.right, Vector2.one, Vector2.up };
+        private static readonly int[] QuadTriangles = { 0, 2, 1, 0, 3, 2 };
 
         [SerializeField] private SpriteSheetLayerParams _params = new() { BlendMode = LayerBlendMode.Transparent };
         [SerializeField] private Shader _shader;
@@ -27,6 +39,12 @@ namespace Aetherin
         private IAudioFeatureProvider _audio;
         private IBeatManager _beat;
         private IDeckStateProvider _deckState;
+        private readonly List<Vector3> _vertices = new();
+        private readonly List<Color> _vertexColors = new();
+        private readonly List<Vector2> _uvs = new();
+        private readonly List<int> _triangles = new();
+        private EvaluatedRepeater _evaluatedRepeater;
+        private ModulationContext _modulationContext;
 
         public override IParams Params => _params;
         protected override StageLayerParams LayerParams => _params;
@@ -71,6 +89,7 @@ namespace Aetherin
                 Application.isPlaying ? _audio : null, Application.isPlaying ? _beat : null,
                 Application.isPlaying && (_stage == null || (_deckState?.IsDeckEditable(_stage.Deck) ?? _stage.Deck == StageDeck.Next)));
             ApplyTransform(context);
+            ApplyRepeater(context);
             ApplyAppearance(context);
         }
 
@@ -87,10 +106,6 @@ namespace Aetherin
             if (_mesh == null)
             {
                 _mesh = new Mesh { name = "Sprite Sheet Quad", hideFlags = HideFlags.DontSave };
-                _mesh.SetVertices(new[] { new Vector3(-.5f, -.5f), new Vector3(.5f, -.5f), new Vector3(.5f, .5f), new Vector3(-.5f, .5f) });
-                _mesh.SetUVs(0, new[] { Vector2.zero, Vector2.right, Vector2.one, Vector2.up });
-                _mesh.SetTriangles(new[] { 0, 2, 1, 0, 3, 2 }, 0);
-                _mesh.RecalculateBounds();
                 _meshFilter.sharedMesh = _mesh;
             }
             if (_material != null) return;
@@ -100,6 +115,33 @@ namespace Aetherin
             _meshRenderer.sharedMaterial = _material;
             _meshRenderer.shadowCastingMode = ShadowCastingMode.Off;
             _meshRenderer.receiveShadows = false;
+        }
+
+        private void ApplyRepeater(in ModulationContext context)
+        {
+            _modulationContext = context;
+            _evaluatedRepeater = EvaluatedRepeater.Evaluate(_params.Repeater, context, MaxRepeaterCopies);
+
+            _vertices.Clear();
+            _vertexColors.Clear();
+            _uvs.Clear();
+            _triangles.Clear();
+            _vertices.AddRange(QuadVertices);
+            _uvs.AddRange(QuadUvs);
+            _triangles.AddRange(QuadTriangles);
+
+            int baseVertexCount = RepeaterMeshUtility.ApplyVertices(
+                _vertices, _vertexColors, _uvs, _evaluatedRepeater,
+                _evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource ? this : null);
+            RepeaterMeshUtility.ApplyIndices(
+                _triangles, QuadTriangles.Length, baseVertexCount, _evaluatedRepeater.Copies);
+
+            _mesh.Clear();
+            _mesh.SetVertices(_vertices);
+            _mesh.SetColors(_vertexColors);
+            _mesh.SetUVs(0, _uvs);
+            _mesh.SetTriangles(_triangles, 0);
+            _mesh.RecalculateBounds();
         }
 
         /// <summary>
@@ -126,13 +168,24 @@ namespace Aetherin
             size.x = Mathf.Max(0f, size.x);
             size.y = Mathf.Max(0f, size.y);
 
-            Camera camera = _cameraStage != null ? _cameraStage.StageCamera : null;
-            Vector3 forward = camera != null ? camera.transform.position - transform.position : Vector3.forward;
-            forward.y = 0f;
-            if (forward.sqrMagnitude < .000001f) forward = Vector3.forward;
-            Quaternion billboard = Quaternion.LookRotation(forward.normalized, Vector3.up);
-            Quaternion rotation = billboard * Quaternion.Euler(_params.Rotation.Evaluate(context));
-            transform.localPosition = position - Quaternion.Inverse(transform.parent != null ? transform.parent.rotation : Quaternion.identity) *
+            Quaternion parentRotation = transform.parent != null
+                ? transform.parent.rotation
+                : Quaternion.identity;
+            Quaternion rotationOffset = Quaternion.Euler(_params.Rotation.Evaluate(context));
+            Quaternion rotation;
+            if (_params.FaceCamera)
+            {
+                Camera camera = _cameraStage != null ? _cameraStage.StageCamera : null;
+                Vector3 forward = camera != null ? camera.transform.position - transform.position : Vector3.forward;
+                forward.y = 0f;
+                if (forward.sqrMagnitude < .000001f) forward = Vector3.forward;
+                rotation = Quaternion.LookRotation(forward.normalized, Vector3.up) * rotationOffset;
+            }
+            else
+            {
+                rotation = parentRotation * rotationOffset;
+            }
+            transform.localPosition = position - Quaternion.Inverse(parentRotation) *
                 rotation * Vector3.Scale(anchor, new Vector3(size.x * scale.x, size.y * scale.y, scale.z));
             transform.rotation = rotation;
             transform.localScale = new Vector3(size.x * scale.x, size.y * scale.y, scale.z);
@@ -151,7 +204,10 @@ namespace Aetherin
             int row = Mod(_params.AnimationRow.Evaluate(context), rowCount);
             // UnityのUV原点は下なので、UI上の行番号0を画像の最上段に対応させる。
             _material.SetVector(UvRectId, new Vector4(1f / frameCount, 1f / rowCount,
-                frame / (float)frameCount, (rowCount - 1 - row) / (float)rowCount));
+                frame / (float)frameCount, 0f));
+            _material.SetFloat(AnimationRowId, row);
+            _material.SetFloat(RowCountId, rowCount);
+            _material.SetFloat(RepeaterRowIncrementId, _params.RepeaterRowIncrement.Evaluate(context));
             ColorPalette palette = Application.isPlaying && _deckState != null
                 ? _deckState.GetState(_stage != null ? _stage.Deck : StageDeck.Next).Palette : PaletteColorParameter.FallbackPalette;
             PaletteColorParameter colorParameter = _params.ColorMode == SpriteSheetColorMode.AccentMask
@@ -165,6 +221,32 @@ namespace Aetherin
         }
 
         private static int Mod(int value, int divisor) => ((value % divisor) + divisor) % divisor;
+
+        public Matrix4x4 GetRepeaterCopyTransform(int copyIndex, float phaseOffset)
+        {
+            if (copyIndex == 0) return Matrix4x4.identity;
+            ModulationContext copyContext = _modulationContext.WithAnimationPhaseOffset(phaseOffset);
+            Matrix4x4 baseMatrix = EvaluateLayerMatrix(_modulationContext);
+            Matrix4x4 copyMatrix = EvaluateLayerMatrix(copyContext);
+            return baseMatrix.inverse * copyMatrix;
+        }
+
+        public float GetRepeaterCopyOpacity(int copyIndex, float phaseOffset)
+        {
+            float baseOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(_modulationContext) ?? 1f);
+            ModulationContext copyContext = _modulationContext.WithAnimationPhaseOffset(phaseOffset);
+            float copyOpacity = Mathf.Clamp01(_params.Opacity?.Evaluate(copyContext) ?? 1f);
+            return baseOpacity > Mathf.Epsilon ? copyOpacity / baseOpacity : copyOpacity;
+        }
+
+        private Matrix4x4 EvaluateLayerMatrix(in ModulationContext context)
+        {
+            return Matrix4x4.TRS(
+                       _params.Position?.Evaluate(context) ?? Vector3.zero,
+                       Quaternion.Euler(_params.Rotation?.Evaluate(context) ?? Vector3.zero),
+                       _params.Scale?.Evaluate(context) ?? Vector3.one) *
+                   Matrix4x4.Translate(-(_params.Anchor?.Evaluate(context) ?? Vector3.zero));
+        }
 
         private void OnDestroy()
         {

@@ -20,6 +20,8 @@ namespace Aetherin
         [Min(1)] public int RowCount = 1;
         [Tooltip("縦方向のアニメーション行。0が画像の最上段です")]
         public IntParameter AnimationRow = new(0);
+        [Tooltip("RepeaterのコピーごとにAnimation Rowへ加える行数")]
+        public IntParameter RepeaterRowIncrement = new(0);
         [Tooltip("有効時はFPSでフレームを進めます。無効時はCurrent Frameを直接使用します")]
         public bool PlayAnimation = true;
         [Min(0f)] public FloatParameter FramesPerSecond = new(12f);
@@ -28,6 +30,8 @@ namespace Aetherin
         public bool Loop = true;
         [Min(0)] public int StartFrame;
         public bool PreserveAspect = true;
+        [Tooltip("有効時は水平方向を保ちながら常にStage Cameraへ向きます")]
+        public bool FaceCamera = true;
         public SpriteSheetColorMode ColorMode;
 
         public Vector3Parameter Position = new();
@@ -38,6 +42,7 @@ namespace Aetherin
         public PaletteColorParameter Color = new() { ColorReference = PaletteColorReference.Custom, CustomColor = UnityEngine.Color.white };
         [Tooltip("Accent Mask時に白い部分へ適用する色")]
         public PaletteColorParameter AccentColor = new();
+        public RepeaterParams Repeater = new();
 
         [NonSerialized] public Func<IReadOnlyList<string>> GetAvailableSpriteSheetKeys;
 
@@ -47,6 +52,7 @@ namespace Aetherin
             Opacity ??= new FloatParameter(1f);
             FramesPerSecond ??= new FloatParameter(12f);
             AnimationRow ??= new IntParameter(0);
+            RepeaterRowIncrement ??= new IntParameter(0);
             CurrentFrame ??= new IntParameter(0);
             Position ??= new Vector3Parameter();
             Rotation ??= new Vector3Parameter();
@@ -55,6 +61,8 @@ namespace Aetherin
             Size ??= new Vector2Parameter(new Vector2(2f, 2f));
             Color ??= new PaletteColorParameter { ColorReference = PaletteColorReference.Custom, CustomColor = UnityEngine.Color.white };
             AccentColor ??= new PaletteColorParameter();
+            Repeater ??= new RepeaterParams();
+            Repeater.EnsureInitialized(128);
             Color.EnsureInitialized();
             AccentColor.EnsureInitialized();
             FrameCount = Mathf.Max(1, FrameCount);

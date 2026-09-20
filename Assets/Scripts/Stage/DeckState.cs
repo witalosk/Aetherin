@@ -23,6 +23,7 @@ namespace Aetherin
         bool IsDeckEditable(StageDeck deck);
 
         DeckState GetState(StageDeck deck);
+        int GetCameraWorkChangeCount(StageDeck deck);
 
         DeckState EditingState { get; }
 

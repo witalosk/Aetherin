@@ -31,8 +31,13 @@ namespace Aetherin
                     UI.Toggle("Loop", () => p.Loop, value => p.Loop = value),
                     UI.Field("Start Frame", () => p.StartFrame, value => p.StartFrame = System.Math.Max(0, value)),
                     UI.Toggle("Preserve Aspect", () => p.PreserveAspect, value => p.PreserveAspect = value))),
-                ("Transform", UI.Column(Param("Size", p.Size), Param("Position", p.Position),
+                ("Transform", UI.Column(
+                    UI.Toggle("Face Camera", () => p.FaceCamera, value => p.FaceCamera = value),
+                    Param("Size", p.Size), Param("Position", p.Position),
                     Param("Rotation", p.Rotation), Param("Scale", p.Scale), Param("Anchor", p.Anchor))),
+                ("Repeater", UI.Column(
+                    Param("Repeater", p.Repeater),
+                    Param("Row Increment", p.RepeaterRowIncrement))),
                 ("Appearance", UI.Column(
                     UI.Field("Color Mode", () => p.ColorMode, value => p.ColorMode = value),
                     UI.DynamicElementOnStatusChanged(() => p.ColorMode, mode =>

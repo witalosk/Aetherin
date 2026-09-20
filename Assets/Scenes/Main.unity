@@ -971,6 +971,10 @@ MonoBehaviour:
       _noteNumber: -1
     RandomLayerLowButton:
       _noteNumber: -1
+    RandomStageLutButton:
+      _noteNumber: -1
+    DisableStageLutButton:
+      _noteNumber: -1
     StageTimeSpeedPads: []
     StageTimeSpeedCc:
       _ccNumber: -1
@@ -1227,6 +1231,7 @@ MonoBehaviour:
   _cameraWorkDecks: []
   _selectedCameraWorkDeck: 0
   _currentCameraWork: 0
+  _cameraWorkChangeCount: 0
 --- !u!1001 &883541376
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -2156,14 +2161,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.Counter
   _params:
-    IncrementPad:
-      _noteNumber: -1
-    ResetPad:
-      _noteNumber: -1
-    IncrementColor: {r: 0.3, g: 0.9, b: 1, a: 1}
-    ResetColor: {r: 1, g: 0.3, b: 0.35, a: 1}
-    AnimationSpeed: 5
-    IdleBrightness: 0.08
+    Counters:
+    - Name: Counter 1
+      IncrementPad:
+        _noteNumber: -1
+      ResetPad:
+        _noteNumber: -1
+      IncrementColor: {r: 0.3, g: 0.9, b: 1, a: 1}
+      ResetColor: {r: 1, g: 0.3, b: 0.35, a: 1}
+      AnimationSpeed: 5
+      IdleBrightness: 0.08
 --- !u!4 &1953477468
 Transform:
   m_ObjectHideFlags: 0
@@ -2405,6 +2412,10 @@ MonoBehaviour:
     FontAsset: {fileID: 11400000, guid: 8274bf08699cf7c45aaac21e4684a23d, type: 2}
   - Key: BeHance
     FontAsset: {fileID: 11400000, guid: b053dc8ef5aecb44eb326c29016da4f5, type: 2}
+  - Key: CutiveMono
+    FontAsset: {fileID: 11400000, guid: 69f826c0bf18cfb4aba6dca50bfa8889, type: 2}
+  - Key: Rock3D
+    FontAsset: {fileID: 11400000, guid: 83ccdc18d5b8c83489b1cd572fa114a5, type: 2}
 --- !u!4 &2093487958
 Transform:
   m_ObjectHideFlags: 0

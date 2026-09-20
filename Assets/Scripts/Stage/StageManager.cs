@@ -164,6 +164,13 @@ namespace Aetherin
         }
 
         public DeckState GetState(StageDeck deck) => deck == StageDeck.Current ? _currentState : NextState;
+        public int GetCameraWorkChangeCount(StageDeck deck)
+        {
+            CameraStage stage = deck == StageDeck.Current
+                ? GetCameraStage(_currentStages, _params.CurrentStageIndex)
+                : GetCameraStage(_nextStages, _params.NextStageIndex);
+            return stage?.CameraWorkChangeCount ?? 0;
+        }
         public bool IsDeckEditable(StageDeck deck) => deck == EditingDeck;
 
         private List<StageBase> EditingStages => IsImmediateMode ? _currentStages : _nextStages;

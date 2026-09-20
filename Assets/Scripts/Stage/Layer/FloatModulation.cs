@@ -19,6 +19,7 @@ namespace Aetherin
         Beat2And4,
         Counter,
         CounterPulse,
+        CameraWorkChangeCount,
     }
 
     public enum FloatModulationOperation
@@ -26,6 +27,12 @@ namespace Aetherin
         Add,
         Multiply,
         Override,
+    }
+
+    public enum BeatPulseDirection
+    {
+        Fall,
+        Rise,
     }
 
     public enum LfoWaveform
@@ -76,6 +83,7 @@ namespace Aetherin
         public readonly IAudioFeatureProvider Audio;
         public readonly IBeatManager Beat;
         public readonly ICounter Counter;
+        public readonly int CameraWorkChangeCount;
         public readonly bool AllowMidi;
         public readonly float AnimationPhaseOffset;
 
@@ -86,22 +94,26 @@ namespace Aetherin
             bool allowMidi,
             float animationPhaseOffset = 0f,
             ICounter counter = null,
-            double? elapsedTime = null)
+            double? elapsedTime = null,
+            int cameraWorkChangeCount = 0)
         {
             Time = time;
             ElapsedTime = elapsedTime ?? time;
             Audio = audio;
             Beat = beat;
             Counter = counter;
+            CameraWorkChangeCount = cameraWorkChangeCount;
             AllowMidi = allowMidi;
             AnimationPhaseOffset = animationPhaseOffset;
         }
 
         public ModulationContext WithAnimationPhaseOffset(float offset) =>
-            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter, ElapsedTime);
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter, ElapsedTime,
+                CameraWorkChangeCount);
 
         public ModulationContext WithElapsedTime(double elapsedTime) =>
-            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, elapsedTime);
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, elapsedTime,
+                CameraWorkChangeCount);
     }
 
     [Serializable]
@@ -144,7 +156,11 @@ namespace Aetherin
         [Min(0.01f)]
         public float BeatPulseSharpness = 3f;
 
+        [Tooltip("Beat 2→3 / 4→1の2拍で、1から0へ減衰するか0から1へ増加するか")]
+        public BeatPulseDirection Beat2And4PulseDirection;
+
         public CounterValueMode CounterValueMode;
+        [Min(0)] public int CounterIndex;
         public float CounterMin;
         public float CounterMax = 1f;
         [Min(0.001f)] public float CounterRepeatMod = 4f;
@@ -202,9 +218,10 @@ namespace Aetherin
                 FloatModulationSource.SnareClap => context.Audio?.SnareClap ?? 0f,
                 FloatModulationSource.InputVolume => context.Audio?.InputVolume ?? 0f,
                 FloatModulationSource.MidiCc => Midi?.GetValue() ?? 0f,
-                FloatModulationSource.Counter => EvaluateCounter(context.Counter ?? Counter.Active),
+                FloatModulationSource.Counter => EvaluateCounter(ResolveCounter(context.Counter ?? Counter.Active)),
                 FloatModulationSource.CounterPulse => EvaluateCounterPulse(
-                    context.Counter ?? Counter.Active, context.Time),
+                    ResolveCounter(context.Counter ?? Counter.Active), context.Time),
+                FloatModulationSource.CameraWorkChangeCount => context.CameraWorkChangeCount,
                 _ => 0f,
             };
 
@@ -433,16 +450,35 @@ namespace Aetherin
             float phase = Mathf.Repeat(rawPhase, 1f);
             if (phase == 0f && rawPhase > 0f) phase = 1f;
 
-            return Mathf.Pow(1f - Mathf.Clamp01(phase), Mathf.Max(0.01f, BeatPulseSharpness));
+            return EvaluatePulsePhase(phase, BeatPulseDirection.Fall);
         }
 
         private float EvaluateBeat2And4Pulse(IBeatManager beat, float phaseOffset)
         {
             if (beat == null || !beat.IsRunning) return 0f;
 
-            // BeatInBarは0始まりなので、1と3がそれぞれ2拍目・4拍目。
-            if (beat.BeatInBar is not (1 or 3)) return 0f;
-            return EvaluateBeatPulse(beat, false, phaseOffset);
+            // BeatInBarは0始まり。2→3拍目と4→次の1拍目を、それぞれ1つの2拍周期として扱う。
+            float pairPhase = beat.BeatInBar switch
+            {
+                1 or 3 => beat.BeatPhase * 0.5f,
+                2 or 0 => 0.5f + beat.BeatPhase * 0.5f,
+                _ => -1f,
+            };
+            if (pairPhase < 0f) return 0f;
+
+            float rawPhase = pairPhase + phaseOffset;
+            float phase = Mathf.Repeat(rawPhase, 1f);
+            if (phase == 0f && rawPhase > 0f) phase = 1f;
+
+            return EvaluatePulsePhase(phase, Beat2And4PulseDirection);
+        }
+
+        private float EvaluatePulsePhase(float phase, BeatPulseDirection direction)
+        {
+            float pulsePhase = direction == BeatPulseDirection.Rise
+                ? Mathf.Clamp01(phase)
+                : 1f - Mathf.Clamp01(phase);
+            return Mathf.Pow(pulsePhase, Mathf.Max(0.01f, BeatPulseSharpness));
         }
 
         private float EvaluateCounter(ICounter counter)
@@ -461,6 +497,13 @@ namespace Aetherin
             };
 
             return Mathf.Pow(Mathf.Max(0f, value), Mathf.Max(0.01f, BeatPulseSharpness));
+        }
+
+        private ICounter ResolveCounter(ICounter counter)
+        {
+            int index = Mathf.Max(0, CounterIndex);
+            if (counter is ICounterBank bank) return bank.GetCounter(index);
+            return index == 0 ? counter : null;
         }
 
         private float EvaluateCounterPulse(ICounter counter, double time)

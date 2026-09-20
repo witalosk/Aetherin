@@ -35,7 +35,8 @@ namespace Aetherin
             {
                 bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Current) ?? false;
                 var currentContext = new ModulationContext(
-                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter,
+                    cameraWorkChangeCount: _deckStateProvider?.GetCameraWorkChangeCount(StageDeck.Current) ?? 0);
                 ApplyVolumeSettings(_currentVolumeProfile, _params.CurrentVolume,
                     currentCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, currentContext);
                 ConfigureCameraVolume(currentCamera, _currentVolumeProfile, 30, "Current Deck Volume");
@@ -45,7 +46,8 @@ namespace Aetherin
             {
                 bool allowMidi = _deckStateProvider?.IsDeckEditable(StageDeck.Next) ?? true;
                 var nextContext = new ModulationContext(
-                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter);
+                    Time.unscaledTimeAsDouble, _audioFeatureProvider, _beatManager, allowMidi, counter: _counter,
+                    cameraWorkChangeCount: _deckStateProvider?.GetCameraWorkChangeCount(StageDeck.Next) ?? 0);
                 ApplyVolumeSettings(_nextVolumeProfile, _params.NextVolume,
                     nextCamera.GetComponentInParent<CameraStage>()?.ActiveCameraWorkRecipe, nextContext);
                 ConfigureCameraVolume(nextCamera, _nextVolumeProfile, 31, "Next Deck Volume");
