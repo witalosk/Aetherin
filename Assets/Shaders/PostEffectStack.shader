@@ -244,7 +244,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 {
                     float grain = max(1.0, abs(_Scale));
                     float frame = floor(_TimeValue * max(0.0, abs(_Speed)) * 30.0);
-                    float noise = hash21(floor(uv * grain) + frame * 7.31) * 2.0 - 1.0;
+                    float noise = Pcg2d01(floor(uv * grain * 4000.) + frame);
                     fx.rgb = saturate(src.rgb + noise * _Amount);
                     fx = lerp(src, fx, saturate(_Strength));
                 }

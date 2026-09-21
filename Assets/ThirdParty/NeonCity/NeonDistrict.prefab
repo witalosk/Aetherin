@@ -9,7 +9,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 555354753454427175}
-  - component: {fileID: 6298462123986685222}
   m_Layer: 0
   m_Name: NeonDistrict
   m_TagString: Untagged
@@ -34,92 +33,6 @@ Transform:
   - {fileID: 1807177490706985193}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &6298462123986685222
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1147950861311227912}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6e651a82d90c9f247a92fb5e7c9fa49b, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PrefabMaterialModulator
-  _targetRenderer: {fileID: 0}
-  _includeChildren: 1
-  _materialSlot: -1
-  _materialNameContains:
-  - ND_Neon
-  - ND_Signs
-  - ND_Signal
-  _type: 0
-  _propertyName: _EmissionColor
-  _useMaterialColor: 1
-  _color: {r: 1, g: 1, b: 1, a: 1}
-  _intensity:
-    BaseValue: 0.35
-    Modulation:
-      Modulators:
-      - Enabled: 1
-        Source: 4
-        Operation: 0
-        Amount: 2.65
-        Offset: 0
-        LfoFrequency: 1
-        LfoPhase: 0
-        LfoWaveform: 0
-        LfoUnipolar: 0
-        ElapsedTimeStartOffset: 0
-        ElapsedTimeUseAnimationCurve: 0
-        ElapsedTimeAnimationCurve:
-          serializedVersion: 2
-          m_Curve:
-          - serializedVersion: 3
-            time: 0
-            value: 0
-            inSlope: 0
-            outSlope: 1
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          - serializedVersion: 3
-            time: 1
-            value: 1
-            inSlope: 1
-            outSlope: 0
-            tangentMode: 0
-            weightedMode: 0
-            inWeight: 0
-            outWeight: 0
-          m_PreInfinity: 2
-          m_PostInfinity: 2
-          m_RotationOrder: 4
-        ElapsedTimeReset: 0
-        ElapsedTimeResetAfterEvents: 4
-        ElapsedTimeLimit: 0
-        ElapsedTimeMin: 0
-        ElapsedTimeMax: 1
-        BeatPulseSharpness: 3
-        Beat2And4PulseDirection: 0
-        CounterValueMode: 0
-        CounterIndex: 0
-        CounterMin: 0
-        CounterMax: 1
-        CounterRepeatMod: 4
-        CounterPulseDuration: 0.5
-        Midi:
-          _ccNumber: -1
-        AccumulatorInitialValue: 0
-        AccumulatorReset: 0
-        AccumulatorResetAfterEvents: 4
-        AccumulatorLimit: 0
-        AccumulatorMin: 0
-        AccumulatorMax: 1
-        AccumulatorTransition: 0
-        AccumulatorTransitionDuration: 0.15
-        AccumulatorTransitionSharpness: 3
 --- !u!1001 &2206441828630566658
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -187,8 +100,81 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 3fbbd71a6f49a73478192677fc03e6c2, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1402087224086775424}
   m_SourcePrefab: {fileID: 100100000, guid: 3fbbd71a6f49a73478192677fc03e6c2, type: 3}
+--- !u!1 &1323973588341729875 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 3fbbd71a6f49a73478192677fc03e6c2, type: 3}
+  m_PrefabInstance: {fileID: 2206441828630566658}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &1402087224086775424
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1323973588341729875}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e651a82d90c9f247a92fb5e7c9fa49b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PrefabMaterialModulator
+  _targetRenderer: {fileID: 0}
+  _includeChildren: 1
+  _materialSlot: -1
+  _materialNameContains: []
+  _type: 0
+  _propertyName: _EmissionColor
+  _useMaterialColor: 1
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _intensity:
+    BaseValue: 1
+    Modulation:
+      Modulators:
+      - Enabled: 1
+        Source: 0
+        Operation: 0
+        Amount: 0.5
+        Offset: 0
+        LfoFrequency: 1
+        LfoPhase: 0
+        LfoWaveform: 0
+        LfoUnipolar: 0
+        ElapsedTimeStartOffset: 0
+        ElapsedTimeUseAnimationCurve: 0
+        ElapsedTimeAnimationCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        ElapsedTimeReset: 0
+        ElapsedTimeResetAfterEvents: 0
+        ElapsedTimeLimit: 0
+        ElapsedTimeMin: 0
+        ElapsedTimeMax: 0
+        BeatPulseSharpness: 3
+        Beat2And4PulseDirection: 0
+        CounterValueMode: 0
+        CounterIndex: 0
+        CounterMin: 0
+        CounterMax: 0
+        CounterRepeatMod: 0
+        CounterPulseDuration: 0
+        Midi:
+          _ccNumber: 0
+        AccumulatorInitialValue: 0
+        AccumulatorReset: 0
+        AccumulatorResetAfterEvents: 0
+        AccumulatorLimit: 0
+        AccumulatorMin: 0
+        AccumulatorMax: 0
+        AccumulatorTransition: 0
+        AccumulatorTransitionDuration: 0
+        AccumulatorTransitionSharpness: 0
 --- !u!4 &1807177490706985193 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 3fbbd71a6f49a73478192677fc03e6c2, type: 3}
@@ -257,10 +243,231 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: -3228256390334795594, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 5507086280671091256}
+    - targetCorrespondingSourceObject: {fileID: 8355600131621163343, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 6822189031126576682}
+    - targetCorrespondingSourceObject: {fileID: -1613651681502456994, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 2765246018352697217}
   m_SourcePrefab: {fileID: 100100000, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
 --- !u!4 &3515762921397152846 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
   m_PrefabInstance: {fileID: 3981400609585662885}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &4951084153804954346 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 8355600131621163343, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+  m_PrefabInstance: {fileID: 3981400609585662885}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &6822189031126576682
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4951084153804954346}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e651a82d90c9f247a92fb5e7c9fa49b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PrefabMaterialModulator
+  _targetRenderer: {fileID: 0}
+  _includeChildren: 0
+  _materialSlot: -1
+  _materialNameContains:
+  - ND_NeonCyan
+  _type: 0
+  _propertyName: _EmissionColor
+  _useMaterialColor: 1
+  _color: {r: 0.099999994, g: 3.75, b: 5, a: 5}
+  _intensity:
+    BaseValue: 0.5
+    Modulation:
+      Modulators:
+      - Enabled: 1
+        Source: 0
+        Operation: 0
+        Amount: 2
+        Offset: 0
+        LfoFrequency: 1
+        LfoPhase: 0
+        LfoWaveform: 0
+        LfoUnipolar: 0
+        ElapsedTimeStartOffset: 0
+        ElapsedTimeUseAnimationCurve: 0
+        ElapsedTimeAnimationCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        ElapsedTimeReset: 0
+        ElapsedTimeResetAfterEvents: 0
+        ElapsedTimeLimit: 0
+        ElapsedTimeMin: 0
+        ElapsedTimeMax: 0
+        BeatPulseSharpness: 0
+        Beat2And4PulseDirection: 0
+        CounterValueMode: 0
+        CounterIndex: 0
+        CounterMin: 0
+        CounterMax: 0
+        CounterRepeatMod: 0
+        CounterPulseDuration: 0
+        Midi:
+          _ccNumber: 0
+        AccumulatorInitialValue: 0
+        AccumulatorReset: 0
+        AccumulatorResetAfterEvents: 0
+        AccumulatorLimit: 0
+        AccumulatorMin: 0
+        AccumulatorMax: 0
+        AccumulatorTransition: 0
+        AccumulatorTransitionDuration: 0
+        AccumulatorTransitionSharpness: 0
+--- !u!1 &6835319208116820219 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -1613651681502456994, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+  m_PrefabInstance: {fileID: 3981400609585662885}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &2765246018352697217
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6835319208116820219}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e651a82d90c9f247a92fb5e7c9fa49b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PrefabMaterialModulator
+  _targetRenderer: {fileID: 0}
+  _includeChildren: 0
+  _materialSlot: -1
+  _materialNameContains: []
+  _type: 0
+  _propertyName: _EmissionColor
+  _useMaterialColor: 1
+  _color: {r: 1, g: 1, b: 1, a: 1}
+  _intensity:
+    BaseValue: 1
+    Modulation:
+      Modulators:
+      - Enabled: 1
+        Source: 0
+        Operation: 0
+        Amount: 0.2
+        Offset: 0
+        LfoFrequency: 10
+        LfoPhase: 0
+        LfoWaveform: 0
+        LfoUnipolar: 0
+        ElapsedTimeStartOffset: 0
+        ElapsedTimeUseAnimationCurve: 0
+        ElapsedTimeAnimationCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        ElapsedTimeReset: 0
+        ElapsedTimeResetAfterEvents: 0
+        ElapsedTimeLimit: 0
+        ElapsedTimeMin: 0
+        ElapsedTimeMax: 0
+        BeatPulseSharpness: 0
+        Beat2And4PulseDirection: 0
+        CounterValueMode: 0
+        CounterIndex: 0
+        CounterMin: 0
+        CounterMax: 0
+        CounterRepeatMod: 0
+        CounterPulseDuration: 0
+        Midi:
+          _ccNumber: 0
+        AccumulatorInitialValue: 0
+        AccumulatorReset: 0
+        AccumulatorResetAfterEvents: 0
+        AccumulatorLimit: 0
+        AccumulatorMin: 0
+        AccumulatorMax: 0
+        AccumulatorTransition: 0
+        AccumulatorTransitionDuration: 0
+        AccumulatorTransitionSharpness: 0
+--- !u!1 &7237895003292646163 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: -3228256390334795594, guid: 717ba5bc5f5ef7b4d988a620f021f67f, type: 3}
+  m_PrefabInstance: {fileID: 3981400609585662885}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &5507086280671091256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7237895003292646163}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e651a82d90c9f247a92fb5e7c9fa49b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.PrefabMaterialModulator
+  _targetRenderer: {fileID: 0}
+  _includeChildren: 0
+  _materialSlot: -1
+  _materialNameContains:
+  - ND_NeonAmber
+  _type: 0
+  _propertyName: _EmissionColor
+  _useMaterialColor: 1
+  _color: {r: 5, g: 1.5, b: 0.125, a: 5}
+  _intensity:
+    BaseValue: 0.5
+    Modulation:
+      Modulators:
+      - Enabled: 1
+        Source: 0
+        Operation: 0
+        Amount: 2
+        Offset: 0
+        LfoFrequency: 1
+        LfoPhase: 0.5
+        LfoWaveform: 0
+        LfoUnipolar: 0
+        ElapsedTimeStartOffset: 0
+        ElapsedTimeUseAnimationCurve: 0
+        ElapsedTimeAnimationCurve:
+          serializedVersion: 2
+          m_Curve: []
+          m_PreInfinity: 0
+          m_PostInfinity: 0
+          m_RotationOrder: 0
+        ElapsedTimeReset: 0
+        ElapsedTimeResetAfterEvents: 0
+        ElapsedTimeLimit: 0
+        ElapsedTimeMin: 0
+        ElapsedTimeMax: 0
+        BeatPulseSharpness: 0
+        Beat2And4PulseDirection: 0
+        CounterValueMode: 0
+        CounterIndex: 0
+        CounterMin: 0
+        CounterMax: 0
+        CounterRepeatMod: 0
+        CounterPulseDuration: 0
+        Midi:
+          _ccNumber: 0
+        AccumulatorInitialValue: 0
+        AccumulatorReset: 0
+        AccumulatorResetAfterEvents: 0
+        AccumulatorLimit: 0
+        AccumulatorMin: 0
+        AccumulatorMax: 0
+        AccumulatorTransition: 0
+        AccumulatorTransitionDuration: 0
+        AccumulatorTransitionSharpness: 0

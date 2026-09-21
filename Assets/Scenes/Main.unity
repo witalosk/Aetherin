@@ -1350,6 +1350,8 @@ MonoBehaviour:
     Texture: {fileID: 2800000, guid: 860376efed7c0994dad1d3d4eea556c2, type: 3}
   - Key: hyoshiki
     Texture: {fileID: 2800000, guid: 6c52e56b1f6c3d844a535e04483388d0, type: 3}
+  - Key: cat_sprite
+    Texture: {fileID: 2800000, guid: 0662e802da8306d48b0f1634879d7f2c, type: 3}
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -2228,6 +2230,10 @@ MonoBehaviour:
     Model: {fileID: 919132149155446097, guid: 682173a6c8bbd704a83b665546887040, type: 3}
   - Key: neonDistrict
     Model: {fileID: 1147950861311227912, guid: 15c9a3b9662a98543802f375732b84a9, type: 3}
+  - Key: appleTree
+    Model: {fileID: 829817286846279805, guid: 1ea61b4baf668064aa5aab33787c4ea9, type: 3}
+  - Key: torii
+    Model: {fileID: 2849406126764801444, guid: 292c06fa88a37cb40ad89d5bbf469f95, type: 3}
 --- !u!4 &1994971894
 Transform:
   m_ObjectHideFlags: 0
