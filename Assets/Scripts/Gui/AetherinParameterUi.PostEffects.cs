@@ -187,6 +187,16 @@ namespace Aetherin
                     yield return Param("Wiggle Amount", module.Secondary);
                     yield return Param("Wiggle FPS", module.HandDrawnFrameRate);
                     break;
+                case PostEffectType.FrameRateDrop:
+                    yield return Param("Drop Amount", module.FrameRateDropAmount);
+                    yield return UI.Field("Sync", () => module.FrameRateDropSync,
+                        value => module.FrameRateDropSync = value);
+                    yield return UI.DynamicElementOnStatusChanged(
+                        () => module.FrameRateDropSync,
+                        sync => sync == FrameRateDropSyncMode.Beat
+                            ? Param("Updates Per Beat At Maximum", module.FrameRateDropUpdatesPerBeat)
+                            : Param("Minimum Frame Rate", module.FrameRateDropFps));
+                    break;
                 case PostEffectType.LightLeak:
                     yield return Param("Intensity", module.Amount);
                     yield return Param("Size", module.Scale);

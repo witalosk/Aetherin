@@ -6,6 +6,7 @@ namespace Aetherin
         int Value { get; }
         float AnimatedValue { get; }
         double LastIncrementTime { get; }
+        long IncrementEventId { get; }
         void Increment();
         void Reset();
     }

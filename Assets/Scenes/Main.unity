@@ -2422,6 +2422,10 @@ MonoBehaviour:
     FontAsset: {fileID: 11400000, guid: 69f826c0bf18cfb4aba6dca50bfa8889, type: 2}
   - Key: Rock3D
     FontAsset: {fileID: 11400000, guid: 83ccdc18d5b8c83489b1cd572fa114a5, type: 2}
+  - Key: Marumonica
+    FontAsset: {fileID: 11400000, guid: 768676388fd12ce4abcb11d1f7df922d, type: 2}
+  - Key: 19Seg
+    FontAsset: {fileID: 11400000, guid: ca7d3bd65342b7845aad00830ea0a83e, type: 2}
 --- !u!4 &2093487958
 Transform:
   m_ObjectHideFlags: 0

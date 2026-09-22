@@ -299,6 +299,10 @@ namespace Aetherin
                     {
                         input = ProcessCrossFilter(input, module, runtime, moduleContext, strength);
                     }
+                    else if (module.Type == PostEffectType.FrameRateDrop)
+                    {
+                        input = ProcessFrameRateDrop(input, module, runtime, moduleContext);
+                    }
                     else
                     {
                         runtime.Buffers.Reset(input);
@@ -323,6 +327,51 @@ namespace Aetherin
             }
 
             return input;
+        }
+
+        private Texture ProcessFrameRateDrop(Texture source, PostEffectModule module, StackRuntime runtime,
+            in ModulationContext context)
+        {
+            FrameRateDropRuntime hold = runtime.GetFrameRateDrop(module, source.width, source.height);
+            float dropAmount = Mathf.Clamp01(module.FrameRateDropAmount.Evaluate(context));
+            if (dropAmount <= 0f)
+            {
+                // CC=0から上げ直した際、古いホールド画像を一瞬表示しない。
+                hold.Valid = false;
+                hold.Bucket = long.MinValue;
+                return source;
+            }
+
+            long bucket;
+            if (module.FrameRateDropSync == FrameRateDropSyncMode.Beat && context.Beat?.IsRunning == true)
+            {
+                int maximumUpdatesPerBeat = Mathf.Clamp(
+                    module.FrameRateDropUpdatesPerBeat.Evaluate(context), 1, 16);
+                int updatesPerBeat = Mathf.Clamp(
+                    Mathf.CeilToInt(maximumUpdatesPerBeat / dropAmount), maximumUpdatesPerBeat, 128);
+                float phase = Mathf.Clamp01(context.Beat.BeatPhase);
+                bucket = context.Beat.BeatEventId * updatesPerBeat +
+                    Mathf.Min(updatesPerBeat - 1, Mathf.FloorToInt(phase * updatesPerBeat));
+            }
+            else
+            {
+                float minimumFps = Mathf.Clamp(module.FrameRateDropFps.Evaluate(context), 0.1f, 120f);
+                float effectiveFps = minimumFps / dropAmount;
+                bucket = (long)Math.Floor(context.ElapsedTime * effectiveFps);
+            }
+
+            if (!hold.Valid || hold.Bucket != bucket)
+            {
+                Graphics.Blit(source, hold.Texture);
+                hold.Bucket = bucket;
+                hold.Valid = true;
+            }
+
+            _material.SetTexture(HistoryTexId, hold.Texture);
+            runtime.Buffers.Reset(source);
+            Graphics.Blit(source, runtime.Buffers.Write, _material);
+            runtime.Buffers.Swap();
+            return runtime.Buffers.Read;
         }
 
         private Texture ProcessCrossFilter(Texture source, PostEffectModule module, StackRuntime runtime,
@@ -499,6 +548,7 @@ namespace Aetherin
             public RenderTexture BackBuffer { get; private set; }
             public bool BackBufferValid { get; set; }
             private readonly Dictionary<PostEffectModule, RuntimeShaderPostEffectRenderer> _runtimeShaders = new();
+            private readonly Dictionary<PostEffectModule, FrameRateDropRuntime> _frameRateDrops = new();
 
             public void Ensure(int width, int height)
             {
@@ -519,6 +569,17 @@ namespace Aetherin
                 return renderer;
             }
 
+            public FrameRateDropRuntime GetFrameRateDrop(PostEffectModule module, int width, int height)
+            {
+                if (!_frameRateDrops.TryGetValue(module, out FrameRateDropRuntime runtime))
+                {
+                    runtime = new FrameRateDropRuntime();
+                    _frameRateDrops.Add(module, runtime);
+                }
+                runtime.Ensure(width, height);
+                return runtime;
+            }
+
             public void Dispose()
             {
                 Buffers.Dispose();
@@ -529,6 +590,9 @@ namespace Aetherin
                 foreach (RuntimeShaderPostEffectRenderer renderer in _runtimeShaders.Values)
                     renderer.Dispose();
                 _runtimeShaders.Clear();
+                foreach (FrameRateDropRuntime runtime in _frameRateDrops.Values)
+                    runtime.Dispose();
+                _frameRateDrops.Clear();
             }
 
             private static RenderTexture Create(int width, int height, string name,
@@ -550,6 +614,38 @@ namespace Aetherin
                 texture.Release();
                 if (Application.isPlaying) UnityEngine.Object.Destroy(texture);
                 else UnityEngine.Object.DestroyImmediate(texture);
+            }
+        }
+
+        private sealed class FrameRateDropRuntime : IDisposable
+        {
+            public RenderTexture Texture { get; private set; }
+            public long Bucket { get; set; } = long.MinValue;
+            public bool Valid { get; set; }
+
+            public void Ensure(int width, int height)
+            {
+                if (Texture != null && Texture.width == width && Texture.height == height) return;
+                Dispose();
+                Texture = new RenderTexture(width, height, 0, RenderTextureFormat.ARGBHalf,
+                    RenderTextureReadWrite.sRGB)
+                {
+                    name = "Post FX Frame Hold",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                };
+                Texture.Create();
+            }
+
+            public void Dispose()
+            {
+                if (Texture == null) return;
+                Texture.Release();
+                if (Application.isPlaying) UnityEngine.Object.Destroy(Texture);
+                else UnityEngine.Object.DestroyImmediate(Texture);
+                Texture = null;
+                Bucket = long.MinValue;
+                Valid = false;
             }
         }
 

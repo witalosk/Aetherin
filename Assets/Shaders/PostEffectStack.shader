@@ -243,8 +243,9 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 else if (_EffectType == 14) // Noise
                 {
                     float grain = max(1.0, abs(_Scale));
-                    float frame = floor(_TimeValue * max(0.0, abs(_Speed)) * 30.0);
-                    float noise = Pcg2d01(floor(uv * grain * 4000.) + frame);
+                    uint frame = (uint)floor(_TimeValue * max(0.0, abs(_Speed)) * 30.0);
+                    uint2 noiseCell = (uint2)floor(uv * grain * 4000.0);
+                    float3 noise = Pcg3d01(uint3(noiseCell, frame)) - 0.5;
                     fx.rgb = saturate(src.rgb + noise * _Amount);
                     fx = lerp(src, fx, saturate(_Strength));
                 }
@@ -351,6 +352,10 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 else if (_EffectType == 21) // Runtime shader
                 {
                     fx = lerp(src, tex2D(_RuntimeTex, uv), saturate(_Strength));
+                }
+                else if (_EffectType == 22) // Frame rate drop / frame hold
+                {
+                    fx = lerp(src, tex2D(_HistoryTex, uv), saturate(_Strength));
                 }
 
                 return fx;

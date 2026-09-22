@@ -275,6 +275,17 @@ namespace Aetherin
                         UI.Field("Duration", () => modulator.CounterPulseDuration,
                             value => modulator.CounterPulseDuration = Math.Max(0.001f, value)));
 
+                case FloatModulationSource.RandomPerBeat:
+                    return UI.Field("Seed", () => modulator.RandomSeed,
+                        value => modulator.RandomSeed = value);
+
+                case FloatModulationSource.RandomPerCounter:
+                    return UI.Column(
+                        UI.Field("Counter #", () => modulator.CounterIndex + 1,
+                            value => modulator.CounterIndex = Math.Max(0, value - 1)),
+                        UI.Field("Seed", () => modulator.RandomSeed,
+                            value => modulator.RandomSeed = value));
+
                 case FloatModulationSource.MidiCc:
                     return UI.Field("Fader", Binder.Create(modulator.Midi, typeof(MidiCcBinding)));
 

@@ -20,6 +20,8 @@ namespace Aetherin
         Counter,
         CounterPulse,
         CameraWorkChangeCount,
+        RandomPerBeat,
+        RandomPerCounter,
     }
 
     public enum FloatModulationOperation
@@ -166,6 +168,9 @@ namespace Aetherin
         [Min(0.001f)] public float CounterRepeatMod = 4f;
         [Min(0.001f)] public float CounterPulseDuration = 0.5f;
 
+        [Tooltip("ランダム値を決めるシード。同じシードとイベント番号なら同じ値になります")]
+        public int RandomSeed = Guid.NewGuid().GetHashCode();
+
         public MidiCcBinding Midi = new();
 
         public float AccumulatorInitialValue;
@@ -222,6 +227,9 @@ namespace Aetherin
                 FloatModulationSource.CounterPulse => EvaluateCounterPulse(
                     ResolveCounter(context.Counter ?? Counter.Active), context.Time),
                 FloatModulationSource.CameraWorkChangeCount => context.CameraWorkChangeCount,
+                FloatModulationSource.RandomPerBeat => EvaluateRandomPerBeat(context.Beat),
+                FloatModulationSource.RandomPerCounter => EvaluateRandomPerCounter(
+                    ResolveCounter(context.Counter ?? Counter.Active)),
                 _ => 0f,
             };
 
@@ -513,6 +521,29 @@ namespace Aetherin
             float phase = Mathf.Max(0f, (float)(time - counter.LastIncrementTime)) /
                 Mathf.Max(0.001f, CounterPulseDuration);
             return Mathf.Pow(1f - Mathf.Clamp01(phase), Mathf.Max(0.01f, BeatPulseSharpness));
+        }
+
+        private float EvaluateRandomPerBeat(IBeatManager beat) =>
+            beat == null || !beat.IsRunning || beat.BeatEventId <= 0
+                ? 0f
+                : HashRandom(beat.BeatEventId, RandomSeed);
+
+        private float EvaluateRandomPerCounter(ICounter counter) =>
+            counter == null || counter.IncrementEventId <= 0
+                ? 0f
+                : HashRandom(counter.IncrementEventId, RandomSeed);
+
+        private static float HashRandom(long eventId, int seed)
+        {
+            unchecked
+            {
+                ulong value = (ulong)eventId ^ ((ulong)(uint)seed << 32 | (uint)seed);
+                value += 0x9E3779B97F4A7C15UL;
+                value = (value ^ (value >> 30)) * 0xBF58476D1CE4E5B9UL;
+                value = (value ^ (value >> 27)) * 0x94D049BB133111EBUL;
+                value ^= value >> 31;
+                return (value >> 40) * (1f / 16777216f);
+            }
         }
 
         private float EvaluateLfo(double time, float phaseOffset)

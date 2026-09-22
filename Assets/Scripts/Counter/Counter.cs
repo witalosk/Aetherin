@@ -51,6 +51,7 @@ namespace Aetherin
         public int Value => PrimaryCounter?.Value ?? 0;
         public float AnimatedValue => PrimaryCounter?.AnimatedValue ?? 0f;
         public double LastIncrementTime => PrimaryCounter?.LastIncrementTime ?? double.NegativeInfinity;
+        public long IncrementEventId => PrimaryCounter?.IncrementEventId ?? 0;
         public int CounterCount => _params?.Counters?.Count ?? 0;
 
         [SerializeField] private CounterParams _params = new();
@@ -100,6 +101,7 @@ namespace Aetherin
             public int Value { get; private set; }
             public float AnimatedValue { get; private set; }
             public double LastIncrementTime { get; private set; } = double.NegativeInfinity;
+            public long IncrementEventId { get; private set; }
 
             public void Update(CounterChannelParams parameters)
             {
@@ -122,6 +124,7 @@ namespace Aetherin
             public void Increment()
             {
                 Value++;
+                IncrementEventId++;
                 LastIncrementTime = Time.unscaledTimeAsDouble;
             }
 

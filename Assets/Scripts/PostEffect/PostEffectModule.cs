@@ -27,6 +27,13 @@ namespace Aetherin
         LightLeak,
         Lut,
         RuntimeShader,
+        FrameRateDrop,
+    }
+
+    public enum FrameRateDropSyncMode
+    {
+        FramesPerSecond,
+        Beat,
     }
 
     public enum ShutterMode
@@ -123,6 +130,14 @@ namespace Aetherin
         [Tooltip("HSV Levels: ガンマ")] public FloatParameter Gamma = new(1f);
         [Tooltip("Shutter: 閉じる方向")] public ShutterMode ShutterMode;
         [Tooltip("Hand Drawn: 揺れを量子化するフレームレート")] public FloatParameter HandDrawnFrameRate = new(8f);
+        [Tooltip("Frame Rate Drop: 固定FPS、またはBPMの拍に同期して映像更新を間引きます")]
+        public FrameRateDropSyncMode FrameRateDropSync;
+        [Tooltip("Frame Rate Drop: 0で無効、1で指定した最大量まで映像更新を間引きます")]
+        public FloatParameter FrameRateDropAmount = new(1f);
+        [Tooltip("Frame Rate Drop: 1秒あたりの映像更新回数")]
+        public FloatParameter FrameRateDropFps = new(12f);
+        [Tooltip("Frame Rate Drop: 1拍あたりの映像更新回数")]
+        public IntParameter FrameRateDropUpdatesPerBeat = new(1);
         [Tooltip("Light Leak: 横位置。0で左、1で右。Beat Accumulator の PingPong で左右交互にできます")]
         public FloatParameter LightLeakPosition = new(0.5f);
         [Tooltip("Light Leak: 色。パレット参照またはカスタム色を指定できます")]
@@ -185,6 +200,9 @@ namespace Aetherin
             BlackLevel ??= new FloatParameter(0f); WhiteLevel ??= new FloatParameter(1f);
             Gamma ??= new FloatParameter(1f);
             HandDrawnFrameRate ??= new FloatParameter(8f);
+            FrameRateDropAmount ??= new FloatParameter(1f);
+            FrameRateDropFps ??= new FloatParameter(12f);
+            FrameRateDropUpdatesPerBeat ??= new IntParameter(1);
             LightLeakPosition ??= new FloatParameter(0.5f);
             LightLeakColor ??= new PaletteColorParameter
             {
