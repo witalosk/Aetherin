@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.VFX;
 using UnitySimpleContainer;
@@ -13,6 +15,7 @@ namespace Aetherin
     {
         Skybox,
         SolidColor,
+        DontClear,
     }
 
     public enum LitReflectionSource
@@ -53,6 +56,9 @@ namespace Aetherin
         [SerializeField] private Camera _camera;
         [SerializeField] private CameraStageBackgroundMode _backgroundMode;
         [SerializeField] private PaletteColorSource _backgroundColor = PaletteColorSource.BackgroundColor1;
+        private UniversalAdditionalCameraData _cameraData;
+        private RenderTexture _historyTexture;
+        internal RTHandle HistoryHandle { get; private set; }
         private StageLayer[] _layers = Array.Empty<StageLayer>();
         private bool _layersInitialized;
         private IAudioFeatureProvider _audioFeatureProvider;
@@ -64,7 +70,18 @@ namespace Aetherin
         public CameraStageBackgroundMode BackgroundMode
         {
             get => _backgroundMode;
-            set => _backgroundMode = value;
+            set
+            {
+                bool enteringDontClear = _backgroundMode != CameraStageBackgroundMode.DontClear &&
+                                         value == CameraStageBackgroundMode.DontClear;
+                _backgroundMode = value;
+                if (enteringDontClear && OutputTexture != null)
+                {
+                    EnsureHistoryTexture();
+                    Graphics.Blit(OutputTexture, _historyTexture);
+                }
+                ApplyBackgroundMode();
+            }
         }
 
         public PaletteColorSource BackgroundColor
@@ -156,30 +173,70 @@ namespace Aetherin
             }
 
             _camera.targetTexture = OutputTexture;
-            UniversalAdditionalCameraData cameraData = _camera.GetUniversalAdditionalCameraData();
-            cameraData.requiresColorOption = CameraOverrideOption.On;
+            if (_backgroundMode == CameraStageBackgroundMode.DontClear)
+                EnsureHistoryTexture();
+            _cameraData = _camera.GetUniversalAdditionalCameraData();
+            _cameraData.requiresColorOption = CameraOverrideOption.On;
             // Current / NextはそれぞれこのカメラでRenderTextureへ描画するため、
             // URPのPost Processingを明示的に有効にしないとGlobal Volumeが評価されない。
-            cameraData.renderPostProcessing = true;
-            cameraData.volumeLayerMask = ~0;
-            cameraData.volumeTrigger = _camera.transform;
+            _cameraData.renderPostProcessing = true;
+            _cameraData.volumeLayerMask = ~0;
+            _cameraData.volumeTrigger = _camera.transform;
             InitializeCameraWork();
             RefreshLayers();
         }
 
+        private void EnsureHistoryTexture()
+        {
+            if (_historyTexture != null) return;
+
+            RenderTextureDescriptor descriptor = OutputTexture.descriptor;
+            descriptor.depthBufferBits = 0;
+            descriptor.depthStencilFormat = GraphicsFormat.None;
+            descriptor.msaaSamples = 1;
+            _historyTexture = new RenderTexture(descriptor)
+            {
+                name = $"{name} DontClear History",
+                filterMode = FilterMode.Bilinear,
+                wrapMode = TextureWrapMode.Clamp,
+            };
+            _historyTexture.Create();
+            RenderTexture previous = RenderTexture.active;
+            try
+            {
+                RenderTexture.active = _historyTexture;
+                GL.Clear(false, true, Color.clear);
+            }
+            finally
+            {
+                RenderTexture.active = previous;
+            }
+            HistoryHandle = RTHandles.Alloc(_historyTexture);
+        }
+
         private void Update()
         {
-            if (_camera != null)
-            {
-                bool skybox = _backgroundMode == CameraStageBackgroundMode.Skybox;
-                _camera.clearFlags = skybox ? CameraClearFlags.Skybox : CameraClearFlags.SolidColor;
-                if (!skybox)
-                {
-                    ColorPalette palette = _deckStateProvider?.GetState(Deck).Palette;
-                    _camera.backgroundColor = PaletteColorParameter.Resolve(palette, _backgroundColor);
-                }
-            }
+            ApplyBackgroundMode();
             UpdateCameraWork();
+        }
+
+        private void ApplyBackgroundMode()
+        {
+            if (_camera == null) return;
+
+            _camera.clearFlags = _backgroundMode switch
+            {
+                CameraStageBackgroundMode.Skybox => CameraClearFlags.Skybox,
+                CameraStageBackgroundMode.DontClear => CameraClearFlags.Nothing,
+                _ => CameraClearFlags.SolidColor,
+            };
+            _cameraData ??= _camera.GetUniversalAdditionalCameraData();
+            _cameraData.renderPostProcessing = true;
+            if (_backgroundMode == CameraStageBackgroundMode.SolidColor)
+            {
+                ColorPalette palette = _deckStateProvider?.GetState(Deck).Palette;
+                _camera.backgroundColor = PaletteColorParameter.Resolve(palette, _backgroundColor);
+            }
         }
 
         /// <summary>子にあるレイヤーを、非アクティブなものも含めて描画順に収集する。</summary>
@@ -494,6 +551,14 @@ namespace Aetherin
 
         protected override void OnDestroy()
         {
+            HistoryHandle?.Release();
+            HistoryHandle = null;
+            if (_historyTexture != null)
+            {
+                _historyTexture.Release();
+                Destroy(_historyTexture);
+                _historyTexture = null;
+            }
             if (_camera != null) _camera.targetTexture = null;
             base.OnDestroy();
         }

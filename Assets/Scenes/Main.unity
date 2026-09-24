@@ -459,7 +459,7 @@ Transform:
   m_GameObject: {fileID: 221290744}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1185.0858, y: 0, z: -456.29553}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -531,33 +531,15 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 227302516}
-  - component: {fileID: 227302515}
   - component: {fileID: 227302517}
+  - component: {fileID: 227302518}
   m_Layer: 0
-  m_Name: WasapiLoopbackInput
+  m_Name: AudioInput
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &227302515
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 227302514}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a8c0b4749acae834bb4118d2d58cb875, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.WasapiLoopbackInput
-  _params:
-    DeviceId: 
-    FftSize: 1024
-    WaveformSamples: 1024
-    Gain: 0
-    DynamicRange: 80
 --- !u!4 &227302516
 Transform:
   m_ObjectHideFlags: 0
@@ -585,7 +567,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13b7287a027d421899bc6cb0f69792ed, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Aetherin.AudioFeatureProvider
-  _audioInputSource: {fileID: 227302515}
+  _audioInputSource: {fileID: 0}
   _params:
     KickMinFrequency: 35
     KickSplitFrequency: 80
@@ -607,6 +589,26 @@ MonoBehaviour:
     TriggerThreshold: 0.12
     ReleaseTime: 0.14
     Cooldown: 0.09
+--- !u!114 &227302518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 227302514}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c8ac420be2cc4c3f95c9ea92fa395450, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Aetherin.AudioInput
+  _params:
+    UseDefaultDevice: 1
+    DeviceId: 
+    Channel: 0
+    SpectrumResolution: 2048
+    AutoGain: 1
+    Gain: 0
+    DynamicRange: 80
 --- !u!1 &295080741
 GameObject:
   m_ObjectHideFlags: 0
@@ -683,7 +685,7 @@ Transform:
   m_GameObject: {fileID: 316289532}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1185.0858, y: 0, z: -456.29553}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1229,6 +1231,7 @@ MonoBehaviour:
   _backgroundMode: 0
   _backgroundColor: 0
   _cameraWorkDecks: []
+  _cameraWorkSwitchTiming: 0
   _selectedCameraWorkDeck: 0
   _currentCameraWork: 0
   _cameraWorkChangeCount: 0
@@ -1327,7 +1330,7 @@ Transform:
   m_GameObject: {fileID: 910745196}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1242.8088, y: 7.03905, z: -182.79358}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1566,7 +1569,7 @@ Transform:
   m_GameObject: {fileID: 1384360349}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1185.0858, y: 0, z: 456.29553}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -2243,7 +2246,7 @@ Transform:
   m_GameObject: {fileID: 1994971892}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1185.0858, y: 0, z: -456.29553}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2435,7 +2438,7 @@ Transform:
   m_GameObject: {fileID: 2093487956}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1185.0858, y: 0, z: -456.29553}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

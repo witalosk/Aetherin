@@ -13,6 +13,7 @@ namespace Aetherin
     public sealed class AudioFeatureProvider : MonoBehaviour, IAudioFeatureProvider, ISaveAndUiTarget
     {
         private const float UiGraphUpdateInterval = 1f / 30f;
+        private const int WaveformTextureWidth = 1024;
         private static readonly Color KickColor = new(1f, 0.42f, 0.08f);
         private static readonly Color SnareColor = new(0.25f, 0.8f, 1f);
 
@@ -36,7 +37,9 @@ namespace Aetherin
         private IPercussiveOnsetSource _onsetSource;
         private int _consumedKickSequence;
         private int _consumedSnareSequence;
-        private Texture2D _waveformTexture;
+        private Texture2D _waveformUploadTexture;
+        private RenderTexture _waveformTexture;
+        private readonly float[] _waveformUploadData = new float[WaveformTextureWidth];
         private Texture2D _spectrumTexture;
         private float[] _waveformData = Array.Empty<float>();
         private float[] _spectrumData = Array.Empty<float>();
@@ -81,7 +84,12 @@ namespace Aetherin
 
         private void OnDestroy()
         {
-            DestroyTexture(ref _waveformTexture);
+            DestroyTexture(ref _waveformUploadTexture);
+            if (_waveformTexture != null)
+            {
+                _waveformTexture.Release();
+                Destroy(_waveformTexture);
+            }
             DestroyTexture(ref _spectrumTexture);
             _uiGraphs?.Dispose();
         }
@@ -103,7 +111,13 @@ namespace Aetherin
             ReadOnlySpan<float> waveform = _audioInput.Waveform;
             ReadOnlySpan<float> spectrum = _audioInput.Spectrum;
             ReadOnlySpan<float> logSpectrum = _audioInput.LogSpectrum;
-            UploadTexture(waveform, ref _waveformData, ref _waveformTexture, "Audio Waveform Data");
+            UploadWaveformTexture(waveform);
+            if (ContainsNonFinite(spectrum))
+            {
+                ResetAnalysis();
+                DecayPulses(Time.unscaledDeltaTime);
+                return;
+            }
             UploadTexture(logSpectrum, ref _spectrumData, ref _spectrumTexture, "Audio Log Spectrum Data");
             if (_onsetSource?.IsHardRealtimeOnsetAvailable == true)
             {
@@ -286,6 +300,13 @@ namespace Aetherin
             spectrum.CopyTo(_previousSpectrum);
         }
 
+        private static bool ContainsNonFinite(ReadOnlySpan<float> values)
+        {
+            foreach (float value in values)
+                if (float.IsNaN(value) || float.IsInfinity(value)) return true;
+            return false;
+        }
+
         private void ResolveCompetingClassification(ref float kick, ref float snare)
         {
             if (kick < _params.TriggerThreshold || snare < _params.TriggerThreshold) return;
@@ -423,6 +444,58 @@ namespace Aetherin
             UpdatePulse(ref _snareClap, 0f, ref _snareCooldown, ref _lastSnareFrame, deltaTime);
         }
 
+        private void UploadWaveformTexture(ReadOnlySpan<float> source)
+        {
+            if (_waveformData.Length != source.Length) _waveformData = new float[source.Length];
+            source.CopyTo(_waveformData);
+
+            if (_waveformUploadTexture == null)
+            {
+                _waveformUploadTexture = new Texture2D(WaveformTextureWidth, 1, TextureFormat.RFloat, false, true)
+                {
+                    name = "Audio Waveform Upload",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.DontSave
+                };
+            }
+
+            if (_waveformTexture == null)
+            {
+                _waveformTexture = new RenderTexture(WaveformTextureWidth, 1, 0, RenderTextureFormat.RFloat)
+                {
+                    name = "Audio Waveform Data",
+                    filterMode = FilterMode.Bilinear,
+                    wrapMode = TextureWrapMode.Clamp,
+                    hideFlags = HideFlags.DontSave
+                };
+                _waveformTexture.Create();
+            }
+            else if (!_waveformTexture.IsCreated())
+            {
+                _waveformTexture.Create();
+            }
+
+            if (source.Length == 0)
+            {
+                Array.Clear(_waveformUploadData, 0, _waveformUploadData.Length);
+            }
+            else
+            {
+                for (int i = 0; i < WaveformTextureWidth; i++)
+                {
+                    float position = (float)i * (source.Length - 1) / (WaveformTextureWidth - 1);
+                    int from = (int)position;
+                    int to = Mathf.Min(from + 1, source.Length - 1);
+                    _waveformUploadData[i] = Mathf.Lerp(source[from], source[to], position - from);
+                }
+            }
+
+            _waveformUploadTexture.SetPixelData(_waveformUploadData, 0);
+            _waveformUploadTexture.Apply(false, false);
+            Graphics.Blit(_waveformUploadTexture, _waveformTexture);
+        }
+
         private static void UploadTexture(
             ReadOnlySpan<float> source,
             ref float[] data,
@@ -510,7 +583,7 @@ namespace Aetherin
                     UI.Label("Start: 10 s / weight 0.40 / threshold 1.8 / margin 0.08")),
                 UI.Label(() => _waveformTexture == null
                     ? "Waveform: unavailable"
-                    : $"Waveform ({_waveformTexture.width} samples / RFloat)"),
+                    : $"Waveform ({_waveformData.Length} samples / {WaveformTextureWidth} texels / RFloat RT)"),
                 UI.Image(() => _uiGraphs.WaveformTexture)
                     .SetWidth(AudioGraphTextures.Width)
                     .SetHeight(AudioGraphTextures.WaveformHeight),

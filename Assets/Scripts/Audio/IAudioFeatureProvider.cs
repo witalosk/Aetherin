@@ -26,7 +26,7 @@ namespace Aetherin
         /// <summary>キャプチャ開始から数えた直近Snare/Clapのサンプル位置。取得不能時は-1。</summary>
         long LastSnareClapSampleIndex { get; }
 
-        /// <summary>Rチャンネルに-1～1の波形を格納した1行のTexture。</summary>
+        /// <summary>Rチャンネルに-1～1の波形を格納した固定幅1024ピクセルの1行のRenderTexture。</summary>
         Texture WaveformTexture { get; }
 
         /// <summary>Rチャンネルに、対数周波数軸とdB正規化振幅の0～1スペクトラムを格納した1行のTexture。</summary>

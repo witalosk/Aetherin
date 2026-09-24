@@ -6,6 +6,7 @@ using UnitySimpleContainer;
 
 namespace Aetherin
 {
+    [DefaultExecutionOrder(200)]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
     public sealed class RuntimeShaderLayer : StageLayer

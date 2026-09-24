@@ -51,6 +51,7 @@ Properties {
 
 	_CullMode			("Cull Mode", Float) = 0
 	_ColorMask			("Color Mask", Float) = 15
+	[HideInInspector] _ZWrite ("Z Write", Float) = 0
 }
 
 SubShader {
@@ -72,7 +73,7 @@ SubShader {
 	}
 
 	Cull [_CullMode]
-	ZWrite Off
+	ZWrite [_ZWrite]
 	Lighting Off
 	Fog { Mode Off }
 	ZTest [unity_GUIZTestMode]
@@ -121,6 +122,7 @@ SubShader {
 		float _UIMaskSoftnessX;
         float _UIMaskSoftnessY;
         int _UIVertexColorAlwaysGammaSpace;
+		float _ZWrite;
 
 		pixel_t VertShader(vertex_t input)
 		{
@@ -235,6 +237,9 @@ SubShader {
 			#if (UNDERLAY_ON | UNDERLAY_INNER)
 			c *= input.texcoord1.z;
 			#endif
+
+			if (_ZWrite > 0.5)
+				clip(c.a - 0.001);
 
 			#if UNITY_UI_ALPHACLIP
 			clip(c.a - 0.001);

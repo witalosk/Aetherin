@@ -223,6 +223,7 @@ namespace Aetherin
             for (int i = 0; i < source.Length; i++)
             {
                 float sample = source[i];
+                if (float.IsNaN(sample) || float.IsInfinity(sample)) sample = 0f;
                 _waveform[i] = sample;
                 squareSum += sample * sample;
                 peak = Mathf.Max(peak, Mathf.Abs(sample));
@@ -241,7 +242,9 @@ namespace Aetherin
         private static void CopySpan(ReadOnlySpan<float> source, ref float[] destination)
         {
             EnsureSize(ref destination, source.Length);
-            source.CopyTo(destination);
+            for (int i = 0; i < source.Length; i++)
+                destination[i] = float.IsNaN(source[i]) || float.IsInfinity(source[i])
+                    ? 0f : source[i];
         }
 
         private static void EnsureSize(ref float[] buffer, int size)
