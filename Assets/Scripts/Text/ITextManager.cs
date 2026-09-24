@@ -6,5 +6,6 @@ namespace Aetherin
     {
         IReadOnlyList<string> Keys { get; }
         IReadOnlyList<string> GetTexts(string key);
+        string GetSelectedText(string key);
     }
 }

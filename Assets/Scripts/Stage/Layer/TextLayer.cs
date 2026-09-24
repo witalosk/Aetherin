@@ -255,6 +255,8 @@ namespace Aetherin
                     index = ((index % texts.Count) + texts.Count) % texts.Count;
                     return texts[index] ?? string.Empty;
                 }
+                case TextSource.TextManagerSelection:
+                    return TextManager.Active?.GetSelectedText(_params.TextManagerKey) ?? string.Empty;
                 case TextSource.LocalClock:
                     try { return DateTime.Now.ToString(_params.ClockFormat); }
                     catch (FormatException) { return DateTime.Now.ToString("HH:mm:ss"); }

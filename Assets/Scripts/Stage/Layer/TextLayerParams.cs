@@ -38,6 +38,7 @@ namespace Aetherin
         BeatCounter,
         InputVolume,
         Fps,
+        TextManagerSelection,
     }
 
     [Serializable]

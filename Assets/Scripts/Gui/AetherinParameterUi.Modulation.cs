@@ -276,6 +276,9 @@ namespace Aetherin
                             value => modulator.CounterPulseDuration = Math.Max(0.001f, value)));
 
                 case FloatModulationSource.RandomPerBeat:
+                case FloatModulationSource.RandomPerKick:
+                case FloatModulationSource.RandomPerSnareClap:
+                case FloatModulationSource.RandomPerOverlayCue:
                     return UI.Field("Seed", () => modulator.RandomSeed,
                         value => modulator.RandomSeed = value);
 

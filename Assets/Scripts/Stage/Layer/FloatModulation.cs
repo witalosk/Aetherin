@@ -22,6 +22,9 @@ namespace Aetherin
         CameraWorkChangeCount,
         RandomPerBeat,
         RandomPerCounter,
+        RandomPerKick,
+        RandomPerSnareClap,
+        RandomPerOverlayCue,
     }
 
     public enum FloatModulationOperation
@@ -86,6 +89,7 @@ namespace Aetherin
         public readonly IBeatManager Beat;
         public readonly ICounter Counter;
         public readonly int CameraWorkChangeCount;
+        public readonly long OverlayCueTriggerEventId;
         public readonly bool AllowMidi;
         public readonly float AnimationPhaseOffset;
 
@@ -97,7 +101,8 @@ namespace Aetherin
             float animationPhaseOffset = 0f,
             ICounter counter = null,
             double? elapsedTime = null,
-            int cameraWorkChangeCount = 0)
+            int cameraWorkChangeCount = 0,
+            long overlayCueTriggerEventId = 0)
         {
             Time = time;
             ElapsedTime = elapsedTime ?? time;
@@ -105,17 +110,18 @@ namespace Aetherin
             Beat = beat;
             Counter = counter;
             CameraWorkChangeCount = cameraWorkChangeCount;
+            OverlayCueTriggerEventId = overlayCueTriggerEventId;
             AllowMidi = allowMidi;
             AnimationPhaseOffset = animationPhaseOffset;
         }
 
         public ModulationContext WithAnimationPhaseOffset(float offset) =>
             new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset + offset, Counter, ElapsedTime,
-                CameraWorkChangeCount);
+                CameraWorkChangeCount, OverlayCueTriggerEventId);
 
         public ModulationContext WithElapsedTime(double elapsedTime) =>
             new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, elapsedTime,
-                CameraWorkChangeCount);
+                CameraWorkChangeCount, OverlayCueTriggerEventId);
     }
 
     [Serializable]
@@ -230,6 +236,10 @@ namespace Aetherin
                 FloatModulationSource.RandomPerBeat => EvaluateRandomPerBeat(context.Beat),
                 FloatModulationSource.RandomPerCounter => EvaluateRandomPerCounter(
                     ResolveCounter(context.Counter ?? Counter.Active)),
+                FloatModulationSource.RandomPerKick => EvaluateRandomPerEvent(context.Audio?.KickEventId ?? 0),
+                FloatModulationSource.RandomPerSnareClap => EvaluateRandomPerEvent(context.Audio?.SnareClapEventId ?? 0),
+                FloatModulationSource.RandomPerOverlayCue =>
+                    EvaluateRandomPerEvent(context.OverlayCueTriggerEventId),
                 _ => 0f,
             };
 
@@ -532,6 +542,9 @@ namespace Aetherin
             counter == null || counter.IncrementEventId <= 0
                 ? 0f
                 : HashRandom(counter.IncrementEventId, RandomSeed);
+
+        private float EvaluateRandomPerEvent(long eventId) =>
+            eventId <= 0 ? 0f : HashRandom(eventId, RandomSeed);
 
         private static float HashRandom(long eventId, int seed)
         {

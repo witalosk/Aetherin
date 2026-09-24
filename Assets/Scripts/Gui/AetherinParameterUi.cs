@@ -41,6 +41,7 @@ namespace Aetherin
             UICustom.RegisterElementCreationFunc<GpuParticleLayerParams>(CreateGpuParticleLayerParamsElement);
             UICustom.RegisterElementCreationFunc<ParticleSimulationModule>(CreateParticleSimulationModuleElement);
             UICustom.RegisterElementCreationFunc<TextLayerParams>(CreateTextLayerParamsElement);
+            UICustom.RegisterElementCreationFunc<TextCollection>(CreateTextCollectionElement);
             UICustom.RegisterElementCreationFunc<TextAnimatorParams>(CreateTextAnimatorElement);
             UICustom.RegisterElementCreationFunc<TextRangeSelectorParams>(CreateTextRangeSelectorElement);
             UICustom.RegisterElementCreationFunc<RuntimeShaderLayerParams>(CreateRuntimeShaderLayerParamsElement);

@@ -56,6 +56,7 @@ Shader "Aetherin/Shape Fill"
             struct Attributes
             {
                 float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
                 half4 color : COLOR;
             };
 
@@ -120,7 +121,7 @@ Shader "Aetherin/Shape Fill"
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.color = input.color;
                 output.shapePositionXY = shapePosition.xy;
-                output.shapeLocalXY = input.positionOS.xy;
+                output.shapeLocalXY = input.uv;
                 output.positionWS = TransformObjectToWorld(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
                 return output;

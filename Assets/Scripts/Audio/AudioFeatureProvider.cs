@@ -22,6 +22,8 @@ namespace Aetherin
         public float SnareClap => _snareClap;
         public bool WasKick => _lastKickFrame == Time.frameCount;
         public bool WasSnareClap => _lastSnareFrame == Time.frameCount;
+        public long KickEventId { get; private set; }
+        public long SnareClapEventId { get; private set; }
         public long LastKickSampleIndex { get; private set; } = -1;
         public long LastSnareClapSampleIndex { get; private set; } = -1;
         public Texture WaveformTexture => _waveformTexture;
@@ -183,6 +185,7 @@ namespace Aetherin
                     _kick = Mathf.Max(_kick, strength);
                     _kickCooldown = _params.Cooldown;
                     _lastKickFrame = Time.frameCount;
+                    KickEventId++;
                     LastKickSampleIndex = _onsetSource.LatestKickSampleIndex;
                 }
             }
@@ -197,6 +200,7 @@ namespace Aetherin
                     _snareClap = Mathf.Max(_snareClap, strength);
                     _snareCooldown = _params.Cooldown;
                     _lastSnareFrame = Time.frameCount;
+                    SnareClapEventId++;
                     LastSnareClapSampleIndex = _onsetSource.LatestSnareClapSampleIndex;
                 }
             }
@@ -294,8 +298,10 @@ namespace Aetherin
                 snareTransient = 0f;
             }
 
-            UpdatePulse(ref _kick, kickTransient, ref _kickCooldown, ref _lastKickFrame, deltaTime);
-            UpdatePulse(ref _snareClap, snareTransient, ref _snareCooldown, ref _lastSnareFrame, deltaTime);
+            if (UpdatePulse(ref _kick, kickTransient, ref _kickCooldown, ref _lastKickFrame, deltaTime))
+                KickEventId++;
+            if (UpdatePulse(ref _snareClap, snareTransient, ref _snareCooldown, ref _lastSnareFrame, deltaTime))
+                SnareClapEventId++;
 
             spectrum.CopyTo(_previousSpectrum);
         }
@@ -419,7 +425,7 @@ namespace Aetherin
             }
         }
 
-        private void UpdatePulse(
+        private bool UpdatePulse(
             ref float value,
             float transient,
             ref float cooldown,
@@ -435,7 +441,9 @@ namespace Aetherin
                 value = Mathf.Max(value, Mathf.Clamp01(transient));
                 cooldown = _params.Cooldown;
                 lastTriggerFrame = Time.frameCount;
+                return true;
             }
+            return false;
         }
 
         private void DecayPulses(float deltaTime)
@@ -569,6 +577,7 @@ namespace Aetherin
                     ? "Hybrid onset: 10 ms block / 30 ms deadline"
                     : "Hybrid onset: fallback (Unity spectral detector)"),
                 UI.Label(() => $"Kick sample: {LastKickSampleIndex}   Snare/Clap sample: {LastSnareClapSampleIndex}"),
+                UI.Label(() => $"Kick count: {KickEventId}   Snare/Clap count: {SnareClapEventId}"),
                 UI.SliderReadOnly("Kick", () => Kick, 0f, 1f),
                 UI.SliderReadOnly("Snare / Clap", () => SnareClap, 0f, 1f),
                 UI.Fold("10 s adaptive statistics",

@@ -20,6 +20,12 @@ namespace Aetherin
         /// <summary>このフレームでスネアまたはハンドクラップを検出した。</summary>
         bool WasSnareClap { get; }
 
+        /// <summary>閾値を超えて検出されたKickの累積イベント番号。未検出時は0。</summary>
+        long KickEventId { get; }
+
+        /// <summary>閾値を超えて検出されたSnare/Clapの累積イベント番号。未検出時は0。</summary>
+        long SnareClapEventId { get; }
+
         /// <summary>キャプチャ開始から数えた直近Kickのサンプル位置。取得不能時は-1。</summary>
         long LastKickSampleIndex { get; }
 

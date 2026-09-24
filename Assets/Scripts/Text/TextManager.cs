@@ -9,6 +9,7 @@ namespace Aetherin
     {
         public string Key = "default";
         public List<string> Texts = new() { "Aetherin" };
+        public int SelectedIndex;
     }
 
     [Serializable]
@@ -46,6 +47,23 @@ namespace Aetherin
             RefreshCache();
             return !string.IsNullOrWhiteSpace(key) && _textsByKey.TryGetValue(key.Trim(), out var texts)
                 ? texts : Array.Empty<string>();
+        }
+
+        public string GetSelectedText(string key)
+        {
+            RefreshCache();
+            if (string.IsNullOrWhiteSpace(key)) return string.Empty;
+            string normalizedKey = key.Trim();
+            if (!_textsByKey.TryGetValue(normalizedKey, out var texts) || texts.Count == 0)
+                return string.Empty;
+
+            foreach (TextCollection collection in _params.Collections)
+            {
+                if (collection?.Key?.Trim() != normalizedKey) continue;
+                int index = Mathf.Clamp(collection.SelectedIndex, 0, texts.Count - 1);
+                return texts[index] ?? string.Empty;
+            }
+            return string.Empty;
         }
 
         private void RefreshCache(bool force = false)

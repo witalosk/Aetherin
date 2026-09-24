@@ -58,10 +58,15 @@ namespace Aetherin
             }
 
             BuildStroke(_strokePath, strokeClosed, fillVertexCount);
+            _textureCoordinates.Clear();
+            EnsureCapacity(_textureCoordinates, _vertices.Count);
+            foreach (Vector3 vertex in _vertices)
+                _textureCoordinates.Add(new Vector2(vertex.x, vertex.y));
             ApplyRepeater();
 
             _mesh.Clear();
             _mesh.SetVertices(_vertices);
+            _mesh.SetUVs(0, _textureCoordinates);
             _mesh.SetColors(_vertexColors);
             _mesh.subMeshCount = 2;
             _mesh.SetTriangles(_fillTriangles, 0, false);
@@ -205,7 +210,7 @@ namespace Aetherin
             int baseVertexCount = _vertices.Count;
             int baseFillCount = _fillTriangles.Count;
             int baseStrokeCount = _strokeTriangles.Count;
-            RepeaterMeshUtility.ApplyVertices(_vertices, _vertexColors, null, _evaluatedRepeater,
+            RepeaterMeshUtility.ApplyVertices(_vertices, _vertexColors, _textureCoordinates, _evaluatedRepeater,
                 _evaluatedRepeater.TransformMode == RepeaterTransformMode.FromSource ? this : null);
             RepeaterMeshUtility.ApplyIndices(
                 _fillTriangles, baseFillCount, baseVertexCount, _evaluatedRepeater.Copies);

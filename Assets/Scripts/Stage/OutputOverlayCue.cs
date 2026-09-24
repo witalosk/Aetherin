@@ -43,6 +43,7 @@ namespace Aetherin
         public OutputOverlayCueData Data { get; private set; }
         public GroupLayer Root { get; private set; }
         public bool IsPlaying { get; private set; }
+        public long TriggerEventId { get; private set; }
         public double ElapsedTime => IsPlaying
             ? Math.Max(0d, (Time.unscaledTimeAsDouble - _startedAt - Data.StartDelay) * Data.PlaybackSpeed)
             : 0d;
@@ -57,6 +58,7 @@ namespace Aetherin
             Root = root;
             _owner = owner;
             Data.EnsureInitialized();
+            TriggerEventId = 0;
             Stop();
         }
 
@@ -89,13 +91,15 @@ namespace Aetherin
 
             if (Root != null) Root.Visible = IsPlaying && !IsWaiting;
 
-            Data.TriggerButton.SetLed(IsPlaying ? Color.white : Color.white * 0.15f);
+            bool blinkOff = IsPlaying && !IsWaiting && (int)(Time.unscaledTimeAsDouble * 3d) % 2 != 0;
+            Data.TriggerButton.SetLed(blinkOff ? Color.black : Color.red);
         }
 
         public void Trigger()
         {
             if (IsPlaying && Data?.RestartOnTrigger == false) return;
             _owner?.StopExclusivePeers(this);
+            TriggerEventId++;
             IsPlaying = true;
             _startedAt = Time.unscaledTimeAsDouble;
             if (Root != null)

@@ -89,6 +89,7 @@ namespace Aetherin
         private readonly List<Vector2> _strokePath = new();
         private readonly List<float> _cumulativeLengths = new();
         private readonly List<Vector3> _vertices = new();
+        private readonly List<Vector2> _textureCoordinates = new();
         private readonly List<Color> _vertexColors = new();
         private readonly List<int> _fillTriangles = new();
         private readonly List<int> _strokeTriangles = new();

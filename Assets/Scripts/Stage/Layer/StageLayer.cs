@@ -7,6 +7,7 @@ namespace Aetherin
     public interface IStageLayerTimeSource
     {
         bool TryGetElapsedTime(out double elapsedTime);
+        long TriggerEventId { get; }
     }
 
     public enum LayerBlendMode
@@ -244,7 +245,8 @@ namespace Aetherin
             if (cueTime != null && cueTime.TryGetElapsedTime(out double cueElapsedTime))
                 return new ModulationContext(time, audio, beat, allowMidi,
                     elapsedTime: Math.Max(0d, cueElapsedTime),
-                    cameraWorkChangeCount: cameraWorkChangeCount);
+                    cameraWorkChangeCount: cameraWorkChangeCount,
+                    overlayCueTriggerEventId: cueTime.TriggerEventId);
 
             if (Application.isPlaying)
             {

@@ -1,9 +1,31 @@
+using System.Collections.Generic;
 using RosettaUI;
+using UnityEngine;
 
 namespace Aetherin
 {
     public static partial class AetherinParameterUi
     {
+        private static Element CreateTextCollectionElement(LabelElement label, IBinder<TextCollection> binder)
+        {
+            var collection = binder.Get();
+            if (collection == null) return UI.Label("-");
+            collection.Texts ??= new List<string>();
+
+            return UI.Column(
+                UI.Field("Key", () => collection.Key, value => collection.Key = value),
+                UI.List("Texts", () => collection.Texts, value => collection.Texts = value,
+                    new ListViewOption(reorderable: true, fixedSize: false, header: true,
+                        suppressAutoIndent: true)),
+                UI.DynamicElementOnStatusChanged(() => collection.Texts?.Count ?? 0, count =>
+                    count > 0
+                        ? UI.Dropdown("Selected Text",
+                            () => Mathf.Clamp(collection.SelectedIndex, 0, collection.Texts.Count - 1),
+                            value => collection.SelectedIndex = value,
+                            collection.Texts)
+                        : UI.Label("Selected Text: -")));
+        }
+
         private static Element CreateTextLayerParamsElement(
             LabelElement label,
             IBinder<TextLayerParams> binder)
@@ -47,6 +69,8 @@ namespace Aetherin
                             () => UI.Field("Text", () => p.Text, value => p.Text = value)),
                         UI.DynamicElementIf(() => p.Source == TextSource.TextManager,
                             () => UI.Column(textKeySelector, Param("Text Index", p.TextManagerIndex))),
+                        UI.DynamicElementIf(() => p.Source == TextSource.TextManagerSelection,
+                            () => textKeySelector),
                         UI.DynamicElementIf(() => p.Source == TextSource.LocalClock,
                             () => UI.Field("Clock Format", () => p.ClockFormat, value => p.ClockFormat = value)),
                         UI.DynamicElementIf(() => p.Source == TextSource.Timecode,
