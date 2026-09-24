@@ -59,7 +59,6 @@ namespace Aetherin
     /// </summary>
     public partial class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
     {
-        public static CameraWorkSwitchTiming CurrentCameraWorkTiming { get; private set; } = CameraWorkSwitchTiming.Manual;
         public IParams Params => _params;
         public bool FoldParams => true;
         public string Category => UiCategory.Main;
@@ -831,6 +830,7 @@ namespace Aetherin
         {
             CameraStage editingStage = GetCameraStage(EditingStages, EditingStageIndex);
             CameraStage currentStage = GetCameraStage(_currentStages, _params.CurrentStageIndex);
+            CameraStage nextStage = GetCameraStage(_nextStages, _params.NextStageIndex);
 
             _params.CameraWorkDeckButtons ??= new List<MidiBinding>();
             for (int i = 0; i < _params.CameraWorkDeckButtons.Count; i++)
@@ -857,9 +857,10 @@ namespace Aetherin
                 if (i >= timingCount) { button.ClearLed(); continue; }
                 if (button.WasNoteOn)
                 {
-                    CurrentCameraWorkTiming = (CameraWorkSwitchTiming)i;
+                    if (nextStage != null)
+                        nextStage.CameraWorkTiming = (CameraWorkSwitchTiming)i;
                 }
-                button.SetLed(i == (int)CurrentCameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
+                button.SetLed(nextStage != null && i == (int)nextStage.CameraWorkTiming ? Color.yellow * 0.5f : Color.yellow * 0.25f);
             }
 
             _params.CameraWorkManualButton ??= new MidiBinding();
@@ -908,7 +909,7 @@ namespace Aetherin
             MidiDiagnostics.RecordCritical("Stage swap begin");
             bool shouldAdvanceCameraWork =
                 _params.CurrentStageIndex == _params.NextStageIndex &&
-                CurrentCameraWorkTiming == CameraWorkSwitchTiming.Manual;
+                GetCameraStage(_nextStages, _params.NextStageIndex)?.CameraWorkTiming == CameraWorkSwitchTiming.Manual;
             // 実効フェードが0側 (=今まで見えていたNextをCurrentとして見続ける側) になる向きを選ぶ
             _isFaderFlipped = _params.CrossFader.GetValue() > 0.5f;
 
@@ -1227,7 +1228,7 @@ namespace Aetherin
                 UI.Row(
                     UI.Button("Add Deck", () => stage.AddCameraWorkDeck()),
                     UI.Button("Restart", stage.ResetCameraWork),
-                    UI.Label(() => $"Timing: {CurrentCameraWorkTiming}"),
+                    UI.Label(() => $"Timing: {stage.CameraWorkTiming}"),
                     UI.Label(() => GetCameraWorkProgressText(stage)).SetFlexGrow(1f),
                     UI.SliderReadOnly(null, () => GetCameraWorkProgress(stage), 0f, 1f).SetWidth(60f)),
                 decks.Length == 0 ? UI.Label("カメラワークデッキがありません") : UI.Column(decks));

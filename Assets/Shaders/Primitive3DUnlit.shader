@@ -50,6 +50,7 @@ Shader "Aetherin/Primitive 3D Unlit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareOpaqueTexture.hlsl"
             #include "Includes/AetherinNoise.hlsl"
+            #include "Includes/Primitive3DVertexNoise.hlsl"
 
             TEXTURE2D(_MainTex); SAMPLER(sampler_MainTex);
 
@@ -120,14 +121,15 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
                 if (_VertexNoiseEnabled > 0.5)
                 {
-                    float4 samplePosition = float4(input.positionOS * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _StageTime;
-                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
                     float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
                         normalize(TransformWorldToObjectDir(worldAxis));
-                    shapePosition += direction * displacement;
+                    AN_ApplyPrimitiveVertexNoise(
+                        input.positionOS.xyz, normalize(input.normalOS), shapeNormal, direction,
+                        _ShapeMatrix, _VertexNoiseFrequency, _VertexNoiseSpeed, _VertexNoiseOffset,
+                        _StageTime, (int)_VertexNoiseType, _VertexNoiseAmount,
+                        shapePosition, shapeNormal);
                 }
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);
@@ -295,6 +297,7 @@ Shader "Aetherin/Primitive 3D Unlit"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/Packing.hlsl"
             #include "Includes/AetherinNoise.hlsl"
+            #include "Includes/Primitive3DVertexNoise.hlsl"
 
             struct DepthNormalsAttributes
             {
@@ -332,14 +335,15 @@ Shader "Aetherin/Primitive 3D Unlit"
                 float3 shapePosition = mul(_ShapeMatrix, input.positionOS).xyz;
                 if (_VertexNoiseEnabled > 0.5)
                 {
-                    float4 samplePosition = float4(input.positionOS * _VertexNoiseFrequency.xyz + _VertexNoiseOffset.xyz,
-                        0.0) + _VertexNoiseSpeed * _StageTime;
-                    float displacement = AN_VertexNoise(samplePosition, (int)_VertexNoiseType) * _VertexNoiseAmount;
                     float3 worldAxis = _VertexNoiseDirection < 1.5 ? float3(1,0,0) :
                         _VertexNoiseDirection < 2.5 ? float3(0,1,0) : float3(0,0,1);
                     float3 direction = _VertexNoiseDirection < 0.5 ? shapeNormal :
                         normalize(TransformWorldToObjectDir(worldAxis));
-                    shapePosition += direction * displacement;
+                    AN_ApplyPrimitiveVertexNoise(
+                        input.positionOS.xyz, normalize(input.normalOS), shapeNormal, direction,
+                        _ShapeMatrix, _VertexNoiseFrequency, _VertexNoiseSpeed, _VertexNoiseOffset,
+                        _StageTime, (int)_VertexNoiseType, _VertexNoiseAmount,
+                        shapePosition, shapeNormal);
                 }
                 output.positionCS = TransformObjectToHClip(shapePosition);
                 output.normalWS = TransformObjectToWorldNormal(shapeNormal);

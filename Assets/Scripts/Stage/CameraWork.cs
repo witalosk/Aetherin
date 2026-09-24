@@ -91,6 +91,11 @@ namespace Aetherin
         public int SelectedCameraWorkDeck => _selectedCameraWorkDeck;
         public int CurrentCameraWork => _currentCameraWork;
         public int CameraWorkChangeCount => _cameraWorkChangeCount;
+        public CameraWorkSwitchTiming CameraWorkTiming
+        {
+            get => _cameraWorkSwitchTiming;
+            set => _cameraWorkSwitchTiming = value;
+        }
         public int CinemachineChannelIndex { get; private set; } = -1;
         public CameraWorkRecipe ActiveCameraWorkRecipe
         {
@@ -104,6 +109,7 @@ namespace Aetherin
         }
 
         [SerializeField] private List<CameraWorkDeck> _cameraWorkDecks = new();
+        [SerializeField] private CameraWorkSwitchTiming _cameraWorkSwitchTiming = CameraWorkSwitchTiming.Manual;
 
         private CinemachineBrain _cinemachineBrain;
         private CinemachineCamera _cinemachineCamera;
@@ -254,7 +260,7 @@ namespace Aetherin
         private bool ShouldAdvanceCameraWork()
         {
             if (_beatManager == null || !_beatManager.IsRunning) return false;
-            CameraWorkSwitchTiming timing = StageManager.CurrentCameraWorkTiming;
+            CameraWorkSwitchTiming timing = _cameraWorkSwitchTiming;
             return timing switch
             {
                 CameraWorkSwitchTiming.Beat => _beatManager.WasBeat,
