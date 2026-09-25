@@ -1361,9 +1361,13 @@ MonoBehaviour:
   - Key: line2
     Texture: {fileID: 2800000, guid: b13e6bec67dae88438324e10e8a2f481, type: 3}
   - Key: buttons
-    Texture: {fileID: 2800000, guid: 446482109ab0d8b4cb3dd27681030a74, type: 3}
+    Texture: {fileID: 2800000, guid: 16bfc0a2914bb6048a50601f2e704dd6, type: 3}
   - Key: dialog
     Texture: {fileID: 2800000, guid: 6444b68f162a2374198302a08a4d9aa4, type: 3}
+  - Key: icons
+    Texture: {fileID: 2800000, guid: 39444bedac8e5b14aae38e57f16abb92, type: 3}
+  - Key: line3
+    Texture: {fileID: 2800000, guid: c076767e3cf427f4bb4ffc5a57e2b153, type: 3}
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
@@ -2246,6 +2250,8 @@ MonoBehaviour:
     Model: {fileID: 829817286846279805, guid: 1ea61b4baf668064aa5aab33787c4ea9, type: 3}
   - Key: torii
     Model: {fileID: 2849406126764801444, guid: 292c06fa88a37cb40ad89d5bbf469f95, type: 3}
+  - Key: heart
+    Model: {fileID: 4532000170940696949, guid: 794c0deea1051774a98da2fa4a8b4149, type: 3}
 --- !u!4 &1994971894
 Transform:
   m_ObjectHideFlags: 0
