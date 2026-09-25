@@ -931,7 +931,7 @@ namespace Aetherin
                 if (stage == null) continue;
 
                 stage.Deck = StageDeck.Current;
-                stage.gameObject.name = $"{_stages[i].name} ({StageDeck.Current})";
+                stage.gameObject.name = $"{GetStageNameForDeck(i, stage)} ({StageDeck.Current})";
                 if (stage is CameraStage cameraStage) cameraStage.ConfigureDeckRenderingIsolation();
             }
 
@@ -1001,7 +1001,8 @@ namespace Aetherin
             StageBase source = _currentStages[index];
             StageBase next = source == null
                 ? null
-                : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset, _stages[index].name, active);
+                : CloneStage(source, StageDeck.Next, _nextSlotOffset - _currentSlotOffset,
+                    GetStageNameForDeck(index, source), active);
             if (next is CameraStage nextCamera)
             {
                 int channel = source is CameraStage sourceCamera && sourceCamera.CinemachineChannelIndex >= 0
@@ -1039,6 +1040,14 @@ namespace Aetherin
         private static string GetStageDisplayName(StageBase stage, int index) =>
             stage == null ? $"Stage {index}" :
             string.IsNullOrEmpty(stage.StageName) ? stage.name : stage.StageName;
+
+        private string GetStageNameForDeck(int index, StageBase fallback)
+        {
+            StageBase template = _stages != null && index >= 0 && index < _stages.Count
+                ? _stages[index]
+                : null;
+            return GetStageDisplayName(template != null ? template : fallback, index);
+        }
 
         private void OnDestroy()
         {

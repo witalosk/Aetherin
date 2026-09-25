@@ -772,8 +772,8 @@
         "StageTimeSpeedCcMin": 0.10000000149011612,
         "StageTimeSpeedCcMax": 6.0,
         "UiRowNum": 8,
-        "CurrentStageIndex": 3,
-        "NextStageIndex": 1,
+        "CurrentStageIndex": 1,
+        "NextStageIndex": 8,
         "NextStageOffset": {
           "x": 0.0,
           "y": 0.0,
