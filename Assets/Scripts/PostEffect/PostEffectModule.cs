@@ -28,6 +28,13 @@ namespace Aetherin
         Lut,
         RuntimeShader,
         FrameRateDrop,
+        TextureComposite,
+        LuminanceDisplacement,
+    }
+
+    public enum TextureCompositeMode
+    {
+        Normal, Add, Multiply, Screen, Subtract, Difference, Darken, Lighten, Overlay
     }
 
     public enum FrameRateDropSyncMode
@@ -153,6 +160,22 @@ namespace Aetherin
         [Tooltip("元映像とLUT適用結果の混合率")]
         public FloatParameter LutIntensity = new(1f);
 
+        [Tooltip("Texture Library のキーを順番に登録します")]
+        public System.Collections.Generic.List<string> CompositeTextureKeys = new();
+        public IntParameter CompositeTextureIndex = new(0);
+        public TextureCompositeMode CompositeMode;
+        public Vector2Parameter CompositeTiling = new(Vector2.one);
+        public Vector2Parameter CompositeOffset = new(Vector2.zero);
+        [Tooltip("Texture Composite: 画像の中心を軸に回転する角度（度）")]
+        public FloatParameter CompositeRotation = new(0f);
+
+        [Tooltip("輝度マップに使う Texture Library のキー。未選択・未解決時は入力映像を使います")]
+        public string LuminanceDisplacementTextureKey;
+        [Tooltip("輝度マップが白のときに入力映像のサンプリング位置をずらすUV量。黒はずらしません")]
+        public Vector2Parameter LuminanceDisplacementOffset = new(new Vector2(0.05f, 0f));
+        public Vector2Parameter LuminanceDisplacementTiling = new(Vector2.one);
+        public Vector2Parameter LuminanceDisplacementMapOffset = new(Vector2.zero);
+
         [Tooltip("ランタイムポストエフェクトの t3 (_PreviousFrameTexture) に1フレーム前の出力を渡します")]
         public bool RuntimeProvidePreviousFrameTexture;
         public FloatParameter RuntimeUserFloat0 = new(1f);
@@ -167,6 +190,7 @@ namespace Aetherin
         [NonSerialized] public bool RuntimeLastCompileSucceeded;
 
         [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableLutKeys;
+        [NonSerialized] public Func<System.Collections.Generic.IReadOnlyList<string>> GetAvailableTextureKeys;
         [NonSerialized] private bool _lutIndexInitialized;
 
         public void InitializeLutIndex(System.Collections.Generic.IReadOnlyList<string> keys)
@@ -213,6 +237,15 @@ namespace Aetherin
             LutKey ??= string.Empty;
             LutIndex ??= new IntParameter(0);
             LutIntensity ??= new FloatParameter(1f);
+            CompositeTextureKeys ??= new System.Collections.Generic.List<string>();
+            CompositeTextureIndex ??= new IntParameter(0);
+            CompositeTiling ??= new Vector2Parameter(Vector2.one);
+            CompositeOffset ??= new Vector2Parameter(Vector2.zero);
+            CompositeRotation ??= new FloatParameter(0f);
+            LuminanceDisplacementTextureKey ??= string.Empty;
+            LuminanceDisplacementOffset ??= new Vector2Parameter(new Vector2(0.05f, 0f));
+            LuminanceDisplacementTiling ??= new Vector2Parameter(Vector2.one);
+            LuminanceDisplacementMapOffset ??= new Vector2Parameter(Vector2.zero);
             RuntimeUserFloat0 ??= new FloatParameter(1f);
             RuntimeUserFloat1 ??= new FloatParameter();
             RuntimeUserFloat2 ??= new FloatParameter();

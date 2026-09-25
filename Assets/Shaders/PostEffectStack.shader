@@ -5,6 +5,8 @@ Shader "Hidden/Aetherin/PostEffectStack"
         _MainTex ("Source", 2D) = "black" {}
         _HistoryTex ("Previous Frame", 2D) = "black" {}
         _RuntimeTex ("Runtime Shader", 2D) = "black" {}
+        _CompositeTex ("Composite Texture", 2D) = "black" {}
+        _LuminanceDisplacementTex ("Luminance Map", 2D) = "black" {}
     }
     SubShader
     {
@@ -21,7 +23,7 @@ Shader "Hidden/Aetherin/PostEffectStack"
             struct v2f { float4 vertex : SV_POSITION; float2 uv : TEXCOORD0; };
             v2f vert(appdata v) { v2f o; o.vertex = UnityObjectToClipPos(v.vertex); o.uv = v.uv; return o; }
 
-            sampler2D _MainTex, _HistoryTex, _LutTex, _RuntimeTex;
+            sampler2D _MainTex, _HistoryTex, _LutTex, _RuntimeTex, _CompositeTex, _LuminanceDisplacementTex;
             float4 _MainTex_TexelSize;
             int _EffectType;
             float _Strength, _Amount, _Scale, _Speed, _Secondary, _TimeValue;
@@ -33,6 +35,13 @@ Shader "Hidden/Aetherin/PostEffectStack"
             float4 _LutParams;
             float _LutEnabled;
             float _LutIntensity;
+            int _CompositeMode;
+            float _CompositeEnabled;
+            float4 _CompositeTilingOffset;
+            float _CompositeRotation;
+            float2 _LuminanceDisplacementOffset;
+            float _LuminanceDisplacementEnabled;
+            float4 _LuminanceDisplacementTilingOffset;
 
             float hash21(float2 p) { return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
             float3 sampleLut(float3 color)
@@ -356,6 +365,44 @@ Shader "Hidden/Aetherin/PostEffectStack"
                 else if (_EffectType == 22) // Frame rate drop / frame hold
                 {
                     fx = lerp(src, tex2D(_HistoryTex, uv), saturate(_Strength));
+                }
+                else if (_EffectType == 23) // Texture composite
+                {
+                    if (_CompositeEnabled > 0.5)
+                    {
+                        float sine, cosine;
+                        sincos(_CompositeRotation, sine, cosine);
+                        float2 centeredUv = uv - 0.5;
+                        float2 rotatedUv = float2(
+                            cosine * centeredUv.x - sine * centeredUv.y,
+                            sine * centeredUv.x + cosine * centeredUv.y) + 0.5;
+                        float2 overlayUv = frac(rotatedUv * _CompositeTilingOffset.xy + _CompositeTilingOffset.zw);
+                        float4 overlay = tex2D(_CompositeTex, overlayUv);
+                        float3 blended = overlay.rgb;
+                        if (_CompositeMode == 1) blended = src.rgb + overlay.rgb;
+                        else if (_CompositeMode == 2) blended = src.rgb * overlay.rgb;
+                        else if (_CompositeMode == 3) blended = 1.0 - (1.0 - src.rgb) * (1.0 - overlay.rgb);
+                        else if (_CompositeMode == 4) blended = src.rgb - overlay.rgb;
+                        else if (_CompositeMode == 5) blended = abs(src.rgb - overlay.rgb);
+                        else if (_CompositeMode == 6) blended = min(src.rgb, overlay.rgb);
+                        else if (_CompositeMode == 7) blended = max(src.rgb, overlay.rgb);
+                        else if (_CompositeMode == 8)
+                            blended = lerp(2.0 * src.rgb * overlay.rgb,
+                                1.0 - 2.0 * (1.0 - src.rgb) * (1.0 - overlay.rgb),
+                                step(0.5, src.rgb));
+                        fx.rgb = lerp(src.rgb, blended, saturate(overlay.a * _Strength));
+                    }
+                }
+                else if (_EffectType == 24) // Luminance displacement
+                {
+                    float2 mapUv = frac(uv * _LuminanceDisplacementTilingOffset.xy +
+                        _LuminanceDisplacementTilingOffset.zw);
+                    float3 mapColor = _LuminanceDisplacementEnabled > 0.5
+                        ? tex2D(_LuminanceDisplacementTex, mapUv).rgb
+                        : tex2D(_MainTex, mapUv).rgb;
+                    float luminance = dot(mapColor, float3(0.2126, 0.7152, 0.0722));
+                    float2 displacedUv = saturate(uv + luminance * _LuminanceDisplacementOffset);
+                    fx = lerp(src, tex2D(_MainTex, displacedUv), saturate(_Strength));
                 }
 
                 return fx;

@@ -29,6 +29,7 @@ namespace Aetherin
                 ("Transform", UI.Column(Param("Size", p.Size), Param("Position", p.Position),
                     Param("Rotation", p.Rotation), Param("Scale", p.Scale), Param("Anchor", p.Anchor))),
                 ("Appearance", UI.Column(
+                    UI.Toggle("Flip Horizontal", () => p.FlipHorizontal, value => p.FlipHorizontal = value),
                     UI.Toggle("LUT", () => p.LutEnabled, value => p.LutEnabled = value),
                     UI.DynamicElementIf(() => p.LutEnabled,
                         () => UI.Column(lutSelector, Param("LUT Intensity", p.LutIntensity))),

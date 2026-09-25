@@ -4,6 +4,7 @@ Shader "Aetherin/Movie Billboard"
     {
         _MainTex ("Movie", 2D) = "black" {}
         _Color ("Color", Color) = (1,1,1,1)
+        [HideInInspector] _FlipHorizontal ("Flip Horizontal", Float) = 0
         [NoScaleOffset] _LutTex ("LUT", 2D) = "gray" {}
         [HideInInspector] _LutParams ("LUT Params", Vector) = (0,0,0,0)
         [HideInInspector] _LutEnabled ("LUT Enabled", Float) = 0
@@ -35,6 +36,7 @@ Shader "Aetherin/Movie Billboard"
             float4 _LutParams;
             float _LutEnabled;
             float _LutIntensity;
+            float _FlipHorizontal;
             float _InvertBlend;
 
 half3 ApplyLut(half3 color)
@@ -84,7 +86,8 @@ half3 ApplyLut(half3 color)
             }
             half4 Frag(Varyings input) : SV_Target
             {
-                half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, input.uv) * _Color;
+                float2 movieUv = float2(lerp(input.uv.x, 1.0 - input.uv.x, step(0.5, _FlipHorizontal)), input.uv.y);
+                half4 color = SAMPLE_TEXTURE2D(_MainTex, sampler_MainTex, movieUv) * _Color;
                 if (_LutEnabled > 0.5)
                     color.rgb = lerp(color.rgb, ApplyLut(color.rgb), saturate(_LutIntensity));
                 if (_InvertBlend > 0.5) color.rgb = color.aaa;

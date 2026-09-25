@@ -19,6 +19,7 @@ namespace Aetherin
         public bool Loop = true;
         public float PlaybackSpeed = 1f;
         public bool PreserveAspect = true;
+        public bool FlipHorizontal;
         public bool LutEnabled;
         [Tooltip("Lut Library に登録したLUTテクスチャのファイル名（拡張子なし）")]
         public string LutKey;

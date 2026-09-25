@@ -14,6 +14,7 @@ namespace Aetherin
     {
         private static readonly int MainTexId = Shader.PropertyToID("_MainTex");
         private static readonly int ColorId = Shader.PropertyToID("_Color");
+        private static readonly int FlipHorizontalId = Shader.PropertyToID("_FlipHorizontal");
         private static readonly int LutTexId = Shader.PropertyToID("_LutTex");
         private static readonly int LutParamsId = Shader.PropertyToID("_LutParams");
         private static readonly int LutEnabledId = Shader.PropertyToID("_LutEnabled");
@@ -87,6 +88,7 @@ namespace Aetherin
             ApplyTransform(context);
             _material.SetTexture(MainTexId, _videoTexture != null ? _videoTexture : Texture2D.blackTexture);
             _material.SetColor(ColorId, new Color(1f, 1f, 1f, Mathf.Clamp01(_params.Opacity.Evaluate(context))));
+            _material.SetFloat(FlipHorizontalId, _params.FlipHorizontal ? 1f : 0f);
             ApplyLut(context);
             LayerMaterialUtility.ApplyBlendMode(_material, _params.BlendMode);
         }

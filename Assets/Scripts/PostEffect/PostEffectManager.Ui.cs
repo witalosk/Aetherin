@@ -80,7 +80,11 @@ namespace Aetherin
             deck.EnsureInitialized();
             if (deck.Modules != null)
                 foreach (PostEffectModule module in deck.Modules)
-                    if (module != null) module.GetAvailableLutKeys = GetLutKeys;
+                    if (module != null)
+                    {
+                        module.GetAvailableLutKeys = GetLutKeys;
+                        module.GetAvailableTextureKeys = GetTextureKeys;
+                    }
             return UI.Column(
                 UI.Row(
                     UI.Field("Name", () => deck.Name, value => deck.Name = value).SetFlexGrow(1f),

@@ -51,6 +51,15 @@ namespace Aetherin
         private static readonly int CrossAttenuationId = Shader.PropertyToID("_CrossAttenuation");
         private static readonly int CrossIntensityId = Shader.PropertyToID("_CrossIntensity");
         private static readonly int RuntimeTexId = Shader.PropertyToID("_RuntimeTex");
+        private static readonly int CompositeTexId = Shader.PropertyToID("_CompositeTex");
+        private static readonly int CompositeModeId = Shader.PropertyToID("_CompositeMode");
+        private static readonly int CompositeTilingOffsetId = Shader.PropertyToID("_CompositeTilingOffset");
+        private static readonly int CompositeRotationId = Shader.PropertyToID("_CompositeRotation");
+        private static readonly int CompositeEnabledId = Shader.PropertyToID("_CompositeEnabled");
+        private static readonly int LuminanceDisplacementOffsetId = Shader.PropertyToID("_LuminanceDisplacementOffset");
+        private static readonly int LuminanceDisplacementTexId = Shader.PropertyToID("_LuminanceDisplacementTex");
+        private static readonly int LuminanceDisplacementEnabledId = Shader.PropertyToID("_LuminanceDisplacementEnabled");
+        private static readonly int LuminanceDisplacementTilingOffsetId = Shader.PropertyToID("_LuminanceDisplacementTilingOffset");
 
         private Material _material;
         private Material _crossFilterMaterial;
@@ -255,6 +264,7 @@ namespace Aetherin
                     if (!module.Enabled) continue;
                     module.EnsureInitialized();
                     module.GetAvailableLutKeys = GetLutKeys;
+                    module.GetAvailableTextureKeys = GetTextureKeys;
                     float strength = deckStrength * Mathf.Clamp01(module.Strength?.Evaluate(moduleContext) ?? 1f);
                     if (strength <= 0f) continue;
 
@@ -282,6 +292,8 @@ namespace Aetherin
                         module.LightLeakColor, palette, moduleContext).ColorA;
                     _material.SetColor(LightLeakColorId, lightLeakColor);
                     ApplyLut(module, moduleContext);
+                    ApplyTextureComposite(module, moduleContext);
+                    ApplyLuminanceDisplacement(module, moduleContext);
                     if (module.Type == PostEffectType.RuntimeShader)
                     {
                         RuntimeShaderPostEffectRenderer runtimeShader = runtime.GetRuntimeShader(module, transform);
@@ -487,6 +499,46 @@ namespace Aetherin
         {
             EnsureLutLibrary();
             return _lutLibrary?.GetKeys() ?? Array.Empty<string>();
+        }
+
+        private IReadOnlyList<string> GetTextureKeys() =>
+            StageAssetCatalog.FindBestAvailable().GetTextureKeys();
+
+        private void ApplyTextureComposite(PostEffectModule module, in ModulationContext context)
+        {
+            _material.SetFloat(CompositeEnabledId, 0f);
+            if (module.Type != PostEffectType.TextureComposite) return;
+            IStageAssetCatalog catalog = StageAssetCatalog.FindBestAvailable();
+            IReadOnlyList<string> keys = module.CompositeTextureKeys;
+            if (keys == null || keys.Count == 0) return;
+            int index = Mathf.Clamp(module.CompositeTextureIndex.Evaluate(context), 0, keys.Count - 1);
+            Texture2D texture = catalog.ResolveTexture(keys[index]);
+            if (texture == null) return;
+            Vector2 tiling = module.CompositeTiling.Evaluate(context);
+            Vector2 offset = module.CompositeOffset.Evaluate(context);
+            _material.SetTexture(CompositeTexId, texture);
+            _material.SetInt(CompositeModeId, (int)module.CompositeMode);
+            _material.SetVector(CompositeTilingOffsetId, new Vector4(tiling.x, tiling.y, offset.x, offset.y));
+            _material.SetFloat(CompositeRotationId, module.CompositeRotation.Evaluate(context) * Mathf.Deg2Rad);
+            _material.SetFloat(CompositeEnabledId, 1f);
+        }
+
+        private void ApplyLuminanceDisplacement(PostEffectModule module, in ModulationContext context)
+        {
+            _material.SetFloat(LuminanceDisplacementEnabledId, 0f);
+            if (module.Type != PostEffectType.LuminanceDisplacement) return;
+            Vector2 offset = module.LuminanceDisplacementOffset.Evaluate(context);
+            Vector2 tiling = module.LuminanceDisplacementTiling.Evaluate(context);
+            Vector2 mapOffset = module.LuminanceDisplacementMapOffset.Evaluate(context);
+            _material.SetVector(LuminanceDisplacementOffsetId, new Vector4(offset.x, offset.y, 0f, 0f));
+            _material.SetVector(LuminanceDisplacementTilingOffsetId,
+                new Vector4(tiling.x, tiling.y, mapOffset.x, mapOffset.y));
+            if (string.IsNullOrWhiteSpace(module.LuminanceDisplacementTextureKey)) return;
+            Texture2D texture = StageAssetCatalog.FindBestAvailable()
+                .ResolveTexture(module.LuminanceDisplacementTextureKey);
+            if (texture == null) return;
+            _material.SetTexture(LuminanceDisplacementTexId, texture);
+            _material.SetFloat(LuminanceDisplacementEnabledId, 1f);
         }
 
         private void ApplyLut(PostEffectModule module, in ModulationContext context)

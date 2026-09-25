@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using RosettaUI;
 
 namespace Aetherin
@@ -84,6 +85,8 @@ namespace Aetherin
             module.GetAvailableLutKeys ??= () =>
                 LutLibrary.FindBestAvailable()
                     ?.GetKeys() ?? System.Array.Empty<string>();
+            module.GetAvailableTextureKeys ??= () =>
+                StageAssetCatalog.FindBestAvailable().GetTextureKeys();
 
             return UI.Column(
                 UI.Row(
@@ -225,6 +228,55 @@ namespace Aetherin
                             .SetInteractable(false);
                     }
                     yield return Param("LUT Intensity", module.LutIntensity);
+                    break;
+                case PostEffectType.TextureComposite:
+                    IReadOnlyList<string> textureKeys = module.GetAvailableTextureKeys?.Invoke();
+                    yield return UI.List("Texture Keys", () => module.CompositeTextureKeys,
+                        value => module.CompositeTextureKeys = value);
+                    if (textureKeys != null && textureKeys.Count > 0)
+                    {
+                        yield return UI.Dropdown("Add Key", () => 0,
+                                value =>
+                                {
+                                    if (value > 0 && value <= textureKeys.Count)
+                                        module.CompositeTextureKeys.Add(textureKeys[value - 1]);
+                                }, new[] { "Select texture" }.Concat(textureKeys).ToArray());
+                    }
+                    yield return UI.DynamicElementOnStatusChanged(
+                        () => string.Join("\u001f", module.CompositeTextureKeys),
+                        _ => module.CompositeTextureKeys.Count > 0
+                            ? UI.Row(
+                                UI.Dropdown("Selected Texture",
+                                    () => UnityEngine.Mathf.Clamp(module.CompositeTextureIndex.BaseValue, 0,
+                                        module.CompositeTextureKeys.Count - 1),
+                                    value => module.CompositeTextureIndex.BaseValue = value,
+                                    module.CompositeTextureKeys).SetFlexGrow(1f),
+                                CreateModulationLauncher("Texture Index", module.CompositeTextureIndex.Modulation))
+                            : UI.Label("Texture Keys にテクスチャを追加してください"));
+                    yield return UI.Field("Blend Mode", () => module.CompositeMode, value => module.CompositeMode = value);
+                    yield return Param("Tiling", module.CompositeTiling);
+                    yield return Param("Offset", module.CompositeOffset);
+                    yield return Param("Rotation (Degrees)", module.CompositeRotation);
+                    break;
+                case PostEffectType.LuminanceDisplacement:
+                    IReadOnlyList<string> displacementKeys = module.GetAvailableTextureKeys?.Invoke();
+                    if (displacementKeys != null && displacementKeys.Count > 0)
+                    {
+                        string[] options = new[] { "Input image" }.Concat(displacementKeys).ToArray();
+                        yield return UI.Dropdown("Texture", () =>
+                            {
+                                for (int i = 0; i < displacementKeys.Count; i++)
+                                    if (displacementKeys[i] == module.LuminanceDisplacementTextureKey) return i + 1;
+                                return 0;
+                            }, value => module.LuminanceDisplacementTextureKey = value == 0
+                                ? string.Empty : displacementKeys[value - 1], options);
+                    }
+                    else
+                        yield return UI.Dropdown("Texture", () => 0, _ => { }, new[] { "Input image" })
+                            .SetInteractable(false);
+                    yield return Param("Displacement X/Y", module.LuminanceDisplacementOffset);
+                    yield return Param("Texture Tiling", module.LuminanceDisplacementTiling);
+                    yield return Param("Texture Offset", module.LuminanceDisplacementMapOffset);
                     break;
                 case PostEffectType.RuntimeShader:
                     yield return UI.Toggle("Previous Frame Texture",

@@ -1368,6 +1368,30 @@ MonoBehaviour:
     Texture: {fileID: 2800000, guid: 39444bedac8e5b14aae38e57f16abb92, type: 3}
   - Key: line3
     Texture: {fileID: 2800000, guid: c076767e3cf427f4bb4ffc5a57e2b153, type: 3}
+  - Key: brush1
+    Texture: {fileID: 2800000, guid: 2f3e524aa358c9f4bbb22d1c239d3f8e, type: 3}
+  - Key: brush2
+    Texture: {fileID: 2800000, guid: 301649c0ef7e27544a0819e906a942f4, type: 3}
+  - Key: brush3
+    Texture: {fileID: 2800000, guid: 9b2815a24d0e9744ea0e1e00548f8624, type: 3}
+  - Key: brush4
+    Texture: {fileID: 2800000, guid: 6ba7515f967918e4894ca793d7703f7a, type: 3}
+  - Key: dots
+    Texture: {fileID: 2800000, guid: eee208acc880a3b44b2abe6b69560b32, type: 3}
+  - Key: hosha
+    Texture: {fileID: 2800000, guid: 75e1d5e5f27d3e9499a7cc6b08fe8069, type: 3}
+  - Key: kirakira
+    Texture: {fileID: 2800000, guid: 666d38e5b02f24a4ebe744b22b764621, type: 3}
+  - Key: leaking1
+    Texture: {fileID: 2800000, guid: 8f8b6eee1b02d434681d938cbe021abf, type: 3}
+  - Key: leaking2
+    Texture: {fileID: 2800000, guid: f81dea8dd445b334d9948fc7feca4863, type: 3}
+  - Key: sprite1
+    Texture: {fileID: 2800000, guid: c5dfd5cb13dfde3439a20859bedb604b, type: 3}
+  - Key: donki_logo
+    Texture: {fileID: 2800000, guid: acce2b87f8dde464d86911e31a7acec6, type: 3}
+  - Key: donki_chara
+    Texture: {fileID: 2800000, guid: 108a59b5d220cde4f9c0ca7d547f346f, type: 3}
 --- !u!1 &933337477
 GameObject:
   m_ObjectHideFlags: 0
