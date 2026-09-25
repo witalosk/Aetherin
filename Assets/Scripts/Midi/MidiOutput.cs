@@ -46,6 +46,7 @@ namespace Aetherin
         private readonly AutoResetEvent _workerWakeSignal = new(false);
         private Thread _worker;
         private volatile bool _stopWorker;
+        private bool _clearLedsOnDisable;
         private string _portNameFilter;
         private int _reconnectIntervalMilliseconds;
         private long _nextReconnectTicks;
@@ -101,6 +102,7 @@ namespace Aetherin
         private void OnEnable()
         {
             _portNameFilter = _params.PortNameFilter ?? string.Empty;
+            _clearLedsOnDisable = _params.ClearLedsOnDisable;
             _reconnectIntervalMilliseconds = Mathf.RoundToInt(Mathf.Max(0.5f, _params.ReconnectInterval) * 1000f);
             _stopWorker = false;
             _worker = new Thread(WorkerLoop) { IsBackground = true, Name = "Aetherin MIDI Output" };
@@ -112,7 +114,7 @@ namespace Aetherin
             _stopWorker = true;
             _workerWakeSignal.Set();
             // ネイティブ送信が詰まっていてもJoinでUnityを待たせない。
-            _worker?.Join(100);
+            _worker?.Join(500);
             _worker = null;
             while (_sendQueue.TryDequeue(out _)) { }
         }
@@ -125,7 +127,24 @@ namespace Aetherin
                 if (_isOpen) SendQueuedMessagesWorker();
                 _workerWakeSignal.WaitOne(50);
             }
+            if (_clearLedsOnDisable && _isOpen) ClearLedsWorker();
             DisconnectWorker();
+        }
+
+        private void ClearLedsWorker()
+        {
+            var clearPads = new byte[]
+            {
+                0xF0, 0x47, 0x7F, 0x4F, 0x24, 0x00, 0x08,
+                (byte)ApcMiniMk2.PadFirst, (byte)ApcMiniMk2.PadLast,
+                0, 0, 0, 0, 0, 0, 0xF7
+            };
+            _midiOut.SendMessage(clearPads);
+
+            for (int note = ApcMiniMk2.TrackButtonFirst; note <= ApcMiniMk2.TrackButtonLast; note++)
+                _midiOut.SendMessage(new byte[] { 0x90, (byte)note, 0 });
+            for (int note = ApcMiniMk2.SceneButtonFirst; note <= ApcMiniMk2.SceneButtonLast; note++)
+                _midiOut.SendMessage(new byte[] { 0x90, (byte)note, 0 });
         }
 
         private void TryConnectWorker()
@@ -176,7 +195,7 @@ namespace Aetherin
 
         private void SendQueuedMessagesWorker()
         {
-            while (_sendQueue.TryDequeue(out byte[] message))
+            while (!_stopWorker && _sendQueue.TryDequeue(out byte[] message))
             {
                 MidiDiagnostics.RecordCritical($"MIDI output begin ({message.Length} bytes)");
                 int result = _midiOut.SendMessage(message);

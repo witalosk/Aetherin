@@ -57,7 +57,7 @@ namespace Aetherin
     /// スワップ時はNext側を昇格したCurrentのコピーとして作り直すため、
     /// どんな子オブジェクト構成のステージでも、いま出ている絵から続きを操作できる
     /// </summary>
-    public partial class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget
+    public partial class StageManager : MonoBehaviour, IDeckStateProvider, ISaveAndUiTarget, ICustomSaveTarget, IOutputTextureProvider
     {
         public IParams Params => _params;
         public bool FoldParams => true;
