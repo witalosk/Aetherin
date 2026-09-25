@@ -1090,7 +1090,7 @@ MonoBehaviour:
   _crossFadeShader: {fileID: 4800000, guid: ee6c2be7cf2b415d8644748c6d2455bc, type: 3}
   _stages:
   - {fileID: 860254699}
-  - {fileID: 0}
+  - {fileID: 735597825}
   _params:
     CrossFader:
       _ccNumber: 56

@@ -29,14 +29,13 @@ namespace Aetherin
         private Mesh _mesh;
         private Material _material;
         private ShaderRenderer _runtimeRenderer;
-        private bool _runtimeRendererPendingDestroy;
+        private RuntimeShaderRendererPool.Entry _rendererLease;
         private RenderTexture _runtimeTexture;
         private RenderTexture _previousFrameTexture;
         private RenderTexture _waveformTexture;
         private Vector2Int _runtimeResolution;
-        private int _shaderCodeHash;
         private bool _isShaderCompiled;
-        private bool _compileAttempted;
+        private string _compiledShaderCode;
         private int _appliedTextureRebuildRevision = int.MinValue;
 
         private IAudioFeatureProvider _audio;
@@ -62,16 +61,17 @@ namespace Aetherin
 
         private void OnDisable()
         {
-            if (!Application.isPlaying || _runtimeRenderer == null) return;
+            ReleaseRuntimeRenderer();
+        }
 
-            // ShaderRenderer starts its render coroutine only in Awake. Unity stops that
-            // coroutine when StageManager deactivates this stage, and enabling the same
-            // component again does not restart it. Recreate the component on the next
-            // activation so rendering resumes.
-            Destroy(_runtimeRenderer);
-            _runtimeRendererPendingDestroy = true;
+        private void ReleaseRuntimeRenderer()
+        {
+            if (_rendererLease != null)
+                RuntimeShaderRendererPool.Return(_rendererLease);
+            _rendererLease = null;
+            _runtimeRenderer = null;
+            _compiledShaderCode = null;
             _isShaderCompiled = false;
-            _compileAttempted = false;
         }
 
         private void InitializeLayer()
@@ -87,7 +87,7 @@ namespace Aetherin
         {
             _params.EnsureInitialized();
             EnsureResources();
-            if (_material == null || _runtimeRendererPendingDestroy || _runtimeRenderer == null) return;
+            if (_material == null) return;
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
@@ -102,7 +102,7 @@ namespace Aetherin
             if (!Application.isPlaying) return;
 
             CompileIfNeeded();
-            if (!_isShaderCompiled) return;
+            if (!_isShaderCompiled || _runtimeRenderer == null) return;
 
             if (_runtimeTexture == null || _appliedTextureRebuildRevision != _params.TextureRebuildRevision)
             {
@@ -117,6 +117,8 @@ namespace Aetherin
             _runtimeRenderer.SetTexture(2, _params.ProvidePreviousFrameTexture
                 ? _previousFrameTexture
                 : Texture2D.blackTexture);
+            _runtimeRenderer.RenderEveryFrame = true;
+            _runtimeRenderer.enabled = true;
         }
 
         protected override void LateUpdate()
@@ -154,50 +156,32 @@ namespace Aetherin
                 }
             }
 
-            // ShaderRenderer initializes a native DirectX compiler in Awake. Creating it
-            // while a layer is added in Edit Mode can block the Unity Editor, so defer the
-            // component entirely until the player is running.
-            if (!Application.isPlaying)
-            {
-                _runtimeRenderer = GetComponent<ShaderRenderer>();
-                if (_runtimeRenderer != null) _runtimeRenderer.enabled = false;
-                return;
-            }
-
-            // Destroy is deferred until the end of the frame. A stage can be
-            // reactivated before then, while GetComponent still finds the old component.
-            if (_runtimeRendererPendingDestroy)
-            {
-                if (_runtimeRenderer != null) return;
-                _runtimeRenderer = null;
-                _runtimeRendererPendingDestroy = false;
-            }
-
-            bool createRuntimeRenderer = _runtimeRenderer == null;
-            _runtimeRenderer ??= GetComponent<ShaderRenderer>() ?? gameObject.AddComponent<ShaderRenderer>();
-            _runtimeRenderer.enabled = true;
-            if (createRuntimeRenderer && _runtimeTexture != null)
-                _runtimeRenderer.TargetTexture = _runtimeTexture;
-            // UnityRuntimeShader queues this path through GL.IssuePluginEvent at the end
-            // of the frame. Do not call BlitNow from Update: it accesses D3D11 directly
-            // on the main thread and can race Unity's threaded graphics device.
-            _runtimeRenderer.RenderEveryFrame = true;
         }
 
         private void CompileIfNeeded()
         {
             string code = _params.ShaderCode ?? RuntimeShaderLayerParams.DefaultShaderCode;
-            int codeHash = code.GetHashCode();
-            if (_compileAttempted && codeHash == _shaderCodeHash) return;
+            if (_rendererLease != null && string.Equals(code, _compiledShaderCode, System.StringComparison.Ordinal)) return;
 
-            _shaderCodeHash = codeHash;
-            _compileAttempted = true;
-            _params.CompileMessage = "Compiling...";
-            _isShaderCompiled = _runtimeRenderer.CompileShaderFromString(code, out string error);
+            ReleaseRuntimeRenderer();
+            _rendererLease = RuntimeShaderRendererPool.Rent(code);
+            _runtimeRenderer = _rendererLease.Renderer;
+            _compiledShaderCode = code;
+            if (!_rendererLease.HasCompileResult)
+            {
+                _params.CompileMessage = "Compiling...";
+                _rendererLease.Compiled = _runtimeRenderer.CompileShaderFromString(code, out string error);
+                _rendererLease.Error = error;
+                _rendererLease.HasCompileResult = true;
+            }
+
+            _isShaderCompiled = _rendererLease.Compiled;
             _params.LastCompileSucceeded = _isShaderCompiled;
-            _params.CompileMessage = _isShaderCompiled ? "Compiled" : error ?? "Unknown shader compilation error";
+            _params.CompileMessage = _isShaderCompiled ? "Compiled" : _rendererLease.Error ?? "Unknown shader compilation error";
             if (!_isShaderCompiled)
-                Debug.LogError($"[RuntimeShaderLayer] Shader compilation failed on '{name}': {error}", this);
+                Debug.LogError($"[RuntimeShaderLayer] Shader compilation failed on '{name}': {_rendererLease.Error}", this);
+            if (_runtimeTexture != null)
+                _runtimeRenderer.TargetTexture = _runtimeTexture;
         }
 
         private void EnsureRuntimeTexture(Vector2Int resolution)
@@ -373,6 +357,7 @@ namespace Aetherin
 
         private void OnDestroy()
         {
+            ReleaseRuntimeRenderer();
             DestroyResource(_material);
             DestroyResource(_mesh);
             DestroyResource(_runtimeTexture);
