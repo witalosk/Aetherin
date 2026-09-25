@@ -29,6 +29,7 @@ namespace Aetherin
         private Mesh _mesh;
         private Material _material;
         private ShaderRenderer _runtimeRenderer;
+        private bool _runtimeRendererPendingDestroy;
         private RenderTexture _runtimeTexture;
         private RenderTexture _previousFrameTexture;
         private RenderTexture _waveformTexture;
@@ -68,7 +69,7 @@ namespace Aetherin
             // component again does not restart it. Recreate the component on the next
             // activation so rendering resumes.
             Destroy(_runtimeRenderer);
-            _runtimeRenderer = null;
+            _runtimeRendererPendingDestroy = true;
             _isShaderCompiled = false;
             _compileAttempted = false;
         }
@@ -86,7 +87,7 @@ namespace Aetherin
         {
             _params.EnsureInitialized();
             EnsureResources();
-            if (_material == null || _runtimeRenderer == null) return;
+            if (_material == null || _runtimeRendererPendingDestroy || _runtimeRenderer == null) return;
 
             var context = CreateModulationContext(
                 Application.isPlaying ? Time.unscaledTimeAsDouble : Time.realtimeSinceStartupAsDouble,
@@ -161,6 +162,15 @@ namespace Aetherin
                 _runtimeRenderer = GetComponent<ShaderRenderer>();
                 if (_runtimeRenderer != null) _runtimeRenderer.enabled = false;
                 return;
+            }
+
+            // Destroy is deferred until the end of the frame. A stage can be
+            // reactivated before then, while GetComponent still finds the old component.
+            if (_runtimeRendererPendingDestroy)
+            {
+                if (_runtimeRenderer != null) return;
+                _runtimeRenderer = null;
+                _runtimeRendererPendingDestroy = false;
             }
 
             bool createRuntimeRenderer = _runtimeRenderer == null;

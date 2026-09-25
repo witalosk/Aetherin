@@ -773,7 +773,7 @@
         "StageTimeSpeedCcMax": 6.0,
         "UiRowNum": 8,
         "CurrentStageIndex": 2,
-        "NextStageIndex": 2,
+        "NextStageIndex": 0,
         "NextStageOffset": {
           "x": 0.0,
           "y": 0.0,
@@ -891,14 +891,14 @@
                 "LayerId": "1521f6c9208b4182ad5ae12f8a4bc908",
                 "Type": "shape",
                 "Name": "Star",
-                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":9,\"ScreenSpace\":false,\"Shape\":3,\"Position\":{\"BaseValue\":{\"x\":12.0,\"y\":6.260000228881836,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":-162.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":0.1599999964237213,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":8.5600004196167,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-1382533990,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Skew\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":2.0,\"y\":2.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"VertexNoise\":{\"Enabled\":false,\"Type\":1,\"Direction\":0,\"Amount\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Frequency\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0,\"w\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]},\"WModulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}},\"VertexNoiseTessellation\":8,\"Points\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"StarEdgeSegments\":1,\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":4,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"TextureEnabled\":false,\"TextureKey\":\"\",\"TextureScale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"TextureOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"MaterialMode\":0,\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"FillEnabled\":true,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":3,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":1,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.33000001311302187,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":249.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.5,\"y\":0.5,\"z\":0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.8999999761581421,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":0,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
+                "ParamsJson": "{\"Visible\":false,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":9,\"ScreenSpace\":false,\"Shape\":3,\"Position\":{\"BaseValue\":{\"x\":12.0,\"y\":6.260000228881836,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":-162.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":0.1599999964237213,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":8.5600004196167,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-1382533990,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Skew\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":2.0,\"y\":2.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"VertexNoise\":{\"Enabled\":false,\"Type\":1,\"Direction\":0,\"Amount\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Frequency\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0,\"w\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]},\"WModulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}},\"VertexNoiseTessellation\":8,\"Points\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"StarEdgeSegments\":1,\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":4,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"TextureEnabled\":false,\"TextureKey\":\"\",\"TextureScale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"TextureOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"MaterialMode\":0,\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"FillEnabled\":true,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.05000000074505806,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":3,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":1,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.33000001311302187,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":249.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":0.5,\"y\":0.5,\"z\":0.5},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.8999999761581421,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":0,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
                 "Children": []
               },
               {
                 "LayerId": "a577bd1d2a89460996fa34f0930004b7",
                 "Type": "shape",
                 "Name": "Frame",
-                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":10,\"ScreenSpace\":true,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":0.2199999988079071,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":1.9500000476837159,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-1859980338,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Skew\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":3.0,\"y\":1.6299999952316285},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"VertexNoise\":{\"Enabled\":false,\"Type\":1,\"Direction\":0,\"Amount\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Frequency\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0,\"w\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]},\"WModulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}},\"VertexNoiseTessellation\":8,\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"StarEdgeSegments\":1,\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":2,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"TextureEnabled\":false,\"TextureKey\":\"\",\"TextureScale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"TextureOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"MaterialMode\":0,\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.007000000216066837,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":3,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":0,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":9.1899995803833,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":20.0,\"Offset\":10.0,\"LfoFrequency\":0.3799999952316284,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":688663516,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":0,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
+                "ParamsJson": "{\"Visible\":false,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":10,\"ScreenSpace\":true,\"Shape\":0,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":true,\"XModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":4,\"Operation\":0,\"Amount\":0.2199999988079071,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":1.9500000476837159,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-1859980338,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Skew\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":3.0,\"y\":1.6299999952316285},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"VertexNoise\":{\"Enabled\":false,\"Type\":1,\"Direction\":0,\"Amount\":{\"BaseValue\":0.10000000149011612,\"Modulation\":{\"Modulators\":[]}},\"Frequency\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Speed\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0,\"w\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]},\"WModulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}},\"VertexNoiseTessellation\":8,\"Points\":{\"BaseValue\":5,\"Modulation\":{\"Modulators\":[]}},\"InnerRadius\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"StarEdgeSegments\":1,\"EllipseSegments\":64,\"FillColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":2,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"TextureEnabled\":false,\"TextureKey\":\"\",\"TextureScale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"TextureOffset\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"MaterialMode\":0,\"Metallic\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"Smoothness\":{\"BaseValue\":0.5,\"Modulation\":{\"Modulators\":[]}},\"FillEnabled\":false,\"StrokeEnabled\":true,\"StrokeWidth\":{\"BaseValue\":0.007000000216066837,\"Modulation\":{\"Modulators\":[]}},\"StrokeColor\":{\"Mode\":0,\"ColorReference\":0,\"Color\":3,\"CustomColor\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorAReference\":0,\"GradientColorA\":2,\"CustomGradientColorA\":{\"r\":1.0,\"g\":1.0,\"b\":1.0,\"a\":1.0},\"GradientColorBReference\":0,\"GradientColorB\":3,\"CustomGradientColorB\":{\"r\":0.699999988079071,\"g\":0.699999988079071,\"b\":0.699999988079071,\"a\":1.0},\"RandomSeed\":0,\"GradientAngle\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"GradientScale\":{\"BaseValue\":2.0,\"Modulation\":{\"Modulators\":[]}},\"Intensity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Alpha\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}},\"StrokeTrim\":{\"Enabled\":false,\"Start\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"End\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"Offset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}}},\"Repeater\":{\"Enabled\":true,\"Copies\":{\"BaseValue\":3,\"Modulation\":{\"Modulators\":[]}},\"LayoutMode\":0,\"Columns\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Rows\":{\"BaseValue\":4,\"Modulation\":{\"Modulators\":[]}},\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":9.1899995803833,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":0,\"Operation\":0,\"Amount\":20.0,\"Offset\":10.0,\"LfoFrequency\":0.3799999952316284,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":688663516,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"TransformMode\":0,\"ValueMode\":0,\"RandomSeed\":0,\"RotationAffectsPosition\":true,\"AnimationPhaseOffset\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"StartOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"EndOpacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}}}}",
                 "Children": []
               },
               {
@@ -1916,6 +1916,415 @@
                     },
                     "NoiseAmount": {
                       "BaseValue": 1.7899999618530273,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "DepthOfFieldEnabled": false,
+                    "FocusDistance": {
+                      "BaseValue": 10.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Aperture": {
+                      "BaseValue": 5.5999999046325684,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FocalLength": {
+                      "BaseValue": 50.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "StageId": "b53190822fc5452d84edf857c5cd1aa6",
+            "StageName": "Stage 1",
+            "RuntimeCreated": false,
+            "StageIndex": 1,
+            "BackgroundMode": 1,
+            "BackgroundColor": 0,
+            "DefaultLut": {
+              "Enabled": false,
+              "LutKey": "",
+              "Intensity": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              }
+            },
+            "Layers": [
+              {
+                "LayerId": "9c0130fc5fed400089d4dd88a5cea838",
+                "Type": "runtime-shader",
+                "Name": "SimpleWave",
+                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":3,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":0,\"ScreenSpace\":false,\"PixelPerUnit\":200.0,\"ProvidePreviousFrameTexture\":false,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":-100.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":35.20000076293945,\"y\":19.06999969482422},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"UserFloat0\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":16,\"Operation\":0,\"Amount\":24.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-439358106,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"UserFloat1\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat2\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat3\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserVector0\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"UserVector1\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ShaderCode\":\"cbuffer AetherinGlobals : register(b0)\\r\\n{\\r\\n    float4 _Time;\\r\\n    float4 _Frame;\\r\\n    float4 _Resolution;\\r\\n    float4 _Audio;\\r\\n    float4 _Beat;\\r\\n    float4 _Bar;\\r\\n    float4 _BackgroundColor1;\\r\\n    float4 _BackgroundColor2;\\r\\n    float4 _AccentColor1;\\r\\n    float4 _AccentColor2;\\r\\n    float4 _SubAccentColor1;\\r\\n    float4 _SubAccentColor2;\\r\\n    float4 _UserFloat;\\r\\n    float4 _UserVector0;\\r\\n    float4 _UserVector1;\\r\\n    float4 _CameraPositionWS;\\r\\n    column_major float4x4 _QuadLocalToWorld;\\r\\n    column_major float4x4 _QuadWorldToLocal;\\r\\n};\\r\\n\\r\\nTexture2D _WaveformTexture : register(t0);\\r\\nTexture2D _SpectrumTexture : register(t1);\\r\\nTexture2D _PreviousFrameTexture : register(t2);\\r\\n\\r\\nSamplerState _WaveformTextureSampler : register(s0);\\r\\nSamplerState _SpectrumTextureSampler : register(s1);\\r\\nSamplerState _PreviousFrameTextureSampler : register(s2);\\r\\n\\r\\nfloat Hash11(float x)\\r\\n{\\r\\n    return frac(sin(x * 127.1 + 78.233) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Hash21(float2 p)\\r\\n{\\r\\n    return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Box(float2 uv, float2 center, float2 halfSize)\\r\\n{\\r\\n    float2 inside = 1.0 - step(halfSize, abs(uv - center));\\r\\n    return inside.x * inside.y;\\r\\n}\\r\\n\\r\\nfloat BoxFrame(float2 uv, float2 center, float2 halfSize, float thickness)\\r\\n{\\r\\n    float outer = Box(uv, center, halfSize);\\r\\n    float inner = Box(\\r\\n        uv, center,\\r\\n        max(float2(0.0, 0.0), halfSize - thickness));\\r\\n    return saturate(outer - inner);\\r\\n}\\r\\n\\r\\nfloat Spectrum(float x)\\r\\n{\\r\\n    return saturate(\\r\\n        _SpectrumTexture.Sample(\\r\\n            _SpectrumTextureSampler,\\r\\n            float2(saturate(x), 0.5)).r);\\r\\n}\\r\\n\\r\\nfloat Wave(float x)\\r\\n{\\r\\n    return _WaveformTexture.Sample(\\r\\n        _WaveformTextureSampler,\\r\\n        float2(saturate(x), 0.5)).r;\\r\\n}\\r\\n\\r\\nfloat4 Frag(VsOutput input) : SV_TARGET\\r\\n{\\r\\n    float2 uv = input.uv;\\r\\n    float pattern = fmod(\\r\\n        floor(max(0.0, _UserFloat.x)),\\r\\n        24.0);\\r\\n\\r\\n    float beatPulse = pow(\\r\\n        1.0 - saturate(_Beat.x), 7.0);\\r\\n    float kick = saturate(_Audio.y);\\r\\n    float snare = saturate(_Audio.z);\\r\\n    float volume = saturate(_Audio.x);\\r\\n    float beatNumber = floor(_Beat.y);\\r\\n\\r\\n    float3 bg = _BackgroundColor1.rgb;\\r\\n    float3 fg = _AccentColor1.rgb;\\r\\n    float3 secondary = _SubAccentColor1.rgb;\\r\\n    float3 color = bg;\\r\\n    float mask = 0.0;\\r\\n\\r\\n\\r\\n   float waveY = Wave(uv.x) * 0.5 + 0.5;\\r\\n   float thickness = 0.004 + kick * 0.012;\\r\\n   mask = 1.0 - step( thickness, abs(uv.y - waveY));\\r\\n    \\r\\n\\r\\n\\r\\n\\r\\n    color = lerp(bg, fg, saturate(mask));\\r\\n    return float4(color, 1.0);\\r\\n}\"}",
+                "Children": []
+              },
+              {
+                "LayerId": "eda6ff2b7f024b4ba311c8d4a1b7fd74",
+                "Type": "runtime-shader",
+                "Name": "SimpleShapes",
+                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":3,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":1,\"ScreenSpace\":false,\"PixelPerUnit\":200.0,\"ProvidePreviousFrameTexture\":false,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":35.20000076293945,\"y\":19.06999969482422},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"UserFloat0\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":16,\"Operation\":0,\"Amount\":24.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-439358106,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"UserFloat1\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat2\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat3\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserVector0\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"UserVector1\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ShaderCode\":\"cbuffer AetherinGlobals : register(b0)\\r\\n{\\r\\n    float4 _Time;\\r\\n    float4 _Frame;\\r\\n    float4 _Resolution;\\r\\n    float4 _Audio;\\r\\n    float4 _Beat;\\r\\n    float4 _Bar;\\r\\n    float4 _BackgroundColor1;\\r\\n    float4 _BackgroundColor2;\\r\\n    float4 _AccentColor1;\\r\\n    float4 _AccentColor2;\\r\\n    float4 _SubAccentColor1;\\r\\n    float4 _SubAccentColor2;\\r\\n    float4 _UserFloat;\\r\\n    float4 _UserVector0;\\r\\n    float4 _UserVector1;\\r\\n    float4 _CameraPositionWS;\\r\\n    column_major float4x4 _QuadLocalToWorld;\\r\\n    column_major float4x4 _QuadWorldToLocal;\\r\\n};\\r\\n\\r\\nTexture2D _WaveformTexture : register(t0);\\r\\nTexture2D _SpectrumTexture : register(t1);\\r\\nTexture2D _PreviousFrameTexture : register(t2);\\r\\n\\r\\nSamplerState _WaveformTextureSampler : register(s0);\\r\\nSamplerState _SpectrumTextureSampler : register(s1);\\r\\nSamplerState _PreviousFrameTextureSampler : register(s2);\\r\\n\\r\\nfloat Hash11(float x)\\r\\n{\\r\\n    return frac(sin(x * 127.1 + 78.233) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Hash21(float2 p)\\r\\n{\\r\\n    return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Box(float2 uv, float2 center, float2 halfSize)\\r\\n{\\r\\n    float2 inside = 1.0 - step(halfSize, abs(uv - center));\\r\\n    return inside.x * inside.y;\\r\\n}\\r\\n\\r\\nfloat BoxFrame(float2 uv, float2 center, float2 halfSize, float thickness)\\r\\n{\\r\\n    float outer = Box(uv, center, halfSize);\\r\\n    float inner = Box(\\r\\n        uv, center,\\r\\n        max(float2(0.0, 0.0), halfSize - thickness));\\r\\n    return saturate(outer - inner);\\r\\n}\\r\\n\\r\\nfloat Spectrum(float x)\\r\\n{\\r\\n    return saturate(\\r\\n        _SpectrumTexture.Sample(\\r\\n            _SpectrumTextureSampler,\\r\\n            float2(saturate(x), 0.5)).r);\\r\\n}\\r\\n\\r\\nfloat Wave(float x)\\r\\n{\\r\\n    return _WaveformTexture.Sample(\\r\\n        _WaveformTextureSampler,\\r\\n        float2(saturate(x), 0.5)).r;\\r\\n}\\r\\n\\r\\nfloat4 Frag(VsOutput input) : SV_TARGET\\r\\n{\\r\\n    float2 uv = input.uv;\\r\\n    float pattern = fmod(\\r\\n        floor(max(0.0, _UserFloat.x)),\\r\\n        24.0);\\r\\n\\r\\n    float beatPulse = pow(\\r\\n        1.0 - saturate(_Beat.x), 7.0);\\r\\n    float kick = saturate(_Audio.y);\\r\\n    float snare = saturate(_Audio.z);\\r\\n    float volume = saturate(_Audio.x);\\r\\n    float beatNumber = floor(_Beat.y);\\r\\n\\r\\n    float3 bg = _BackgroundColor1.rgb;\\r\\n    float3 fg = _AccentColor1.rgb;\\r\\n    float3 secondary = _SubAccentColor1.rgb;\\r\\n    float3 color = bg;\\r\\n    float mask = 0.0;\\r\\n\\r\\n    // 0: 一本の波形\\r\\n    if (pattern < 1.0)\\r\\n    {\\r\\n        float waveY = Wave(uv.x) * 0.5 + 0.5;\\r\\n        float thickness = 0.004 + kick * 0.012;\\r\\n        mask = 1.0 - step(\\r\\n            thickness, abs(uv.y - waveY));\\r\\n    }\\r\\n\\r\\n    // 1: 散らばる正方形\\r\\n    else if (pattern < 2.0)\\r\\n    {\\r\\n        float2 grid = float2(6.0, 4.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float selector = Hash21(cell + 4.0);\\r\\n        float active = step(0.50, selector);\\r\\n        float size = 0.12 + 0.16 * kick +\\r\\n                     0.10 * Hash21(cell + beatNumber);\\r\\n        mask = active * Box(\\r\\n            local, float2(0.5, 0.5),\\r\\n            float2(size, size));\\r\\n    }\\r\\n\\r\\n    // 2: 縦棒の列\\r\\n    else if (pattern < 3.0)\\r\\n    {\\r\\n        float columns = 24.0;\\r\\n        float cellX = floor(uv.x * columns);\\r\\n        float localX = frac(uv.x * columns);\\r\\n        float height = 0.08 +\\r\\n            Spectrum((cellX + 0.5) / columns) * 0.80;\\r\\n        mask = (1.0 - step(0.55, localX)) *\\r\\n               (1.0 - step(height, uv.y));\\r\\n    }\\r\\n\\r\\n    // 3: 同心四角形\\r\\n    else if (pattern < 4.0)\\r\\n    {\\r\\n        float distanceFromCenter = max(\\r\\n            abs(uv.x - 0.5),\\r\\n            abs(uv.y - 0.5));\\r\\n        float shifted = distanceFromCenter -\\r\\n                        beatPulse * 0.08;\\r\\n        mask = 1.0 - step(\\r\\n            0.012, frac(shifted * 11.0));\\r\\n    }\\r\\n\\r\\n    // 4: 点滅する格子\\r\\n    else if (pattern < 5.0)\\r\\n    {\\r\\n        float2 grid = float2(14.0, 9.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float chosen = Hash21(\\r\\n            cell + beatNumber * float2(1.0, 3.0));\\r\\n        mask = step(0.72, chosen) *\\r\\n               Box(\\r\\n                   local,\\r\\n                   float2(0.5, 0.5),\\r\\n                   float2(0.42, 0.42));\\r\\n    }\\r\\n\\r\\n    // 5: 中央の正方形\\r\\n    else if (pattern < 6.0)\\r\\n    {\\r\\n        float size = 0.12 +\\r\\n                     0.22 * kick +\\r\\n                     0.05 * beatPulse;\\r\\n        mask = Box(\\r\\n            uv, float2(0.5, 0.5),\\r\\n            float2(size, size));\\r\\n        color = lerp(bg, fg, mask);\\r\\n        color = lerp(color, secondary, mask * snare);\\r\\n        return float4(color, 1.0);\\r\\n    }\\r\\n\\r\\n    // 6: 走る横線\\r\\n    else if (pattern < 7.0)\\r\\n    {\\r\\n        float position = frac(\\r\\n            uv.y * 7.0 -\\r\\n            _Beat.x * 2.0 -\\r\\n            Hash11(beatNumber) * 0.5);\\r\\n        mask = 1.0 - step(0.045, position);\\r\\n    }\\r\\n\\r\\n    // 7: 四隅のブロック\\r\\n    else if (pattern < 8.0)\\r\\n    {\\r\\n        float2 cell = floor(uv * 2.0);\\r\\n        float2 local = frac(uv * 2.0);\\r\\n        float diagonal = 1.0 -\\r\\n            step(0.5, abs(cell.x - cell.y));\\r\\n        float selected = lerp(\\r\\n            diagonal, 1.0 - diagonal,\\r\\n            step(kick, snare));\\r\\n        mask = selected * Box(\\r\\n            local, float2(0.5, 0.5),\\r\\n            float2(0.25 + 0.12 * beatPulse,\\r\\n                   0.25 + 0.12 * beatPulse));\\r\\n    }\\r\\n\\r\\n    // 8: 階段状の帯\\r\\n    else if (pattern < 9.0)\\r\\n    {\\r\\n        float rows = 9.0;\\r\\n        float row = floor(uv.y * rows);\\r\\n        float width = 0.15 +\\r\\n            (row + 1.0) / rows *\\r\\n            (0.45 + 0.30 * volume);\\r\\n        float localY = frac(uv.y * rows);\\r\\n        mask = (1.0 - step(width, uv.x)) *\\r\\n               (1.0 - step(0.70, localY));\\r\\n    }\\r\\n\\r\\n    // 9: 四角いドットの輪\\r\\n    else if (pattern < 10.0)\\r\\n    {\\r\\n        float2 grid = float2(11.0, 11.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float2 fromCenter = abs(cell - 5.0);\\r\\n        float ring = 1.0 - step(\\r\\n            0.5, abs(max(fromCenter.x,\\r\\n                         fromCenter.y) - 4.0));\\r\\n        float active = step(\\r\\n            0.35,\\r\\n            Hash21(cell + beatNumber));\\r\\n        mask = ring * active *\\r\\n               Box(\\r\\n                   local, float2(0.5, 0.5),\\r\\n                   float2(0.24, 0.24));\\r\\n    }\\r\\n\\r\\n    // 10: 極細の縦線群\\r\\n    else if (pattern < 11.0)\\r\\n    {\\r\\n        float columns = 120.0;\\r\\n        float column = floor(uv.x * columns);\\r\\n        float localX = frac(uv.x * columns);\\r\\n        float density = 0.25 +\\r\\n            0.55 * Spectrum(\\r\\n                (column + 0.5) / columns);\\r\\n        float active = step(\\r\\n            1.0 - density,\\r\\n            Hash11(column + 9.0));\\r\\n        mask = active *\\r\\n               (1.0 - step(0.18, localX));\\r\\n    }\\r\\n\\r\\n    // 11: 白い走査帯\\r\\n    else if (pattern < 12.0)\\r\\n    {\\r\\n        float scanY = frac(\\r\\n            _Beat.x +\\r\\n            Hash11(beatNumber) * 0.35);\\r\\n        float distanceToScan =\\r\\n            abs(uv.y - scanY);\\r\\n        mask = 1.0 - step(\\r\\n            0.008 + 0.025 * beatPulse,\\r\\n            distanceToScan);\\r\\n    }\\r\\n\\r\\n    // 12: 二値のノイズ列\\r\\n    else if (pattern < 13.0)\\r\\n    {\\r\\n        float2 grid = float2(100.0, 38.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float value = Hash21(\\r\\n            cell +\\r\\n            beatNumber * float2(7.0, 3.0));\\r\\n        float threshold =\\r\\n            0.68 - 0.20 * volume;\\r\\n        mask = step(threshold, value) *\\r\\n               (1.0 - step(0.60, local.y));\\r\\n    }\\r\\n\\r\\n    // 13: 一画面の反転\\r\\n    else if (pattern < 14.0)\\r\\n    {\\r\\n        float flash = step(\\r\\n            0.18, beatPulse + kick * 0.6);\\r\\n        color = lerp(bg, fg, flash);\\r\\n        return float4(color, 1.0);\\r\\n    }\\r\\n\\r\\n    // 14: 細い矩形フレーム\\r\\n    else if (pattern < 15.0)\\r\\n    {\\r\\n        float count = 1.0 +\\r\\n            floor(volume * 3.0);\\r\\n        mask += BoxFrame(\\r\\n            uv, float2(0.5, 0.5),\\r\\n            float2(0.17, 0.17), 0.005);\\r\\n        if (count > 1.0)\\r\\n            mask += BoxFrame(\\r\\n                uv, float2(0.5, 0.5),\\r\\n                float2(0.29, 0.29), 0.005);\\r\\n        if (count > 2.0)\\r\\n            mask += BoxFrame(\\r\\n                uv, float2(0.5, 0.5),\\r\\n                float2(0.41, 0.41), 0.005);\\r\\n        mask = saturate(mask);\\r\\n    }\\r\\n\\r\\n    // 15: 縦方向のデータ列\\r\\n    else if (pattern < 16.0)\\r\\n    {\\r\\n        float2 grid = float2(35.0, 65.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float chosen = Hash21(\\r\\n            cell + beatNumber * 2.0);\\r\\n        float segmentWidth =\\r\\n            0.20 + 0.65 * Hash11(cell.y);\\r\\n        mask = step(0.66, chosen) *\\r\\n               (1.0 - step(segmentWidth,\\r\\n                           local.x)) *\\r\\n               (1.0 - step(0.20, local.y));\\r\\n    }\\r\\n\\r\\n    // 16: 中央の分断線\\r\\n    else if (pattern < 17.0)\\r\\n    {\\r\\n        float open = beatPulse * 0.25;\\r\\n        float vertical =\\r\\n            step(0.5, Hash11(beatNumber));\\r\\n        float verticalPair =\\r\\n            (1.0 - step(\\r\\n                0.006,\\r\\n                abs(uv.x - (0.5 - open)))) +\\r\\n            (1.0 - step(\\r\\n                0.006,\\r\\n                abs(uv.x - (0.5 + open))));\\r\\n        float horizontalPair =\\r\\n            (1.0 - step(\\r\\n                0.006,\\r\\n                abs(uv.y - (0.5 - open)))) +\\r\\n            (1.0 - step(\\r\\n                0.006,\\r\\n                abs(uv.y - (0.5 + open))));\\r\\n        mask = saturate(\\r\\n            lerp(horizontalPair,\\r\\n                 verticalPair, vertical));\\r\\n    }\\r\\n\\r\\n    // 17: 高密度の点配列\\r\\n    else if (pattern < 18.0)\\r\\n    {\\r\\n        float2 grid = float2(70.0, 42.0);\\r\\n        float2 cell = floor(uv * grid);\\r\\n        float2 local = frac(uv * grid);\\r\\n        float energy = Spectrum(\\r\\n            (cell.x + 0.5) / grid.x);\\r\\n        float selected = step(\\r\\n            0.75 - energy * 0.45,\\r\\n            Hash21(cell));\\r\\n        mask = selected * Box(\\r\\n            local, float2(0.5, 0.5),\\r\\n            float2(0.16, 0.16));\\r\\n    }\\r\\n\\r\\n    // 18: 画面端のパルス\\r\\n    else if (pattern < 19.0)\\r\\n    {\\r\\n        float side = floor(\\r\\n            Hash11(beatNumber + 21.0) * 4.0);\\r\\n        float width =\\r\\n            0.012 + 0.10 * beatPulse;\\r\\n        if (side < 1.0)\\r\\n            mask = 1.0 - step(width, uv.x);\\r\\n        else if (side < 2.0)\\r\\n            mask = step(1.0 - width, uv.x);\\r\\n        else if (side < 3.0)\\r\\n            mask = 1.0 - step(width, uv.y);\\r\\n        else\\r\\n            mask = step(1.0 - width, uv.y);\\r\\n    }\\r\\n\\r\\n    // 19: 細線と大きな余白\\r\\n    else if (pattern < 20.0)\\r\\n    {\\r\\n        float third = floor(\\r\\n            Hash11(beatNumber + 37.0) *\\r\\n            3.0);\\r\\n        float region =\\r\\n            step(third / 3.0, uv.x) *\\r\\n            (1.0 - step(\\r\\n                (third + 1.0) / 3.0,\\r\\n                uv.x));\\r\\n        float localX = frac(uv.x * 95.0);\\r\\n        float column = floor(uv.x * 95.0);\\r\\n        float chosen = step(\\r\\n            0.45,\\r\\n            Hash11(column + beatNumber));\\r\\n        mask = region * chosen *\\r\\n               (1.0 - step(0.12, localX));\\r\\n    }\\n    // 20: 分裂する正方形\\r\\n    else if (pattern < 21.0)\\r\\n    {\\r\\n        float split = smoothstep(0.0, 0.55, _Beat.x);\\r\\n        float2 grid = floor(uv * 2.0);\\r\\n        float2 local = frac(uv * 2.0);\\r\\n\\r\\n        float2 directionFromCenter = grid * 2.0 - 1.0;\\r\\n        float2 squareCenter =\\r\\n            float2(0.5, 0.5) +\\r\\n            directionFromCenter * split * 0.22;\\r\\n\\r\\n        float fourSquares = Box(\\r\\n            local,\\r\\n            squareCenter,\\r\\n            float2(0.17, 0.17));\\r\\n\\r\\n        float centerSquare = Box(\\r\\n            uv,\\r\\n            float2(0.5, 0.5),\\r\\n            float2(0.19, 0.19));\\r\\n\\r\\n        mask = lerp(centerSquare, fourSquares, split);\\r\\n    }\\r\\n\\r\\n    // 21: データの滝\\r\\n    else if (pattern < 22.0)\\r\\n    {\\r\\n        float columns = 42.0;\\r\\n        float column = floor(uv.x * columns);\\r\\n        float localX = frac(uv.x * columns);\\r\\n\\r\\n        float speed = 0.25 +\\r\\n            Hash11(column + 14.0) * 0.75;\\r\\n        float flowingY = frac(\\r\\n            uv.y + _Time.x * speed +\\r\\n            Hash11(column + 29.0));\\r\\n\\r\\n        float rows = 26.0;\\r\\n        float row = floor(flowingY * rows);\\r\\n        float localY = frac(flowingY * rows);\\r\\n\\r\\n        float active = step(\\r\\n            0.58,\\r\\n            Hash21(float2(\\r\\n                column,\\r\\n                row + floor(_Time.x * speed))));\\r\\n\\r\\n        float segmentWidth = 0.18 +\\r\\n            0.70 * Hash21(float2(column, row + 8.0));\\r\\n\\r\\n        mask = active *\\r\\n            (1.0 - step(segmentWidth, localX)) *\\r\\n            (1.0 - step(0.18, localY));\\r\\n    }\\r\\n\\r\\n    // 22: 交差部分が強く光る波形の干渉\\r\\n    else if (pattern < 23.0)\\r\\n    {\\r\\n        float waveA = Wave(uv.x) * 0.35 + 0.50;\\r\\n        float waveB =\\r\\n            0.50 +\\r\\n            0.19 * sin(\\r\\n                uv.x * 35.0 +\\r\\n                _Time.x * 2.4);\\r\\n        float waveC =\\r\\n            0.50 +\\r\\n            0.13 * sin(\\r\\n                uv.x * 67.0 -\\r\\n                _Time.x * 3.1);\\r\\n\\r\\n        float thickness = 0.005 +\\r\\n            volume * 0.007;\\r\\n\\r\\n        float traceA = 1.0 - step(\\r\\n            thickness,\\r\\n            abs(uv.y - waveA));\\r\\n        float traceB = 1.0 - step(\\r\\n            thickness,\\r\\n            abs(uv.y - waveB));\\r\\n        float traceC = 1.0 - step(\\r\\n            thickness,\\r\\n            abs(uv.y - waveC));\\r\\n\\r\\n        float crossing = saturate(\\r\\n            traceA * traceB +\\r\\n            traceB * traceC +\\r\\n            traceC * traceA);\\r\\n\\r\\n        mask = saturate(\\r\\n            (traceA + traceB + traceC) * 0.55 +\\r\\n            crossing * 0.45);\\r\\n    }\\r\\n\\r\\n    // 23: キックで線群が崩れ、拍の間に整列する\\r\\n    else if (pattern < 24.0)\\r\\n    {\\r\\n        float columns = 48.0;\\r\\n        float column = floor(uv.x * columns);\\r\\n        float localX = frac(uv.x * columns);\\r\\n\\r\\n        float displacement =\\r\\n            (Hash11(column + beatNumber * 17.0) -\\r\\n             0.5) *\\r\\n            (0.35 * kick + 0.18 * beatPulse);\\r\\n\\r\\n        float shiftedY = uv.y + displacement;\\r\\n        float lineSpacing = 18.0 +\\r\\n            floor(Hash11(column + 5.0) * 12.0);\\r\\n\\r\\n        float fragment = frac(\\r\\n            shiftedY * lineSpacing);\\r\\n        float active = step(\\r\\n            0.28,\\r\\n            Hash11(column + 3.0));\\r\\n\\r\\n        mask = active *\\r\\n            (1.0 - step(0.22, localX)) *\\r\\n            (1.0 - step(0.55, fragment));\\r\\n    }\\r\\n\\r\\n    color = lerp(bg, fg, saturate(mask));\\r\\n    return float4(color, 1.0);\\r\\n}\"}",
+                "Children": []
+              },
+              {
+                "LayerId": "4f110d9e8b9944d1bd25325d4114e2df",
+                "Type": "runtime-shader",
+                "Name": "CurveShapes",
+                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":3,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":2,\"ScreenSpace\":false,\"PixelPerUnit\":200.0,\"ProvidePreviousFrameTexture\":false,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":100.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Size\":{\"BaseValue\":{\"x\":35.0,\"y\":19.0},\"ApplyXModulationToBothAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]}},\"UserFloat0\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":16,\"Operation\":0,\"Amount\":24.0,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-439358106,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"UserFloat1\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat2\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserFloat3\":{\"BaseValue\":0.0,\"Modulation\":{\"Modulators\":[]}},\"UserVector0\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"UserVector1\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"ShaderCode\":\"cbuffer AetherinGlobals : register(b0)\\r\\n{\\r\\n    float4 _Time;\\r\\n    float4 _Frame;\\r\\n    float4 _Resolution;\\r\\n    float4 _Audio;\\r\\n    float4 _Beat;\\r\\n    float4 _Bar;\\r\\n    float4 _BackgroundColor1;\\r\\n    float4 _BackgroundColor2;\\r\\n    float4 _AccentColor1;\\r\\n    float4 _AccentColor2;\\r\\n    float4 _SubAccentColor1;\\r\\n    float4 _SubAccentColor2;\\r\\n    float4 _UserFloat;\\r\\n    float4 _UserVector0;\\r\\n    float4 _UserVector1;\\r\\n    float4 _CameraPositionWS;\\r\\n    column_major float4x4 _QuadLocalToWorld;\\r\\n    column_major float4x4 _QuadWorldToLocal;\\r\\n};\\r\\n\\r\\nTexture2D _WaveformTexture : register(t0);\\r\\nTexture2D _SpectrumTexture : register(t1);\\r\\nTexture2D _PreviousFrameTexture : register(t2);\\r\\n\\r\\nSamplerState _WaveformTextureSampler : register(s0);\\r\\nSamplerState _SpectrumTextureSampler : register(s1);\\r\\nSamplerState _PreviousFrameTextureSampler : register(s2);\\r\\n\\r\\nfloat Hash11(float x)\\r\\n{\\r\\n    return frac(sin(x * 127.1 + 78.233) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Hash21(float2 p)\\r\\n{\\r\\n    return frac(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat2 Hash22(float2 p)\\r\\n{\\r\\n    return frac(sin(float2(\\r\\n        dot(p, float2(127.1, 311.7)),\\r\\n        dot(p, float2(269.5, 183.3)))) * 43758.5453);\\r\\n}\\r\\n\\r\\nfloat Noise2(float2 p)\\r\\n{\\r\\n    float2 i = floor(p);\\r\\n    float2 f = frac(p);\\r\\n    float2 u = f * f * (3.0 - 2.0 * f);\\r\\n\\r\\n    float a = Hash21(i);\\r\\n    float b = Hash21(i + float2(1.0, 0.0));\\r\\n    float c = Hash21(i + float2(0.0, 1.0));\\r\\n    float d = Hash21(i + float2(1.0, 1.0));\\r\\n\\r\\n    return lerp(\\r\\n        lerp(a, b, u.x),\\r\\n        lerp(c, d, u.x),\\r\\n        u.y);\\r\\n}\\r\\n\\r\\nfloat Fbm(float2 p)\\r\\n{\\r\\n    float value = 0.0;\\r\\n    value += Noise2(p) * 0.57;\\r\\n    value += Noise2(p * 2.07 + 7.1) * 0.29;\\r\\n    value += Noise2(p * 4.13 + 19.3) * 0.14;\\r\\n    return value;\\r\\n}\\r\\n\\r\\nfloat Circle(float2 p, float radius)\\r\\n{\\r\\n    return 1.0 - smoothstep(\\r\\n        radius - 0.006,\\r\\n        radius + 0.006,\\r\\n        length(p));\\r\\n}\\r\\n\\r\\nfloat Ring(float2 p, float radius, float width)\\r\\n{\\r\\n    return 1.0 - smoothstep(\\r\\n        width - 0.004,\\r\\n        width + 0.004,\\r\\n        abs(length(p) - radius));\\r\\n}\\r\\n\\r\\nfloat SegmentDistance(float2 p, float2 a, float2 b)\\r\\n{\\r\\n    float2 ab = b - a;\\r\\n    float t = saturate(\\r\\n        dot(p - a, ab) /\\r\\n        max(dot(ab, ab), 0.00001));\\r\\n    return length(p - (a + ab * t));\\r\\n}\\r\\n\\r\\nfloat VoronoiDistance(float2 p)\\r\\n{\\r\\n    float2 cell = floor(p);\\r\\n    float2 local = frac(p);\\r\\n    float nearest = 10.0;\\r\\n\\r\\n    [unroll] for (int y = -1; y <= 1; y++)\\r\\n    {\\r\\n        [unroll] for (int x = -1; x <= 1; x++)\\r\\n        {\\r\\n            float2 neighbor = float2(x, y);\\r\\n            float2 center =\\r\\n                neighbor +\\r\\n                Hash22(cell + neighbor);\\r\\n            nearest = min(\\r\\n                nearest,\\r\\n                length(center - local));\\r\\n        }\\r\\n    }\\r\\n    return nearest;\\r\\n}\\r\\n\\r\\nfloat VoronoiBorder(float2 p)\\r\\n{\\r\\n    float2 cell = floor(p);\\r\\n    float2 local = frac(p);\\r\\n    float first = 10.0;\\r\\n    float second = 10.0;\\r\\n\\r\\n    [unroll] for (int y = -1; y <= 1; y++)\\r\\n    {\\r\\n        [unroll] for (int x = -1; x <= 1; x++)\\r\\n        {\\r\\n            float2 neighbor = float2(x, y);\\r\\n            float2 center =\\r\\n                neighbor +\\r\\n                Hash22(cell + neighbor);\\r\\n            float distanceToCenter =\\r\\n                length(center - local);\\r\\n\\r\\n            if (distanceToCenter < first)\\r\\n            {\\r\\n                second = first;\\r\\n                first = distanceToCenter;\\r\\n            }\\r\\n            else\\r\\n            {\\r\\n                second = min(\\r\\n                    second,\\r\\n                    distanceToCenter);\\r\\n            }\\r\\n        }\\r\\n    }\\r\\n\\r\\n    return 1.0 - smoothstep(\\r\\n        0.015, 0.08, second - first);\\r\\n}\\r\\n\\r\\nfloat Spectrum(float x)\\r\\n{\\r\\n    return saturate(\\r\\n        _SpectrumTexture.Sample(\\r\\n            _SpectrumTextureSampler,\\r\\n            float2(saturate(x), 0.5)).r);\\r\\n}\\r\\n\\r\\nfloat Wave(float x)\\r\\n{\\r\\n    return _WaveformTexture.Sample(\\r\\n        _WaveformTextureSampler,\\r\\n        float2(saturate(x), 0.5)).r;\\r\\n}\\r\\n\\r\\nfloat4 Frag(VsOutput input) : SV_TARGET\\r\\n{\\r\\n    float2 uv = input.uv;\\r\\n\\r\\n    // qは画面の高さを基準とした座標。\\r\\n    // q上で距離を測ると、横長画面でも円が楕円にならない。\\r\\n    float aspect =\\r\\n        _Resolution.x / max(_Resolution.y, 1.0);\\r\\n    float2 q =\\r\\n        (uv - 0.5) * float2(aspect, 1.0);\\r\\n\\r\\n    float time = _Time.x;\\r\\n    float beatPulse = pow(\\r\\n        1.0 - saturate(_Beat.x), 6.0);\\r\\n    float kick = saturate(_Audio.y);\\r\\n    float snare = saturate(_Audio.z);\\r\\n    float volume = saturate(_Audio.x);\\r\\n    float beatNumber = floor(_Beat.y);\\r\\n\\r\\n    float pattern = fmod(\\r\\n        floor(max(0.0, _UserFloat.x)),\\r\\n        24.0);\\r\\n\\r\\n    float3 background = _BackgroundColor1.rgb;\\r\\n    float3 accent = _AccentColor1.rgb;\\r\\n    float3 secondary = _SubAccentColor1.rgb;\\r\\n    float3 color = background;\\r\\n    float mask = 0.0;\\r\\n\\r\\n    // 0: 呼吸する斑点\\r\\n    if (pattern < 1.0)\\r\\n    {\\r\\n        float2 field = q * 6.0 +\\r\\n            float2(\\r\\n                sin(time * 0.32),\\r\\n                cos(time * 0.27)) * 0.15;\\r\\n        float distanceToSpot =\\r\\n            VoronoiDistance(field);\\r\\n        float radius =\\r\\n            0.21 + 0.12 * beatPulse;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            radius - 0.04,\\r\\n            radius + 0.04,\\r\\n            distanceToSpot);\\r\\n    }\\r\\n\\r\\n    // 1: 液体の境界\\r\\n    else if (pattern < 2.0)\\r\\n    {\\r\\n        float distortion =\\r\\n            (Fbm(q * 5.0 +\\r\\n                 float2(time * 0.18, 0.0)) -\\r\\n             0.5) *\\r\\n            (0.20 + kick * 0.16);\\r\\n\\r\\n        float boundary =\\r\\n            0.50 +\\r\\n            distortion +\\r\\n            sin(q.x * 8.0 + time * 0.6) *\\r\\n            0.035;\\r\\n\\r\\n        mask = smoothstep(\\r\\n            boundary - 0.015,\\r\\n            boundary + 0.015,\\r\\n            uv.y);\\r\\n    }\\r\\n\\r\\n    // 2: 細胞の群れ\\r\\n    else if (pattern < 3.0)\\r\\n    {\\r\\n        float2 field =\\r\\n            q * 5.0 +\\r\\n            float2(\\r\\n                sin(time * 0.25),\\r\\n                cos(time * 0.22)) * 0.22;\\r\\n\\r\\n        mask = VoronoiBorder(field);\\r\\n        mask *= 0.65 + 0.35 * beatPulse;\\r\\n    }\\r\\n\\r\\n    // 3: 水面の波紋\\r\\n    else if (pattern < 4.0)\\r\\n    {\\r\\n        float2 centerA = float2(0.32, 0.43);\\r\\n        float2 centerB = float2(0.72, 0.63);\\r\\n        float2 centerC = float2(0.55, 0.30);\\r\\n        float2 metric = float2(aspect, 1.0);\\r\\n\\r\\n        float rippleA = frac(\\r\\n            length((uv - centerA) * metric) *\\r\\n            8.0 - time * 0.55);\\r\\n        float rippleB = frac(\\r\\n            length((uv - centerB) * metric) *\\r\\n            9.0 - time * 0.43);\\r\\n        float rippleC = frac(\\r\\n            length((uv - centerC) * metric) *\\r\\n            7.0 - time * 0.62);\\r\\n\\r\\n        mask =\\r\\n            (1.0 - smoothstep(\\r\\n                0.025, 0.075, rippleA)) +\\r\\n            (1.0 - smoothstep(\\r\\n                0.025, 0.075, rippleB)) +\\r\\n            (1.0 - smoothstep(\\r\\n                0.025, 0.075, rippleC));\\r\\n        mask = saturate(mask);\\r\\n    }\\r\\n\\r\\n    // 4: 揺れる一本の糸\\r\\n    else if (pattern < 5.0)\\r\\n    {\\r\\n        float waveY =\\r\\n            0.5 +\\r\\n            (Wave(uv.x) - 0.5) * 0.22 +\\r\\n            sin(q.x * 12.0 + time) *\\r\\n            0.045;\\r\\n\\r\\n        float thickness =\\r\\n            0.003 + 0.008 * snare;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            thickness,\\r\\n            thickness + 0.004,\\r\\n            abs(uv.y - waveY));\\r\\n    }\\r\\n\\r\\n    // 5: 枝分かれする流れ\\r\\n    else if (pattern < 6.0)\\r\\n    {\\r\\n        float trunk =\\r\\n            0.5 +\\r\\n            sin(uv.y * 7.0 + time * 0.6) *\\r\\n            0.09;\\r\\n\\r\\n        float branchA =\\r\\n            trunk +\\r\\n            max(0.0, uv.y - 0.35) *\\r\\n            0.32;\\r\\n\\r\\n        float branchB =\\r\\n            trunk -\\r\\n            max(0.0, uv.y - 0.50) *\\r\\n            0.43;\\r\\n\\r\\n        mask =\\r\\n            1.0 - smoothstep(\\r\\n                0.006, 0.013,\\r\\n                abs(uv.x - trunk) * aspect);\\r\\n\\r\\n        mask += step(0.35, uv.y) *\\r\\n            (1.0 - smoothstep(\\r\\n                0.004, 0.010,\\r\\n                abs(uv.x - branchA) * aspect));\\r\\n\\r\\n        mask += step(0.50, uv.y) *\\r\\n            (1.0 - smoothstep(\\r\\n                0.004, 0.010,\\r\\n                abs(uv.x - branchB) * aspect));\\r\\n\\r\\n        mask = saturate(mask);\\r\\n    }\\r\\n\\r\\n    // 6: インクの滴\\r\\n    else if (pattern < 7.0)\\r\\n    {\\r\\n        float2 centerUv = float2(\\r\\n            0.5 + sin(time * 0.47) * 0.13,\\r\\n            0.42 + cos(time * 0.39) * 0.09);\\r\\n\\r\\n        float2 centerQ =\\r\\n            (centerUv - 0.5) *\\r\\n            float2(aspect, 1.0);\\r\\n\\r\\n        float drop = Circle(\\r\\n            q - centerQ,\\r\\n            0.13 + kick * 0.07);\\r\\n\\r\\n        float2 tailStart =\\r\\n            centerQ + float2(0.0, 0.06);\\r\\n        float2 tailEnd =\\r\\n            centerQ + float2(\\r\\n                0.04 * sin(time), 0.28);\\r\\n\\r\\n        float tail =\\r\\n            1.0 - smoothstep(\\r\\n                0.02, 0.035,\\r\\n                SegmentDistance(\\r\\n                    q, tailStart, tailEnd));\\r\\n\\r\\n        mask = saturate(drop + tail);\\r\\n    }\\r\\n\\r\\n    // 7: 脈打つ輪郭\\r\\n    else if (pattern < 8.0)\\r\\n    {\\r\\n        float angle = atan2(q.y, q.x);\\r\\n\\r\\n        float radius =\\r\\n            0.27 +\\r\\n            0.025 * sin(\\r\\n                angle * 7.0 + time * 0.5) +\\r\\n            0.022 * sin(\\r\\n                angle * 11.0 - time * 0.3) +\\r\\n            0.07 * beatPulse;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            0.004, 0.012,\\r\\n            abs(length(q) - radius));\\r\\n    }\\r\\n\\r\\n    // 8: 漂う粒子雲\\r\\n    else if (pattern < 9.0)\\r\\n    {\\r\\n        float2 field =\\r\\n            q * 35.0 +\\r\\n            float2(\\r\\n                time * 0.4,\\r\\n                sin(time * 0.3));\\r\\n\\r\\n        float2 cell = floor(field);\\r\\n        float2 local = frac(field);\\r\\n        float2 center = Hash22(cell);\\r\\n\\r\\n        float cloud = Fbm(\\r\\n            q * 3.5 +\\r\\n            float2(time * 0.07, 0.0));\\r\\n\\r\\n        float active = step(\\r\\n            0.49,\\r\\n            cloud +\\r\\n            Hash21(cell) * 0.38);\\r\\n\\r\\n        mask = active *\\r\\n            Circle(\\r\\n                local - center,\\r\\n                0.055 + 0.05 * volume);\\r\\n    }\\r\\n\\r\\n    // 9: 花弁の開閉\\r\\n    else if (pattern < 10.0)\\r\\n    {\\r\\n        float angle = atan2(q.y, q.x);\\r\\n\\r\\n        float petals =\\r\\n            0.18 +\\r\\n            0.09 * cos(\\r\\n                angle * 7.0 + time * 0.2);\\r\\n\\r\\n        petals += beatPulse * 0.06;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            petals - 0.012,\\r\\n            petals + 0.012,\\r\\n            length(q));\\r\\n    }\\r\\n\\r\\n    // 10: ゆがむ同心円\\r\\n    else if (pattern < 11.0)\\r\\n    {\\r\\n        float angle = atan2(q.y, q.x);\\r\\n\\r\\n        float warpedRadius =\\r\\n            length(q) +\\r\\n            0.025 * sin(\\r\\n                angle * 9.0 + time * 0.5) +\\r\\n            0.018 * sin(\\r\\n                angle * 15.0 - time * 0.3);\\r\\n\\r\\n        float rings = frac(\\r\\n            warpedRadius *\\r\\n            (15.0 + volume * 6.0));\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            0.025, 0.065, rings);\\r\\n    }\\r\\n\\r\\n    // 11: 流体の筋\\r\\n    else if (pattern < 12.0)\\r\\n    {\\r\\n        float flow =\\r\\n            q.x * 13.0 +\\r\\n            sin(uv.y * 7.0 +\\r\\n                time * 0.35) * 1.2 +\\r\\n            (Fbm(q * 5.0 +\\r\\n                 float2(\\r\\n                     0.0, time * 0.12)) -\\r\\n             0.5) * 2.5;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            0.025, 0.11,\\r\\n            frac(flow));\\r\\n    }\\r\\n\\r\\n    // 12: 泡の浮上\\r\\n    else if (pattern < 13.0)\\r\\n    {\\r\\n        float2 field = q * 6.0;\\r\\n        float2 cell = floor(field);\\r\\n        float2 local = frac(field);\\r\\n\\r\\n        float speed =\\r\\n            0.20 + Hash11(cell.x) * 0.45;\\r\\n\\r\\n        local.y = frac(\\r\\n            local.y +\\r\\n            time * speed +\\r\\n            Hash21(cell));\\r\\n\\r\\n        float2 center =\\r\\n            0.25 + Hash22(cell) * 0.5;\\r\\n\\r\\n        float radius =\\r\\n            0.12 +\\r\\n            Hash21(cell + 7.0) * 0.18;\\r\\n\\r\\n        mask = Ring(\\r\\n            local - center,\\r\\n            radius,\\r\\n            0.025);\\r\\n    }\\r\\n\\r\\n    // 13: 膜の振動\\r\\n    else if (pattern < 14.0)\\r\\n    {\\r\\n        float membrane =\\r\\n            0.5 +\\r\\n            sin(q.x * 8.0 +\\r\\n                time * 1.1) * 0.035 +\\r\\n            (Wave(uv.x) - 0.5) *\\r\\n            (0.08 + snare * 0.08);\\r\\n\\r\\n        float distanceToMembrane =\\r\\n            abs(uv.y - membrane);\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            0.005, 0.018,\\r\\n            distanceToMembrane);\\r\\n\\r\\n        color = lerp(\\r\\n            background,\\r\\n            _BackgroundColor2.rgb,\\r\\n            smoothstep(\\r\\n                membrane - 0.03,\\r\\n                membrane + 0.03,\\r\\n                uv.y));\\r\\n\\r\\n        color = lerp(\\r\\n            color,\\r\\n            accent,\\r\\n            saturate(mask));\\r\\n\\r\\n        return float4(color, 1.0);\\r\\n    }\\r\\n\\r\\n    // 14: 地形の等高線\\r\\n    else if (pattern < 15.0)\\r\\n    {\\r\\n        float terrain = Fbm(\\r\\n            q * 4.5 +\\r\\n            float2(\\r\\n                time * 0.10,\\r\\n                -time * 0.06));\\r\\n\\r\\n        float contour = frac(\\r\\n            terrain *\\r\\n            (12.0 + volume * 6.0));\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            0.025, 0.09,\\r\\n            contour);\\r\\n    }\\r\\n\\r\\n    // 15: 渦の種\\r\\n    else if (pattern < 16.0)\\r\\n    {\\r\\n        float angle = atan2(q.y, q.x);\\r\\n        float radius = length(q);\\r\\n\\r\\n        float spiral = frac(\\r\\n            (angle / 6.2831853) * 5.0 +\\r\\n            radius * 8.0 -\\r\\n            time * (0.35 +\\r\\n                    kick * 0.5));\\r\\n\\r\\n        mask =\\r\\n            (1.0 - smoothstep(\\r\\n                0.025, 0.09,\\r\\n                spiral)) *\\r\\n            (1.0 - smoothstep(\\r\\n                0.36, 0.48,\\r\\n                radius));\\r\\n    }\\r\\n\\r\\n    // 16: 根の広がり\\r\\n    else if (pattern < 17.0)\\r\\n    {\\r\\n        float growth = smoothstep(\\r\\n            0.0, 0.8, uv.y);\\r\\n\\r\\n        float baseX =\\r\\n            0.5 +\\r\\n            0.045 * sin(\\r\\n                uv.y * 8.0 +\\r\\n                time * 0.25);\\r\\n\\r\\n        float spread =\\r\\n            growth * growth * 0.37;\\r\\n\\r\\n        float rootA = baseX;\\r\\n        float rootB =\\r\\n            baseX +\\r\\n            spread +\\r\\n            0.025 * sin(uv.y * 19.0);\\r\\n        float rootC =\\r\\n            baseX -\\r\\n            spread +\\r\\n            0.025 * cos(uv.y * 17.0);\\r\\n\\r\\n        mask =\\r\\n            1.0 - smoothstep(\\r\\n                0.004, 0.011,\\r\\n                abs(uv.x - rootA) * aspect);\\r\\n\\r\\n        mask += growth *\\r\\n            (1.0 - smoothstep(\\r\\n                0.003, 0.009,\\r\\n                abs(uv.x - rootB) * aspect));\\r\\n\\r\\n        mask += growth *\\r\\n            (1.0 - smoothstep(\\r\\n                0.003, 0.009,\\r\\n                abs(uv.x - rootC) * aspect));\\r\\n\\r\\n        mask = saturate(mask);\\r\\n    }\\r\\n\\r\\n    // 17: 星図のような結節\\r\\n    else if (pattern < 18.0)\\r\\n    {\\r\\n        float2 field = q * 6.0;\\r\\n        float2 cell = floor(field);\\r\\n        float2 local = frac(field);\\r\\n\\r\\n        float2 nodeA =\\r\\n            0.15 + Hash22(cell) * 0.70;\\r\\n\\r\\n        float2 nodeB =\\r\\n            float2(1.0, 0.0) +\\r\\n            0.15 +\\r\\n            Hash22(\\r\\n                cell + float2(1.0, 0.0)\\r\\n            ) * 0.70;\\r\\n\\r\\n        float connection =\\r\\n            1.0 - smoothstep(\\r\\n                0.018, 0.035,\\r\\n                SegmentDistance(\\r\\n                    local, nodeA, nodeB));\\r\\n\\r\\n        float nodes = Circle(\\r\\n            local - nodeA,\\r\\n            0.055 + beatPulse * 0.045);\\r\\n\\r\\n        mask = saturate(\\r\\n            connection * 0.65 +\\r\\n            nodes);\\r\\n    }\\r\\n\\r\\n    // 18: 砂紋\\r\\n    else if (pattern < 19.0)\\r\\n    {\\r\\n        float dune =\\r\\n            uv.y * 22.0 +\\r\\n            sin(q.x * 10.0 +\\r\\n                time * 0.35) * 0.7 +\\r\\n            Fbm(q * 8.0) * 1.3;\\r\\n\\r\\n        float ridge =\\r\\n            1.0 - smoothstep(\\r\\n                0.03, 0.10,\\r\\n                frac(dune));\\r\\n\\r\\n        float grain = step(\\r\\n            0.82 - snare * 0.12,\\r\\n            Hash21(\\r\\n                floor(q * 170.0) +\\r\\n                beatNumber));\\r\\n\\r\\n        mask = saturate(\\r\\n            ridge * 0.75 +\\r\\n            grain * 0.30);\\r\\n    }\\r\\n\\r\\n    // 19: 溶ける穴\\r\\n    else if (pattern < 20.0)\\r\\n    {\\r\\n        float2 warped =\\r\\n            q +\\r\\n            (float2(\\r\\n                Fbm(q * 5.0 +\\r\\n                    float2(\\r\\n                        time * 0.12, 0.0)),\\r\\n                Fbm(q * 5.0 +\\r\\n                    float2(\\r\\n                        13.0,\\r\\n                        -time * 0.10))\\r\\n            ) - 0.5) * 0.10;\\r\\n\\r\\n        float distanceToHole =\\r\\n            VoronoiDistance(warped * 4.0);\\r\\n\\r\\n        float holes =\\r\\n            1.0 - smoothstep(\\r\\n                0.16 + kick * 0.09,\\r\\n                0.22 + kick * 0.09,\\r\\n                distanceToHole);\\r\\n\\r\\n        color = lerp(\\r\\n            accent,\\r\\n            background,\\r\\n            holes);\\r\\n\\r\\n        return float4(color, 1.0);\\r\\n    }\\r\\n\\r\\n    // 20: 群れる短い線\\r\\n    else if (pattern < 21.0)\\r\\n    {\\r\\n        float2 field = q * 25.0;\\r\\n        float2 cell = floor(field);\\r\\n        float2 local =\\r\\n            frac(field) - 0.5;\\r\\n\\r\\n        float directionAngle =\\r\\n            Fbm(\\r\\n                cell * 0.10 +\\r\\n                time * 0.09\\r\\n            ) * 6.2831853;\\r\\n\\r\\n        float2 direction = float2(\\r\\n            cos(directionAngle),\\r\\n            sin(directionAngle));\\r\\n\\r\\n        float distanceToStroke =\\r\\n            SegmentDistance(\\r\\n                local,\\r\\n                -direction * 0.18,\\r\\n                 direction * 0.18);\\r\\n\\r\\n        float active =\\r\\n            step(0.28, Hash21(cell));\\r\\n\\r\\n        mask = active *\\r\\n            (1.0 - smoothstep(\\r\\n                0.025, 0.055,\\r\\n                distanceToStroke));\\r\\n    }\\r\\n\\r\\n    // 21: 発光する菌糸\\r\\n    else if (pattern < 22.0)\\r\\n    {\\r\\n        float2 field = q * 6.0;\\r\\n        float2 cell = floor(field);\\r\\n        float2 local = frac(field);\\r\\n\\r\\n        float2 node =\\r\\n            0.2 + Hash22(cell) * 0.6;\\r\\n\\r\\n        float2 nextNode =\\r\\n            float2(1.0, 0.0) +\\r\\n            0.2 +\\r\\n            Hash22(\\r\\n                cell + float2(1.0, 0.0)\\r\\n            ) * 0.6;\\r\\n\\r\\n        float distanceToFiber =\\r\\n            SegmentDistance(\\r\\n                local, node, nextNode);\\r\\n\\r\\n        float fiber =\\r\\n            1.0 - smoothstep(\\r\\n                0.015, 0.045,\\r\\n                distanceToFiber);\\r\\n\\r\\n        float nodeGlow =\\r\\n            1.0 - smoothstep(\\r\\n                0.025, 0.18,\\r\\n                length(local - node));\\r\\n\\r\\n        mask = saturate(\\r\\n            fiber * 0.65 +\\r\\n            nodeGlow *\\r\\n            (0.25 + 0.55 * beatPulse));\\r\\n    }\\r\\n\\r\\n    // 22: 潮の満ち引き\\r\\n    else if (pattern < 23.0)\\r\\n    {\\r\\n        float direction =\\r\\n            step(0.5, frac(_Bar.y * 0.5));\\r\\n\\r\\n        float tide =\\r\\n            direction < 0.5\\r\\n                ? _Bar.x\\r\\n                : 1.0 - _Bar.x;\\r\\n\\r\\n        float coast =\\r\\n            tide +\\r\\n            (Fbm(float2(\\r\\n                q.y * 5.0,\\r\\n                time * 0.12)) -\\r\\n             0.5) * 0.18;\\r\\n\\r\\n        float coastDistance =\\r\\n            (uv.x - coast) * aspect;\\r\\n\\r\\n        mask = 1.0 - smoothstep(\\r\\n            -0.025, 0.025,\\r\\n            coastDistance);\\r\\n    }\\r\\n\\r\\n    // 23: 有機的な万華鏡\\r\\n    else\\r\\n    {\\r\\n        float angle = atan2(q.y, q.x);\\r\\n        float radius = length(q);\\r\\n\\r\\n        float foldedAngle = abs(\\r\\n            frac(\\r\\n                angle /\\r\\n                6.2831853 * 6.0\\r\\n            ) * 2.0 - 1.0);\\r\\n\\r\\n        float shape =\\r\\n            sin(\\r\\n                foldedAngle * 16.0 +\\r\\n                radius * 31.0 -\\r\\n                time * 0.7);\\r\\n\\r\\n        shape +=\\r\\n            (Fbm(float2(\\r\\n                foldedAngle * 5.0,\\r\\n                radius * 9.0 +\\r\\n                time * 0.15)) -\\r\\n             0.5) * 1.2;\\r\\n\\r\\n        mask = smoothstep(\\r\\n            0.25, 0.55,\\r\\n            shape);\\r\\n\\r\\n        mask *=\\r\\n            1.0 - smoothstep(\\r\\n                0.36, 0.53,\\r\\n                radius);\\r\\n    }\\r\\n\\r\\n    color = lerp(\\r\\n        background,\\r\\n        accent,\\r\\n        saturate(mask));\\r\\n\\r\\n    color = lerp(\\r\\n        color,\\r\\n        secondary,\\r\\n        saturate(mask) *\\r\\n        saturate(kick + snare) *\\r\\n        0.35);\\r\\n\\r\\n    return float4(color, 1.0);\\r\\n}\"}",
+                "Children": []
+              }
+            ],
+            "CameraWorkDecks": [
+              {
+                "Name": "SimpleWave",
+                "Recipes": [
+                  {
+                    "Name": "Camera Work 1",
+                    "Type": 0,
+                    "Position": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": -100.0,
+                        "z": -17.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": -100.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FollowTargetLayerId": "",
+                    "FollowTargetPath": "",
+                    "FieldOfView": {
+                      "BaseValue": 60.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "DepthOfFieldEnabled": false,
+                    "FocusDistance": {
+                      "BaseValue": 10.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Aperture": {
+                      "BaseValue": 5.5999999046325684,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FocalLength": {
+                      "BaseValue": 50.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "Name": "SimpleShapes",
+                "Recipes": [
+                  {
+                    "Name": "Camera Work 1",
+                    "Type": 0,
+                    "Position": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": -17.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FollowTargetLayerId": "",
+                    "FollowTargetPath": "",
+                    "FieldOfView": {
+                      "BaseValue": 60.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "DepthOfFieldEnabled": false,
+                    "FocusDistance": {
+                      "BaseValue": 10.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Aperture": {
+                      "BaseValue": 5.5999999046325684,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FocalLength": {
+                      "BaseValue": 50.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  }
+                ]
+              },
+              {
+                "Name": "CurveShapes",
+                "Recipes": [
+                  {
+                    "Name": "Camera Work 1",
+                    "Type": 0,
+                    "Position": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 100.0,
+                        "z": -17.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "LookAt": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 100.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "AimRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "OrbitRotation": {
+                      "BaseValue": {
+                        "x": 0.0,
+                        "y": 0.0,
+                        "z": 0.0
+                      },
+                      "ApplyXModulationToAllAxes": false,
+                      "XModulation": {
+                        "Modulators": []
+                      },
+                      "YModulation": {
+                        "Modulators": []
+                      },
+                      "ZModulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "FollowTargetLayerId": "",
+                    "FollowTargetPath": "",
+                    "FieldOfView": {
+                      "BaseValue": 60.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Speed": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Radius": {
+                      "BaseValue": 5.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "NoiseAmount": {
+                      "BaseValue": 0.0,
                       "Modulation": {
                         "Modulators": []
                       }
@@ -9220,7 +9629,7 @@
                 "LayerId": "709d5065cbc34a60a7a4854a41965340",
                 "Type": "group",
                 "Name": "Star",
-                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":3,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":2,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
+                "ParamsJson": "{\"Visible\":false,\"RandomPriority\":3,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":2,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
                 "Children": [
                   {
                     "LayerId": "4ea0b22cf16a4e2fb5be14f30ee541b9",
@@ -9256,7 +9665,7 @@
                 "LayerId": "cbbab03274c94576840650e3c1819972",
                 "Type": "group",
                 "Name": "Anntenna",
-                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":4,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":4.570000171661377,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-161484435,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
+                "ParamsJson": "{\"Visible\":false,\"RandomPriority\":1,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":4,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[{\"Enabled\":true,\"Source\":6,\"Operation\":0,\"Amount\":4.570000171661377,\"Offset\":0.0,\"LfoFrequency\":1.0,\"LfoPhase\":0.0,\"LfoWaveform\":0,\"LfoUnipolar\":false,\"ElapsedTimeStartOffset\":0.0,\"ElapsedTimeUseAnimationCurve\":false,\"ElapsedTimeAnimationCurve\":{\"serializedVersion\":\"2\",\"m_Curve\":[{\"serializedVersion\":\"3\",\"time\":0.0,\"value\":0.0,\"inSlope\":0.0,\"outSlope\":1.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0},{\"serializedVersion\":\"3\",\"time\":1.0,\"value\":1.0,\"inSlope\":1.0,\"outSlope\":0.0,\"tangentMode\":0,\"weightedMode\":0,\"inWeight\":0.0,\"outWeight\":0.0}],\"m_PreInfinity\":2,\"m_PostInfinity\":2,\"m_RotationOrder\":4},\"ElapsedTimeReset\":0,\"ElapsedTimeResetAfterEvents\":4,\"ElapsedTimeLimit\":0,\"ElapsedTimeMin\":0.0,\"ElapsedTimeMax\":1.0,\"BeatPulseSharpness\":3.0,\"Beat2And4PulseDirection\":0,\"CounterValueMode\":0,\"CounterIndex\":0,\"CounterMin\":0.0,\"CounterMax\":1.0,\"CounterRepeatMod\":4.0,\"CounterPulseDuration\":0.5,\"RandomSeed\":-161484435,\"Midi\":{\"_ccNumber\":-1},\"AccumulatorInitialValue\":0.0,\"AccumulatorReset\":0,\"AccumulatorResetAfterEvents\":4,\"AccumulatorLimit\":0,\"AccumulatorMin\":0.0,\"AccumulatorMax\":1.0,\"AccumulatorTransition\":0,\"AccumulatorTransitionDuration\":0.15000000596046449,\"AccumulatorTransitionSharpness\":3.0}]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
                 "Children": [
                   {
                     "LayerId": "fc76468099eb45a1bf0deca5d7e3139b",
@@ -9320,7 +9729,7 @@
                 "LayerId": "b643a8e6296f4a40b5531c3e686099a2",
                 "Type": "group",
                 "Name": "Texts",
-                "ParamsJson": "{\"Visible\":true,\"RandomPriority\":2,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":5,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
+                "ParamsJson": "{\"Visible\":false,\"RandomPriority\":2,\"Opacity\":{\"BaseValue\":1.0,\"Modulation\":{\"Modulators\":[]}},\"BlendMode\":0,\"Order\":5,\"Position\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Rotation\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Scale\":{\"BaseValue\":{\"x\":1.0,\"y\":1.0,\"z\":1.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}},\"Anchor\":{\"BaseValue\":{\"x\":0.0,\"y\":0.0,\"z\":0.0},\"ApplyXModulationToAllAxes\":false,\"XModulation\":{\"Modulators\":[]},\"YModulation\":{\"Modulators\":[]},\"ZModulation\":{\"Modulators\":[]}}}",
                 "Children": [
                   {
                     "LayerId": "bec31e475ba241d3b52ba6aa981084d2",
@@ -70380,6 +70789,454 @@
                     }
                   },
                   "RuntimeShaderCode": "cbuffer AetherinGlobals : register(b0)\r\n{\r\n    float4 _Time;       // time, deltaTime, sin(time), cos(time)\r\n    float4 _Frame;      // frame, timeScale, unscaledTime, unscaledDeltaTime\r\n    float4 _Resolution; // width, height, 1/width, 1/height\r\n    float4 _Audio;      // volume, kick, snare/clap, audio trigger\r\n    float4 _Beat;       // phase, count, beat in bar, beat trigger\r\n    float4 _Bar;        // phase, count, beats per bar, bar trigger\r\n    float4 _BackgroundColor1;\r\n    float4 _BackgroundColor2;\r\n    float4 _AccentColor1;\r\n    float4 _AccentColor2;\r\n    float4 _SubAccentColor1;\r\n    float4 _SubAccentColor2;\r\n    float4 _UserFloat;  // UserFloat 0..3\r\n    float4 _UserVector0;\r\n    float4 _UserVector1;\r\n};\r\n\r\nTexture2D _SourceTexture : register(t0);\r\nTexture2D _WaveformTexture : register(t1);\r\nTexture2D _SpectrumTexture : register(t2);\r\nTexture2D _PreviousFrameTexture : register(t3);\r\nSamplerState _SourceTextureSampler : register(s0);\r\nSamplerState _WaveformTextureSampler : register(s1);\r\nSamplerState _SpectrumTextureSampler : register(s2);\r\nSamplerState _PreviousFrameTextureSampler : register(s3);\r\n\r\nfloat4 Frag(VsOutput input) : SV_TARGET\r\n{\r\n    return _SourceTexture.Sample(_SourceTextureSampler, input.uv);\r\n}"
+                }
+              ]
+            },
+            {
+              "Name": "Deck 26",
+              "Enabled": true,
+              "Strength": {
+                "BaseValue": 1.0,
+                "Modulation": {
+                  "Modulators": []
+                }
+              },
+              "ControlMode": 1,
+              "Fader": {
+                "_ccNumber": -1
+              },
+              "ToggleButton": {
+                "_noteNumber": 101
+              },
+              "OutputPad": {
+                "_noteNumber": 101
+              },
+              "CurrentFaderValue": 0.0,
+              "Modules": [
+                {
+                  "Enabled": true,
+                  "Type": 21,
+                  "Strength": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Amount": {
+                    "BaseValue": 0.019999999552965164,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Scale": {
+                    "BaseValue": 4.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Speed": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Secondary": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterThreshold": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterExposure": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterLineCount": {
+                    "BaseValue": 4,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterPassCount": {
+                    "BaseValue": 3,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterSampleLength": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterAttenuation": {
+                    "BaseValue": 0.85000002384185791,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CrossFilterRotation": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Hue": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Saturation": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Value": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "BlackLevel": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "WhiteLevel": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "Gamma": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "ShutterMode": 0,
+                  "HandDrawnFrameRate": {
+                    "BaseValue": 8.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "FrameRateDropSync": 0,
+                  "FrameRateDropAmount": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "FrameRateDropFps": {
+                    "BaseValue": 12.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "FrameRateDropUpdatesPerBeat": {
+                    "BaseValue": 1,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LightLeakPosition": {
+                    "BaseValue": 0.5,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LightLeakColor": {
+                    "Mode": 0,
+                    "ColorReference": 1,
+                    "Color": 2,
+                    "CustomColor": {
+                      "r": 1.0,
+                      "g": 0.31999999284744263,
+                      "b": 0.059999998658895493,
+                      "a": 1.0
+                    },
+                    "GradientColorAReference": 0,
+                    "GradientColorA": 2,
+                    "CustomGradientColorA": {
+                      "r": 1.0,
+                      "g": 1.0,
+                      "b": 1.0,
+                      "a": 1.0
+                    },
+                    "GradientColorBReference": 0,
+                    "GradientColorB": 3,
+                    "CustomGradientColorB": {
+                      "r": 0.699999988079071,
+                      "g": 0.699999988079071,
+                      "b": 0.699999988079071,
+                      "a": 1.0
+                    },
+                    "RandomSeed": 0,
+                    "GradientAngle": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "GradientOffset": {
+                      "BaseValue": 0.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "GradientScale": {
+                      "BaseValue": 2.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Intensity": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    },
+                    "Alpha": {
+                      "BaseValue": 1.0,
+                      "Modulation": {
+                        "Modulators": []
+                      }
+                    }
+                  },
+                  "LutKey": "",
+                  "LutIndex": {
+                    "BaseValue": 0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LutIntensity": {
+                    "BaseValue": 1.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CompositeTextureKeys": [],
+                  "CompositeTextureIndex": {
+                    "BaseValue": 0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CompositeMode": 0,
+                  "CompositeTiling": {
+                    "BaseValue": {
+                      "x": 1.0,
+                      "y": 1.0
+                    },
+                    "ApplyXModulationToBothAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CompositeOffset": {
+                    "BaseValue": {
+                      "x": 0.0,
+                      "y": 0.0
+                    },
+                    "ApplyXModulationToBothAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "CompositeRotation": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LuminanceDisplacementTextureKey": "",
+                  "LuminanceDisplacementOffset": {
+                    "BaseValue": {
+                      "x": 0.05000000074505806,
+                      "y": 0.0
+                    },
+                    "ApplyXModulationToBothAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LuminanceDisplacementTiling": {
+                    "BaseValue": {
+                      "x": 1.0,
+                      "y": 1.0
+                    },
+                    "ApplyXModulationToBothAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "LuminanceDisplacementMapOffset": {
+                    "BaseValue": {
+                      "x": 0.0,
+                      "y": 0.0
+                    },
+                    "ApplyXModulationToBothAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeProvidePreviousFrameTexture": false,
+                  "RuntimeUserFloat0": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": [
+                        {
+                          "Enabled": true,
+                          "Source": 18,
+                          "Operation": 0,
+                          "Amount": 1.0,
+                          "Offset": 0.0,
+                          "LfoFrequency": 1.0,
+                          "LfoPhase": 0.0,
+                          "LfoWaveform": 0,
+                          "LfoUnipolar": false,
+                          "ElapsedTimeStartOffset": 0.0,
+                          "ElapsedTimeUseAnimationCurve": false,
+                          "ElapsedTimeAnimationCurve": {
+                            "serializedVersion": "2",
+                            "m_Curve": [
+                              {
+                                "serializedVersion": "3",
+                                "time": 0.0,
+                                "value": 0.0,
+                                "inSlope": 0.0,
+                                "outSlope": 1.0,
+                                "tangentMode": 0,
+                                "weightedMode": 0,
+                                "inWeight": 0.0,
+                                "outWeight": 0.0
+                              },
+                              {
+                                "serializedVersion": "3",
+                                "time": 1.0,
+                                "value": 1.0,
+                                "inSlope": 1.0,
+                                "outSlope": 0.0,
+                                "tangentMode": 0,
+                                "weightedMode": 0,
+                                "inWeight": 0.0,
+                                "outWeight": 0.0
+                              }
+                            ],
+                            "m_PreInfinity": 2,
+                            "m_PostInfinity": 2,
+                            "m_RotationOrder": 4
+                          },
+                          "ElapsedTimeReset": 0,
+                          "ElapsedTimeResetAfterEvents": 4,
+                          "ElapsedTimeLimit": 0,
+                          "ElapsedTimeMin": 0.0,
+                          "ElapsedTimeMax": 1.0,
+                          "BeatPulseSharpness": 3.0,
+                          "Beat2And4PulseDirection": 0,
+                          "CounterValueMode": 0,
+                          "CounterIndex": 0,
+                          "CounterMin": 0.0,
+                          "CounterMax": 1.0,
+                          "CounterRepeatMod": 4.0,
+                          "CounterPulseDuration": 0.5,
+                          "RandomSeed": -2005608246,
+                          "Midi": {
+                            "_ccNumber": -1
+                          },
+                          "AccumulatorInitialValue": 0.0,
+                          "AccumulatorReset": 0,
+                          "AccumulatorResetAfterEvents": 4,
+                          "AccumulatorLimit": 0,
+                          "AccumulatorMin": 0.0,
+                          "AccumulatorMax": 1.0,
+                          "AccumulatorTransition": 0,
+                          "AccumulatorTransitionDuration": 0.15000000596046448,
+                          "AccumulatorTransitionSharpness": 3.0
+                        }
+                      ]
+                    }
+                  },
+                  "RuntimeUserFloat1": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeUserFloat2": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeUserFloat3": {
+                    "BaseValue": 0.0,
+                    "Modulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeUserVector0": {
+                    "BaseValue": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "z": 0.0
+                    },
+                    "ApplyXModulationToAllAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    },
+                    "ZModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeUserVector1": {
+                    "BaseValue": {
+                      "x": 0.0,
+                      "y": 0.0,
+                      "z": 0.0
+                    },
+                    "ApplyXModulationToAllAxes": false,
+                    "XModulation": {
+                      "Modulators": []
+                    },
+                    "YModulation": {
+                      "Modulators": []
+                    },
+                    "ZModulation": {
+                      "Modulators": []
+                    }
+                  },
+                  "RuntimeShaderCode": "cbuffer AetherinGlobals : register(b0)\r\n{\r\n    float4 _Time;\r\n    float4 _Frame;\r\n    float4 _Resolution;\r\n    float4 _Audio;\r\n    float4 _Beat;\r\n    float4 _Bar;\r\n    float4 _BackgroundColor1;\r\n    float4 _BackgroundColor2;\r\n    float4 _AccentColor1;\r\n    float4 _AccentColor2;\r\n    float4 _SubAccentColor1;\r\n    float4 _SubAccentColor2;\r\n    float4 _UserFloat;\r\n    float4 _UserVector0;\r\n    float4 _UserVector1;\r\n};\r\n\r\nTexture2D _SourceTexture : register(t0);\r\nTexture2D _WaveformTexture : register(t1);\r\nTexture2D _SpectrumTexture : register(t2);\r\nTexture2D _PreviousFrameTexture : register(t3);\r\n\r\nSamplerState _SourceTextureSampler : register(s0);\r\nSamplerState _WaveformTextureSampler : register(s1);\r\nSamplerState _SpectrumTextureSampler : register(s2);\r\nSamplerState _PreviousFrameTextureSampler : register(s3);\r\n\r\nfloat Hash11(float x)\r\n{\r\n    return frac(sin(x * 127.1 + 78.233) * 43758.5453);\r\n}\r\n\r\nfloat4 Source(float2 uv)\r\n{\r\n    return _SourceTexture.Sample(_SourceTextureSampler, saturate(uv));\r\n}\r\n\r\nfloat RegionMask(float2 uv, float seed, bool horizontalLines)\r\n{\r\n    // 35%: 全画面 / 65%: ランダムな1/3\r\n    if (Hash11(seed + 11.0) < 0.35) return 1.0;\r\n\r\n    float position = horizontalLines ? uv.x : uv.y;\r\n    float third = floor(Hash11(seed + 12.0) * 3.0);\r\n    return step(third / 3.0, position) *\r\n           (1.0 - step((third + 1.0) / 3.0, position));\r\n}\r\n\r\nfloat2 Direction(float seed)\r\n{\r\n    float index = floor(Hash11(seed + 21.0) * 4.0);\r\n    if (index < 1.0) return float2( 1.0,  0.0);\r\n    if (index < 2.0) return float2(-1.0,  0.0);\r\n    if (index < 3.0) return float2( 0.0,  1.0);\r\n    return float2(0.0, -1.0);\r\n}\r\n\r\nfloat3 Edge(float2 uv)\r\n{\r\n    float2 pixel = _Resolution.zw * 2.0;\r\n    float3 leftColor  = Source(uv - float2(pixel.x, 0.0)).rgb;\r\n    float3 rightColor = Source(uv + float2(pixel.x, 0.0)).rgb;\r\n    float3 downColor  = Source(uv - float2(0.0, pixel.y)).rgb;\r\n    float3 upColor    = Source(uv + float2(0.0, pixel.y)).rgb;\r\n    return saturate(abs(rightColor - leftColor) +\r\n                    abs(upColor - downColor)) * 2.5;\r\n}\r\n\r\nfloat4 Frag(VsOutput input) : SV_TARGET\r\n{\r\n    float2 uv = input.uv;\r\n    float4 original = Source(uv);\r\n\r\n    // User Float 0: RandomPerOverlayCue の値 [0, 1)\r\n    float seed = saturate(_UserFloat.x);\r\n    float kind = min(11.0, floor(seed * 12.0));\r\n\r\n    float r1 = Hash11(seed + 31.0);\r\n    float r2 = Hash11(seed + 47.0);\r\n    float r3 = Hash11(seed + 63.0);\r\n    float2 direction = Direction(seed);\r\n    float2 offset = direction * lerp(0.025, 0.095, r1);\r\n    float3 result = original.rgb;\r\n\r\n    // 0: 横線だけ。全画面または横位置の1/3\r\n    if (kind < 1.0)\r\n    {\r\n        float region = RegionMask(uv, seed, true);\r\n        float period = floor(lerp(4.0, 14.0, r1));\r\n        float stripeMask = 1.0 - step(\r\n            0.32, frac(uv.y * _Resolution.y / period));\r\n        result = lerp(original.rgb, original.rgb * stripeMask, region);\r\n    }\r\n    // 1: 縦線だけ。全画面または縦位置の1/3\r\n    else if (kind < 2.0)\r\n    {\r\n        float region = RegionMask(uv, seed, false);\r\n        float period = floor(lerp(4.0, 14.0, r1));\r\n        float stripeMask = 1.0 - step(\r\n            0.32, frac(uv.x * _Resolution.x / period));\r\n        result = lerp(original.rgb, original.rgb * stripeMask, region);\r\n    }\r\n    // 2: 太い帯の中だけ映像を残す\r\n    else if (kind < 3.0)\r\n    {\r\n        bool vertical = r2 < 0.5;\r\n        float axis = vertical ? uv.x : uv.y;\r\n        float bandMask = 1.0 - step(\r\n            0.36, frac(axis * lerp(4.0, 9.0, r1)));\r\n        result = lerp(_BackgroundColor1.rgb, original.rgb, bandMask);\r\n    }\r\n    // 3: ずれた映像を重ねる\r\n    else if (kind < 4.0)\r\n    {\r\n        float3 copy1 = Source(uv + offset).rgb;\r\n        float3 copy2 = Source(uv - offset * 0.55).rgb;\r\n        result = original.rgb * 0.45 +\r\n                 copy1 * 0.35 +\r\n                 copy2 * 0.20;\r\n    }\r\n    // 4: 画面の1/3だけずらす\r\n    else if (kind < 5.0)\r\n    {\r\n        bool verticalArea = r2 < 0.5;\r\n        float axis = verticalArea ? uv.x : uv.y;\r\n        float third = floor(r3 * 3.0);\r\n        float region = step(third / 3.0, axis) *\r\n                       (1.0 - step((third + 1.0) / 3.0, axis));\r\n        result = lerp(original.rgb, Source(uv + offset).rgb, region);\r\n    }\r\n    // 5: 分割スライド\r\n    else if (kind < 6.0)\r\n    {\r\n        bool vertical = r2 < 0.5;\r\n        float axis = vertical ? uv.x : uv.y;\r\n        float count = floor(lerp(3.0, 7.0, r1));\r\n        float stripe = floor(axis * count);\r\n        float side = frac(stripe * 0.5) < 0.5 ? -1.0 : 1.0;\r\n        float2 slide = vertical\r\n            ? float2(side * offset.x + side * 0.04, 0.0)\r\n            : float2(0.0, side * offset.y + side * 0.04);\r\n        result = Source(uv + slide).rgb;\r\n    }\r\n    // 6: 上下左右いずれかへの方向性ブラー\r\n    else if (kind < 7.0)\r\n    {\r\n        float3 sum = 0.0;\r\n        [unroll] for (int i = 0; i < 7; i++)\r\n        {\r\n            sum += Source(\r\n                uv + direction * (float(i) / 6.0) *\r\n                lerp(0.035, 0.16, r1)).rgb;\r\n        }\r\n        result = sum / 7.0;\r\n    }\r\n    // 7: 複数のずれた映像によるエコー\r\n    else if (kind < 8.0)\r\n    {\r\n        result = original.rgb * 0.36;\r\n        result += Source(uv + offset * 0.6).rgb * 0.30;\r\n        result += Source(uv + offset * 1.3).rgb * 0.21;\r\n        result += Source(uv + offset * 2.0).rgb * 0.13;\r\n    }\r\n    // 8: 一色だけ大きくRGB分離\r\n    else if (kind < 9.0)\r\n    {\r\n        float3 shifted = Source(uv + offset).rgb;\r\n        if (r2 < 0.333)      result.r = shifted.r;\r\n        else if (r2 < 0.666) result.g = shifted.g;\r\n        else                 result.b = shifted.b;\r\n    }\r\n    // 9: 画面の1/3だけ反転ミラー\r\n    else if (kind < 10.0)\r\n    {\r\n        bool flipX = r2 < 0.5;\r\n        float axis = flipX ? uv.x : uv.y;\r\n        float third = floor(r3 * 3.0);\r\n        float region = step(third / 3.0, axis) *\r\n                       (1.0 - step((third + 1.0) / 3.0, axis));\r\n        float2 mirrored = uv;\r\n        if (flipX) mirrored.x = 1.0 - uv.x;\r\n        else       mirrored.y = 1.0 - uv.y;\r\n        result = lerp(original.rgb, Source(mirrored).rgb, region);\r\n    }\r\n    // 10: タイル状に隣の映像と入れ替える\r\n    else if (kind < 11.0)\r\n    {\r\n        float2 grid = float2(3.0, 3.0);\r\n        float2 cell = floor(uv * grid);\r\n        float2 local = frac(uv * grid);\r\n        float2 neighbor = cell;\r\n        if (r2 < 0.5) neighbor.x = 2.0 - cell.x;\r\n        else          neighbor.y = 2.0 - cell.y;\r\n        float2 swappedUv = (neighbor + local) / grid;\r\n        float checker = frac(cell.x + cell.y) < 0.5 ? 0.0 : 1.0;\r\n        result = lerp(original.rgb, Source(swappedUv).rgb, checker);\r\n    }\r\n    // 11: 輪郭線とアクセント色\r\n    else\r\n    {\r\n        float3 edges = Edge(uv);\r\n        float brightness = dot(\r\n            edges, float3(0.299, 0.587, 0.114));\r\n        result = lerp(\r\n            _BackgroundColor1.rgb,\r\n            _AccentColor1.rgb,\r\n            saturate(brightness * 2.0));\r\n    }\r\n\r\n    return float4(result, original.a);\r\n}"
                 }
               ]
             }

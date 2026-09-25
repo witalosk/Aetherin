@@ -122,6 +122,10 @@ namespace Aetherin
         public ModulationContext WithElapsedTime(double elapsedTime) =>
             new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, elapsedTime,
                 CameraWorkChangeCount, OverlayCueTriggerEventId);
+
+        public ModulationContext WithOverlayCueTriggerEventId(long eventId) =>
+            new(Time, Audio, Beat, AllowMidi, AnimationPhaseOffset, Counter, ElapsedTime,
+                CameraWorkChangeCount, eventId);
     }
 
     [Serializable]

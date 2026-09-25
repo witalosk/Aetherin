@@ -227,7 +227,8 @@ namespace Aetherin
                     ? !isOutputPadDeck || (context.AllowMidi && deck.OutputPad?.IsNoteOn == true)
                     : isOutputPadDeck && deck.OutputPad?.IsNoteOn == true);
                 ModulationContext deckContext = context.WithElapsedTime(
-                    runtime.Activations.Evaluate(deck, deckIsActive, context.Time));
+                    runtime.Activations.Evaluate(deck, deckIsActive, context.Time))
+                    .WithOverlayCueTriggerEventId(runtime.Activations.GetActivationCount(deck));
                 if (!deckIsActive)
                 {
                     if (deck.Modules != null)
@@ -260,7 +261,8 @@ namespace Aetherin
                 {
                     if (module == null) continue;
                     ModulationContext moduleContext = deckContext.WithElapsedTime(
-                        runtime.Activations.Evaluate(module, module.Enabled && deckIsActive, context.Time));
+                        runtime.Activations.Evaluate(module, module.Enabled && deckIsActive, context.Time))
+                        .WithOverlayCueTriggerEventId(runtime.Activations.GetActivationCount(module));
                     if (!module.Enabled) continue;
                     module.EnsureInitialized();
                     module.GetAvailableLutKeys = GetLutKeys;
@@ -606,7 +608,7 @@ namespace Aetherin
             {
                 if (Buffers.Matches(width, height) && BackBuffer != null &&
                     BackBuffer.width == width && BackBuffer.height == height) return;
-                Dispose();
+                DisposeResources();
                 // CrossFilterの高輝度成分を保持できるよう、共有バッファはHDR形式にする。
                 Buffers.Ensure(width, height, "Post FX Swap", RenderTextureFormat.ARGBHalf);
                 BackBuffer = Create(width, height, "Post FX Back Buffer");
@@ -634,11 +636,16 @@ namespace Aetherin
 
             public void Dispose()
             {
+                DisposeResources();
+                Activations.Clear();
+            }
+
+            private void DisposeResources()
+            {
                 Buffers.Dispose();
                 Release(BackBuffer);
                 BackBuffer = null;
                 BackBufferValid = false;
-                Activations.Clear();
                 foreach (RuntimeShaderPostEffectRenderer renderer in _runtimeShaders.Values)
                     renderer.Dispose();
                 _runtimeShaders.Clear();
@@ -709,17 +716,21 @@ namespace Aetherin
             {
                 if (!_entries.TryGetValue(key, out Entry entry))
                 {
-                    entry = new Entry { Active = active, StartTime = time };
+                    entry = new Entry { Active = active, StartTime = time, ActivationCount = active ? 1 : 0 };
                     _entries.Add(key, entry);
                 }
                 else if (active && !entry.Active)
                 {
                     entry.StartTime = time;
+                    entry.ActivationCount++;
                 }
 
                 entry.Active = active;
                 return active ? Math.Max(0d, time - entry.StartTime) : 0d;
             }
+
+            public long GetActivationCount(object key) =>
+                _entries.TryGetValue(key, out Entry entry) ? entry.ActivationCount : 0;
 
             public void Clear() => _entries.Clear();
 
@@ -727,6 +738,7 @@ namespace Aetherin
             {
                 public bool Active;
                 public double StartTime;
+                public long ActivationCount;
             }
         }
 
