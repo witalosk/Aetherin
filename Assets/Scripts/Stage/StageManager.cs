@@ -837,15 +837,11 @@ namespace Aetherin
             {
                 MidiBinding button = _params.CameraWorkDeckButtons[i];
                 if (button == null) continue;
-                bool available = editingStage != null && i < editingStage.CameraWorkDecks.Count;
+                bool available = nextStage != null && i < nextStage.CameraWorkDecks.Count;
                 if (!available) { button.ClearLed(); continue; }
                 if (button.WasNoteOn)
-                {
-                    editingStage.SelectCameraWorkDeck(i);
-                    if (!IsImmediateMode && currentStage != null && i < currentStage.CameraWorkDecks.Count)
-                        currentStage.SelectCameraWorkDeck(i);
-                }
-                button.SetLed(i == editingStage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
+                    nextStage.SelectCameraWorkDeck(i);
+                button.SetLed(i == nextStage.SelectedCameraWorkDeck ? StageLedColor * 0.5f : StageLedColor * 0.25f);
             }
 
             _params.CameraWorkTimingButtons ??= new List<MidiBinding>();
